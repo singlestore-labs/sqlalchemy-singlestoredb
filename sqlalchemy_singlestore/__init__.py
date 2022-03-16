@@ -2,15 +2,6 @@
 """SingleStore SQLAlchemy dialects."""
 from __future__ import annotations
 
-from sqlalchemy.dialects.mysql import aiomysql  # noqa
-from sqlalchemy.dialects.mysql import asyncmy  # noqa
-from sqlalchemy.dialects.mysql import base  # noqa
-from sqlalchemy.dialects.mysql import cymysql  # noqa
-from sqlalchemy.dialects.mysql import mariadbconnector  # noqa
-from sqlalchemy.dialects.mysql import mysqlconnector  # noqa
-from sqlalchemy.dialects.mysql import mysqldb  # noqa
-from sqlalchemy.dialects.mysql import pymysql  # noqa
-from sqlalchemy.dialects.mysql import pyodbc  # noqa
 from sqlalchemy.dialects.mysql.base import BIGINT
 from sqlalchemy.dialects.mysql.base import BINARY
 from sqlalchemy.dialects.mysql.base import BIT
@@ -49,8 +40,10 @@ from sqlalchemy.dialects.mysql.dml import Insert
 from sqlalchemy.dialects.mysql.dml import insert
 from sqlalchemy.dialects.mysql.expression import match
 
+from . import base  # noqa
+
 # default dialect
-base.dialect = dialect = pymysql.dialect
+dialect = base.dialect
 
 __all__ = (
     'BIGINT',
