@@ -5,9 +5,8 @@ from __future__ import annotations
 from typing import Any
 from typing import List
 from typing import Type
-from urllib.parse import parse_qs
-from urllib.parse import urlparse
 
+from singlestore.connection import build_params
 from sqlalchemy import util
 from sqlalchemy.dialects.mysql.base import BIT  # noqa: F401
 from sqlalchemy.dialects.mysql.base import MySQLCompiler
@@ -59,27 +58,7 @@ class SingleStoreDialect(MySQLDialect):
         return __import__('singlestore')
 
     def create_connect_args(self, url: URL) -> List[Any]:
-        urlp = urlparse(str(url))
-
-        opts = {
-            k: v for k, v in dict(
-                host=urlp.hostname or None,
-                port=urlp.port or None,
-                user=urlp.username or None,
-                password=urlp.password or None,
-            ).items() if v is not None
-        }
-
-        opts.update({k.lower(): v[-1] for k, v in parse_qs(urlp.query).items()})
-
-        if '+' in urlp.scheme:
-            opts['driver'] = urlp.scheme.split('+', 1)[-1]
-
-        path = [x for x in urlp.path.split('/') if x]
-        if path:
-            opts['database'] = path[0]
-
-        return [[], opts]
+        return [[], build_params(host=str(url))]
 
     def _extract_error_code(self, exception: Exception) -> int:
         return getattr(exception, 'errno', -1)
