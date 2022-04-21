@@ -53,9 +53,21 @@ class SingleStoreDialect(MySQLDialect):
     type_compiler = SingleStoreTypeCompiler
     preparer = SingleStoreIdentifierPreparer
 
+    driver = ''
+
+    supports_statement_cache = False
+
     @classmethod
     def dbapi(cls) -> Any:
         return __import__('singlestore')
+
+    @classmethod
+    def import_dbapi(cls) -> Any:
+        return __import__('singlestore')
+
+    def initialize(self, connection: Any) -> Any:
+        self.driver = connection.connection._driver.name
+        return MySQLDialect.initialize(self, connection)
 
     def create_connect_args(self, url: URL) -> List[Any]:
         return [[], build_params(host=str(url))]

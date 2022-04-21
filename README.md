@@ -1,7 +1,7 @@
 # SingleStore SQLAlchemy Dialect
 
-This project contains a SQLAlchemy dialect which allows you to use the SQLAlchemy
-APIs with the SingleStore database.
+This project contains a [SQLAlchemy](https://sqlalchemy.org) dialect which allows
+you to use the SQLAlchemy APIs with the [SingleStore](https://singlestore.com) database.
 
 ## Resources
 
