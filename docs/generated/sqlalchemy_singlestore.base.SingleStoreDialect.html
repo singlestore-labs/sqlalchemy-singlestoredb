@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sqlalchemy_singlestore.base.SingleStoreDialect &mdash; SingleStore SQLAlchemy 0.1.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi" href="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi.html" />
+    <link rel="prev" title="API Reference" href="../api.html" />
+</head>
+
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> SingleStore SQLAlchemy
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../whatsnew.html">What’s New</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#connections">Connections</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../api.html#dialect">Dialect</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sqlalchemy_singlestore.base.SingleStoreDialect</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi.html">sqlalchemy_singlestore.base.SingleStoreDialect.dbapi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi.html">sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.initialize.html">sqlalchemy_singlestore.base.SingleStoreDialect.initialize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args.html">sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SingleStore SQLAlchemy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API Reference</a> &raquo;</li>
+      <li>sqlalchemy_singlestore.base.SingleStoreDialect</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/sqlalchemy_singlestore.base.SingleStoreDialect.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+
+  <section id="sqlalchemy-singlestore-base-singlestoredialect">
+<h1>sqlalchemy_singlestore.base.SingleStoreDialect<a class="headerlink" href="#sqlalchemy-singlestore-base-singlestoredialect" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlalchemy_singlestore.base.SingleStoreDialect">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sqlalchemy_singlestore.base.</span></span><span class="sig-name descname"><span class="pre">SingleStoreDialect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isolation_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_serializer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_deserializer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mariadb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sqlalchemy_singlestore.base.SingleStoreDialect" title="Permalink to this definition">¶</a></dt>
+<dd><p>SingleStore SQLAlchemy dialect.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlalchemy_singlestore.base.SingleStoreDialect.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">isolation_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_serializer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">json_deserializer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_mariadb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sqlalchemy_singlestore.base.SingleStoreDialect.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sqlalchemy_singlestore.base.SingleStoreDialect.__init__" title="sqlalchemy_singlestore.base.SingleStoreDialect.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([isolation_level, json_serializer, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">connect</span></code>(*cargs, **cparams)</p></td>
+<td><p>Establish a connection using this dialect's DBAPI.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args.html#sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args" title="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_connect_args</span></code></a>(url)</p></td>
+<td><p>Build DB-API compatible connection arguments.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_xid</span></code>()</p></td>
+<td><p>Create a random two-phase transaction ID.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi.html#sqlalchemy_singlestore.base.SingleStoreDialect.dbapi" title="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">denormalize_name</span></code>(name)</p></td>
+<td><p>convert the given name to a case insensitive identifier for the backend if it is an all-lowercase name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_begin</span></code>(dbapi_connection)</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">connection.begin()</span></code>, given a DB-API connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_begin_twophase</span></code>(connection, xid)</p></td>
+<td><p>Begin a two phase transaction on the given connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_close</span></code>(dbapi_connection)</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">connection.close()</span></code>, given a DBAPI connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_commit</span></code>(dbapi_connection)</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">connection.commit()</span></code>, given a DB-API connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_commit_twophase</span></code>(connection, xid[, ...])</p></td>
+<td><p>Commit a two phase transaction on the given connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_execute</span></code>(cursor, statement, parameters[, ...])</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">cursor.execute(statement,</span> <span class="pre">parameters)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_execute_no_params</span></code>(cursor, statement[, ...])</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">cursor.execute(statement)</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_executemany</span></code>(cursor, statement, parameters)</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">cursor.executemany(statement,</span> <span class="pre">parameters)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_ping</span></code>(dbapi_connection)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_prepare_twophase</span></code>(connection, xid)</p></td>
+<td><p>Prepare a two phase transaction on the given connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_recover_twophase</span></code>(connection)</p></td>
+<td><p>Recover list of uncommitted prepared two phase transaction identifiers on the given connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_release_savepoint</span></code>(connection, name)</p></td>
+<td><p>Release the named savepoint on a connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_rollback</span></code>(dbapi_connection)</p></td>
+<td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">connection.rollback()</span></code>, given a DB-API connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_rollback_to_savepoint</span></code>(connection, name)</p></td>
+<td><p>Rollback a connection to the named savepoint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_rollback_twophase</span></code>(connection, xid[, ...])</p></td>
+<td><p>Rollback a two phase transaction on the given connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_savepoint</span></code>(connection, name)</p></td>
+<td><p>Create a savepoint with the given name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_set_input_sizes</span></code>(cursor, list_of_tuples, ...)</p></td>
+<td><p>invoke the cursor.setinputsizes() method with appropriate arguments</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">engine_created</span></code>(engine)</p></td>
+<td><p>A convenience hook called before returning the final <code class="xref py py-class docutils literal notranslate"><span class="pre">_engine.Engine</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_check_constraints</span></code>(connection, table_name)</p></td>
+<td><p>Return information about check constraints in <cite>table_name</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_columns</span></code>(connection, table_name[, schema])</p></td>
+<td><p>Return information about columns in <cite>table_name</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_isolation_level</span></code>(dbapi_conn)</p></td>
+<td><p>Given a DBAPI connection, return its isolation level, or a default isolation level if one cannot be retrieved.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dialect_cls</span></code>(url)</p></td>
+<td><p>Given a URL, return the <code class="xref py py-class docutils literal notranslate"><span class="pre">Dialect</span></code> that will be used.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dialect_pool_class</span></code>(url)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_driver_connection</span></code>(connection)</p></td>
+<td><p>Returns the connection object as returned by the external driver package.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_foreign_keys</span></code>(connection, table_name[, ...])</p></td>
+<td><p>Return information about foreign_keys in <cite>table_name</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_indexes</span></code>(connection, table_name[, schema])</p></td>
+<td><p>Return information about indexes in <cite>table_name</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_isolation_level</span></code>(connection)</p></td>
+<td><p>Given a DBAPI connection, return its isolation level.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pk_constraint</span></code>(connection, table_name[, ...])</p></td>
+<td><p>Return information about the primary key constraint on table_name`.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_pool_class</span></code>(url)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_schema_names</span></code>(connection, **kw)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_sequence_names</span></code>(connection[, schema])</p></td>
+<td><p>Return a list of all sequence names available in the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_comment</span></code>(connection, table_name[, ...])</p></td>
+<td><p>Return the &quot;comment&quot; for the table identified by <cite>table_name</cite>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_names</span></code>(connection[, schema])</p></td>
+<td><p>Return a Unicode SHOW TABLES from a given schema.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_options</span></code>(connection, table_name[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_temp_table_names</span></code>(connection[, schema])</p></td>
+<td><p>Return a list of temporary table names on the given connection, if supported by the underlying backend.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_temp_view_names</span></code>(connection[, schema])</p></td>
+<td><p>Return a list of temporary view names on the given connection, if supported by the underlying backend.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_unique_constraints</span></code>(connection, table_name)</p></td>
+<td><p>Return information about unique constraints in <cite>table_name</cite>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_view_definition</span></code>(connection, view_name[, ...])</p></td>
+<td><p>Return view definition.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_view_names</span></code>(connection[, schema])</p></td>
+<td><p>Return a list of all view names available in the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_index</span></code>(connection, table_name, index_name)</p></td>
+<td><p>Check the existence of a particular index name in the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_sequence</span></code>(connection, sequence_name[, schema])</p></td>
+<td><p>Check the existence of a particular sequence in the database.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">has_table</span></code>(connection, table_name[, schema])</p></td>
+<td><p>For internal dialect use, check the existence of a particular table in the database.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi.html#sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi" title="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">import_dbapi</span></code></a>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.initialize.html#sqlalchemy_singlestore.base.SingleStoreDialect.initialize" title="sqlalchemy_singlestore.base.SingleStoreDialect.initialize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">initialize</span></code></a>(connection)</p></td>
+<td><p>Called during strategized creation of the dialect with a connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_disconnect</span></code>(e, connection, cursor)</p></td>
+<td><p>Return True if the given DB-API error indicates an invalid connection</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_provisioning</span></code>()</p></td>
+<td><p>set up the provision.py module for this dialect.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize_name</span></code>(name)</p></td>
+<td><p>convert the given name to lowercase if it is detected as case insensitive.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_connect</span></code>()</p></td>
+<td><p>return a callable which sets up a newly created DBAPI connection.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_connect_url</span></code>(url)</p></td>
+<td><p>return a callable which sets up a newly created DBAPI connection.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_isolation_level</span></code>(dbapi_conn)</p></td>
+<td><p>Given a DBAPI connection, revert its isolation to the default.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_connection_execution_options</span></code>(connection, ...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_engine_execution_options</span></code>(engine, opts)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_isolation_level</span></code>(connection, level)</p></td>
+<td><p>Given a DBAPI connection, set its isolation level.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type_descriptor</span></code>(typeobj)</p></td>
+<td><p>Provide a database-specific <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeEngine</span></code> object, given the generic object which comes from the types module.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_identifier</span></code>(ident)</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">CACHE_HIT</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">CACHE_MISS</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">CACHING_DISABLED</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">NO_CACHE_KEY</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">NO_DIALECT_SUPPORT</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">colspecs</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">connection_characteristics</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">construct_arguments</span></code></p></td>
+<td><p>Optional set of argument specifiers for various SQLAlchemy constructs, typically schema items.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cte_follows_insert</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dbapi_exception_translation_map</span></code></p></td>
+<td><p>mapping used in the extremely unusual case that a DBAPI's published exceptions don't actually have the __name__ that they are linked towards.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_paramstyle</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_schema_name</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">default_sequence_base</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">description_encoding</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dialect_description</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dispatch</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">driver</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">engine_config_types</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">full_returning</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">implicit_returning</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">inline_comments</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_executemany_returning</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_async</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_mariadb</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">ischema_names</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">isolation_level</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">logger</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_constraint_name_length</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_identifier_length</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">max_index_name_length</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">non_native_boolean_check_constraint</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">postfetch_lastrowid</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">preexecute_autoincrement_sequences</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reflection_options</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_name_normalize</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">returns_unicode_strings</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sequences_optional</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">server_side_cursors</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">server_version_info</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_alter</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_comments</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_default_metavalue</span></code></p></td>
+<td><p>dialect supports INSERT.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_default_values</span></code></p></td>
+<td><p>dialect supports INSERT.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_empty_insert</span></code></p></td>
+<td><p>dialect supports INSERT () VALUES ()</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_for_update_of</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_identity_columns</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_is_distinct_from</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_multivalues_insert</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_native_boolean</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_native_decimal</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_native_enum</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_sane_multi_rowcount</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_sane_rowcount</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_sane_rowcount_returning</span></code></p></td>
+<td><p>True if this dialect supports sane rowcount even if RETURNING is in use.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_schemas</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_sequences</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_server_side_cursors</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_simple_order_by_label</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_statement_cache</span></code></p></td>
+<td><p>indicates if this dialect supports caching.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_unicode_binds</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_unicode_statements</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_views</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">tuple_in_values</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">use_setinputsizes</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi.html" class="btn btn-neutral float-right" title="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 SingleStore. All Rights Reserved.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+</body>
+</html>

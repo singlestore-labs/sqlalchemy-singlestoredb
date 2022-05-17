@@ -1,0 +1,6 @@
+﻿sqlalchemy\_singlestore.base.SingleStoreDialect.import\_dbapi
+=============================================================
+
+.. currentmodule:: sqlalchemy_singlestore.base
+
+.. automethod:: SingleStoreDialect.import_dbapi

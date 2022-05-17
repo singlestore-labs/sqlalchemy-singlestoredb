@@ -45,6 +45,8 @@ from . import base  # noqa
 # default dialect
 dialect = base.dialect
 
+__version__ = '0.1.0'
+
 __all__ = (
     'BIGINT',
     'BINARY',
