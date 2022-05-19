@@ -3,6 +3,10 @@
 This project contains a [SQLAlchemy](https://sqlalchemy.org) dialect which allows
 you to use the SQLAlchemy APIs with the [SingleStore](https://singlestore.com) database.
 
+## License
+
+This library is licensed under the [Apache 2.0 License](https://raw.githubusercontent.com/singlestore-labs/singlestore-python/main/LICENSE?token=GHSAT0AAAAAABMGV6QPNR6N23BVICDYK5LAYTVK5EA).
+
 ## Resources
 
 * [Documentation](https://singlestore-labs.github.io/sqlalchemy-singlestore)
