@@ -1,0 +1,39 @@
+
+package:
+    name: sqlalchemy-singlestore
+    version: 0.1.0
+
+source:
+#   url: https://github.com/singlestore-labs/sqlalchemy-singlestore/releases/download/v0.1.0/singlestore-python-0.1.0.tar.gz
+    path: ..
+
+build:
+    noarch: python
+    number: 0
+    script: python -m pip install --no-deps --ignore-installed .
+
+requirements:
+    build:
+        - python {{ python }}
+        - pip
+    run:
+        - singlestore
+        - sqlalchemy
+
+test:
+    imports:
+        - singlestore
+    requires:
+        - coverage
+        - nose2
+        - pandas
+    commands:
+        - nose2 -v singlestore.tests.test_basics
+
+about:
+    home: https://github.com/singlestore-labs/sqlalchemy-singlestore
+    license: Apache 2.0
+    license_file: ../LICENSE
+    summary: SingleStore SQLAlchemy Dialect
+    doc_url: https://singlestore.github.io/sqlalchemy-singlestore/index.html
+    dev_url: https://github.com/singlestore/sqlalchemy-singlestore
