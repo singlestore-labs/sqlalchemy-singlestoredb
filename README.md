@@ -3,6 +3,18 @@
 This project contains a [SQLAlchemy](https://sqlalchemy.org) dialect which allows
 you to use the SQLAlchemy APIs with the [SingleStore](https://singlestore.com) database.
 
+## Install
+
+This package can be install from PyPI using `pip`:
+```
+pip install sqlalchemy-singlestore
+```
+
+If you use Anaconda, you can install as follows:
+```
+conda install -c singlestore sqlalchemy-singlestore
+```
+
 ## License
 
 This library is licensed under the [Apache 2.0 License](https://raw.githubusercontent.com/singlestore-labs/singlestore-python/main/LICENSE?token=GHSAT0AAAAAABMGV6QPNR6N23BVICDYK5LAYTVK5EA).
