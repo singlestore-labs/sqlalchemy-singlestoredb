@@ -41,6 +41,12 @@ class SingleStoreIdentifierPreparer(MySQLIdentifierPreparer):
     """SingleStore SQLAlchemy identifier preparer."""
 
 
+class _myconnpyBIT(BIT):
+    def result_processor(self, dialect, coltype):
+        """MySQL-connector already converts mysql bits, so."""
+        return None
+
+
 class SingleStoreDialect(MySQLDialect):
     """SingleStore SQLAlchemy dialect."""
 
@@ -48,10 +54,11 @@ class SingleStoreDialect(MySQLDialect):
 
     default_paramstyle = 'named'
 
+    # Possibly mysql.connector-specific
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = True
-
     supports_native_decimal = True
+    colspecs = util.update_copy(MySQLDialect.colspecs, {BIT: _myconnpyBIT})
 
     statement_compiler = SingleStoreCompiler
     ddl_compiler = SingleStoreDDLCompiler
