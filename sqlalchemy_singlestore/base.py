@@ -42,7 +42,7 @@ class SingleStoreIdentifierPreparer(MySQLIdentifierPreparer):
 
 
 class _myconnpyBIT(BIT):
-    def result_processor(self, dialect, coltype):
+    def result_processor(self, dialect: Any, coltype: Any) -> Any:
         """MySQL-connector already converts mysql bits, so."""
         return None
 
