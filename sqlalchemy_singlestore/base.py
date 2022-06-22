@@ -48,6 +48,11 @@ class SingleStoreDialect(MySQLDialect):
 
     default_paramstyle = 'named'
 
+    supports_sane_rowcount = True
+    supports_sane_multi_rowcount = True
+
+    supports_native_decimal = True
+
     statement_compiler = SingleStoreCompiler
     ddl_compiler = SingleStoreDDLCompiler
     type_compiler = SingleStoreTypeCompiler
