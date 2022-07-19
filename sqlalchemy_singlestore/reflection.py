@@ -30,7 +30,9 @@ class SingleStoreTableDefinitionParser(MySQLTableDefinitionParser):
         m = re_shard.match(line)
         if m:
             type_ = "shard_key"
-            spec = {'type': None, 'name': 'SHARD', 'using_pre': None, 'columns': [], 'using_post': None, 'keyblock': None, 'parser': None, 'comment': None, 'version_sql': None}
+            spec = {'type': None, 'name': 'SHARD', 'using_pre': None,
+                    'columns': [], 'using_post': None, 'keyblock': None,
+                    'parser': None, 'comment': None, 'version_sql': None}
         return type_, spec
             
     def parse(self, show_create, charset):

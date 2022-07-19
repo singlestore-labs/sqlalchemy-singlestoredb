@@ -42,6 +42,8 @@ from sqlalchemy.dialects.mysql.expression import match
 
 from . import base  # noqa
 
+import sqlalchemy.sql.sqltypes as sqltypes
+
 # default dialect
 dialect = base.dialect
 

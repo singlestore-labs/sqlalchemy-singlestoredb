@@ -35,7 +35,17 @@ class SingleStoreDDLCompiler(MySQLDDLCompiler):
 
 class SingleStoreTypeCompiler(MySQLTypeCompiler):
     """SingleStore SQLAlchemy type compiler."""
-
+    def visit_DATETIME(self, type_, **kw):
+            if getattr(type_, "fsp", None):
+                return "DATETIME(%d)" % type_.fsp
+            else:
+                return "DATETIME(6)"
+    
+    def visit_TIMESTAMP(self, type_, **kw):
+        if getattr(type_, "fsp", None):
+            return "TIMESTAMP(%d)" % type_.fsp
+        else:
+            return "DATETIME(6)"
 
 class SingleStoreIdentifierPreparer(MySQLIdentifierPreparer):
     """SingleStore SQLAlchemy identifier preparer."""
