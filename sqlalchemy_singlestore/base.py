@@ -6,7 +6,7 @@ from typing import Any
 from typing import List
 from typing import Type
 
-from singlestore.connection import build_params
+from singlestoredb.connection import build_params
 from sqlalchemy import util
 from sqlalchemy.dialects.mysql.base import BIT  # noqa: F401
 from sqlalchemy.dialects.mysql.base import MySQLCompiler
@@ -35,17 +35,19 @@ class SingleStoreDDLCompiler(MySQLDDLCompiler):
 
 class SingleStoreTypeCompiler(MySQLTypeCompiler):
     """SingleStore SQLAlchemy type compiler."""
-    def visit_DATETIME(self, type_, **kw):
-            if getattr(type_, "fsp", None):
-                return "DATETIME(%d)" % type_.fsp
-            else:
-                return "DATETIME(6)"
-    
-    def visit_TIMESTAMP(self, type_, **kw):
-        if getattr(type_, "fsp", None):
-            return "TIMESTAMP(%d)" % type_.fsp
+
+    def visit_DATETIME(self, type_: Any, **kw: Any) -> str:
+        if getattr(type_, 'fsp', None):
+            return 'DATETIME(%d)' % type_.fsp
         else:
-            return "DATETIME(6)"
+            return 'DATETIME(6)'
+
+    def visit_TIMESTAMP(self, type_: Any, **kw: Any) -> str:
+        if getattr(type_, 'fsp', None):
+            return 'TIMESTAMP(%d)' % type_.fsp
+        else:
+            return 'DATETIME(6)'
+
 
 class SingleStoreIdentifierPreparer(MySQLIdentifierPreparer):
     """SingleStore SQLAlchemy identifier preparer."""
@@ -81,11 +83,11 @@ class SingleStoreDialect(MySQLDialect):
 
     @classmethod
     def dbapi(cls) -> Any:
-        return __import__('singlestore')
+        return __import__('singlestoredb')
 
     @classmethod
     def import_dbapi(cls) -> Any:
-        return __import__('singlestore')
+        return __import__('singlestoredb')
 
     def initialize(self, connection: Any) -> Any:
         self.driver = connection.connection._driver.name
