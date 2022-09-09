@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""SingleStore SQLAlchemy reflection utilities."""
+"""SingleStoreDB SQLAlchemy reflection utilities."""
 from __future__ import annotations
 
 import re
@@ -15,12 +15,12 @@ from sqlalchemy.dialects.mysql.reflection import ReflectedState
 
 
 @log.class_logger
-class SingleStoreTableDefinitionParser(MySQLTableDefinitionParser):
+class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
     """Parses the results of a SHOW CREATE TABLE statement."""
 
     def _parse_constraints(self, line: str) -> Tuple[str, Dict[str, Any]]:
         type_, spec = super(
-            SingleStoreTableDefinitionParser,
+            SingleStoreDBTableDefinitionParser,
             self,
         )._parse_constraints(line)
         re_shard = _re_compile(r'\s+,\s+SHARD\s+KEY\s+\(\)\s+')
@@ -70,7 +70,7 @@ class SingleStoreTableDefinitionParser(MySQLTableDefinitionParser):
 
     def _prep_regexes(self) -> None:
         """Pre-compile regular expressions."""
-        super(SingleStoreTableDefinitionParser, self)._prep_regexes()
+        super(SingleStoreDBTableDefinitionParser, self)._prep_regexes()
 
         quotes = dict(
             zip(

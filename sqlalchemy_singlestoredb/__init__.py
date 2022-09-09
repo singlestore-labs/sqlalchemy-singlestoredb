@@ -2,6 +2,7 @@
 """SingleStore SQLAlchemy dialects."""
 from __future__ import annotations
 
+import sqlalchemy.sql.sqltypes as sqltypes
 from sqlalchemy.dialects.mysql.base import BIGINT
 from sqlalchemy.dialects.mysql.base import BINARY
 from sqlalchemy.dialects.mysql.base import BIT
@@ -41,8 +42,6 @@ from sqlalchemy.dialects.mysql.dml import insert
 from sqlalchemy.dialects.mysql.expression import match
 
 from . import base  # noqa
-
-import sqlalchemy.sql.sqltypes as sqltypes
 
 # default dialect
 dialect = base.dialect
