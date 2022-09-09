@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Type
 
@@ -22,7 +23,7 @@ from sqlalchemy.engine.url import URL
 from . import reflection
 
 
-class CaseInsensitiveDict(dict[str, Any]):
+class CaseInsensitiveDict(Dict[str, Any]):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         data = dict(*args, **kwargs)
