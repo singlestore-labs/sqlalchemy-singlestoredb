@@ -1,15 +1,15 @@
+{% set data = load_setup_py_data() %}
 
 package:
-    name: sqlalchemy-singlestore
-    version: 0.1.0
+    name: sqlalchemy-singlestoredb
+    version: {{ data.get('version') }}
 
 source:
-#   url: https://github.com/singlestore-labs/sqlalchemy-singlestore/releases/download/v0.1.0/singlestore-python-0.1.0.tar.gz
     path: ..
 
 build:
     noarch: python
-    number: 0
+    number: {{ environ.get('PACKAGE_BUILD_NUMBER', '0') }}
     script: python -m pip install --no-deps --ignore-installed .
 
 requirements:
@@ -17,23 +17,24 @@ requirements:
         - python {{ python }}
         - pip
     run:
-        - singlestore
+        - singlestoredb
         - sqlalchemy
 
 test:
     imports:
-        - singlestore
+        - sqlalchemy_singlestoredb
     requires:
         - coverage
         - nose2
         - pandas
+        - pytest
     commands:
-        - nose2 -v singlestore.tests.test_basics
+        - nose2 -v sqlalchemy_singlestoredb.tests.test_basics
 
 about:
-    home: https://github.com/singlestore-labs/sqlalchemy-singlestore
+    home: https://github.com/singlestore-labs/sqlalchemy-singlestoredb
     license: Apache 2.0
     license_file: ../LICENSE
-    summary: SingleStore SQLAlchemy Dialect
+    summary: SingleStoreDB SQLAlchemy Dialect
     doc_url: https://singlestore.github.io/sqlalchemy-singlestore/index.html
-    dev_url: https://github.com/singlestore/sqlalchemy-singlestore
+    dev_url: https://github.com/singlestore/sqlalchemy-singlestoredb

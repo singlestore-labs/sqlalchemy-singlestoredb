@@ -1,0 +1,6 @@
+﻿sqlalchemy\_singlestoredb.base.SingleStoreDBDialect.initialize
+==============================================================
+
+.. currentmodule:: sqlalchemy_singlestoredb.base
+
+.. automethod:: SingleStoreDBDialect.initialize

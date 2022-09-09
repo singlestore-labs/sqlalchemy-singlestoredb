@@ -1,4 +1,4 @@
-.. module:: singlestore
+.. module:: sqlalchemy_singlestoredb
 .. _api:
 
 API Reference
@@ -10,7 +10,7 @@ API Reference
 Connections
 -----------
 
-Connections to SingleStore should be done by creating an SQLAlchemy engine
+Connections to SingleStoreDB should be done by creating an SQLAlchemy engine
 first, then calling the :meth:`connect` method on that engine. See the
 Getting Started section for more information.
 
@@ -21,13 +21,13 @@ not worked with directly.
 Dialect
 .......
 
-.. currentmodule:: sqlalchemy_singlestore.base
+.. currentmodule:: sqlalchemy_singlestoredb.base
 
 .. autosummary::
    :toctree: generated/
 
-   SingleStoreDialect
-   SingleStoreDialect.dbapi
-   SingleStoreDialect.import_dbapi
-   SingleStoreDialect.initialize
-   SingleStoreDialect.create_connect_args
+   SingleStoreDBDialect
+   SingleStoreDBDialect.dbapi
+   SingleStoreDBDialect.import_dbapi
+   SingleStoreDBDialect.initialize
+   SingleStoreDBDialect.create_connect_args

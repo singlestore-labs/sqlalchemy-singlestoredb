@@ -17,12 +17,12 @@ sys.path.insert(0, os.path.abspath('../..'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'SingleStore SQLAlchemy'
+project = 'SingleStoreDB SQLAlchemy Dialect'
 copyright = '2022 SingleStore. All Rights Reserved'
 author = 'SingleStore'
 
 
-import sqlalchemy_singlestore as s2a  # noqa: W291,E402
+import sqlalchemy_singlestoredb as s2a  # noqa: W291,E402
 
 version = s2a.__version__
 release = s2a.__version__

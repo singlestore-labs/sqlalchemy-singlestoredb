@@ -4,7 +4,7 @@
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sqlalchemy_singlestore.base.SingleStoreDialect.initialize &mdash; SingleStore SQLAlchemy 0.1.0 documentation</title>
+  <title>sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize &mdash; SingleStoreDB SQLAlchemy Dialect 0.1.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -19,8 +19,8 @@
     <script src="../_static/js/theme.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args" href="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args.html" />
-    <link rel="prev" title="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi" href="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi.html" />
+    <link rel="next" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args.html" />
+    <link rel="prev" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi.html" />
 </head>
 
 <body class="wy-body-for-nav">
@@ -28,7 +28,7 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="../index.html" class="icon icon-home"> SingleStore SQLAlchemy
+            <a href="../index.html" class="icon icon-home"> SingleStoreDB SQLAlchemy Dialect
           </a>
               <div class="version">
                 0.1.0
@@ -49,11 +49,11 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#connections">Connections</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="../api.html#dialect">Dialect</a><ul class="current">
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.html">sqlalchemy_singlestore.base.SingleStoreDialect</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.dbapi.html">sqlalchemy_singlestore.base.SingleStoreDialect.dbapi</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi.html">sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi</a></li>
-<li class="toctree-l4 current"><a class="current reference internal" href="#">sqlalchemy_singlestore.base.SingleStoreDialect.initialize</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args.html">sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.dbapi.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.dbapi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args</a></li>
 </ul>
 </li>
 </ul>
@@ -69,7 +69,7 @@
 
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="../index.html">SingleStore SQLAlchemy</a>
+          <a href="../index.html">SingleStoreDB SQLAlchemy Dialect</a>
       </nav>
 
       <div class="wy-nav-content">
@@ -78,9 +78,9 @@
   <ul class="wy-breadcrumbs">
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
           <li><a href="../api.html">API Reference</a> &raquo;</li>
-      <li>sqlalchemy_singlestore.base.SingleStoreDialect.initialize</li>
+      <li>sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize</li>
       <li class="wy-breadcrumbs-aside">
-            <a href="../_sources/generated/sqlalchemy_singlestore.base.SingleStoreDialect.initialize.rst.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/generated/sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize.rst.txt" rel="nofollow"> View page source</a>
       </li>
   </ul>
   <hr/>
@@ -88,11 +88,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
 
-  <section id="sqlalchemy-singlestore-base-singlestoredialect-initialize">
-<h1>sqlalchemy_singlestore.base.SingleStoreDialect.initialize<a class="headerlink" href="#sqlalchemy-singlestore-base-singlestoredialect-initialize" title="Permalink to this headline">¶</a></h1>
+  <section id="sqlalchemy-singlestoredb-base-singlestoredbdialect-initialize">
+<h1>sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize<a class="headerlink" href="#sqlalchemy-singlestoredb-base-singlestoredbdialect-initialize" title="Permalink to this headline">¶</a></h1>
 <dl class="py method">
-<dt class="sig sig-object py" id="sqlalchemy_singlestore.base.SingleStoreDialect.initialize">
-<span class="sig-prename descclassname"><span class="pre">SingleStoreDialect.</span></span><span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a></span></span><a class="headerlink" href="#sqlalchemy_singlestore.base.SingleStoreDialect.initialize" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize">
+<span class="sig-prename descclassname"><span class="pre">SingleStoreDBDialect.</span></span><span class="sig-name descname"><span class="pre">initialize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.10)"><span class="pre">Any</span></a></span></span><a class="headerlink" href="#sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Called during strategized creation of the dialect with a
 connection.</p>
 <p>Allows dialects to configure options based on server version info or
@@ -114,8 +114,8 @@ any <code class="xref py py-meth docutils literal notranslate"><span class="pre"
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi.html" class="btn btn-neutral float-left" title="sqlalchemy_singlestore.base.SingleStoreDialect.import_dbapi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args.html" class="btn btn-neutral float-right" title="sqlalchemy_singlestore.base.SingleStoreDialect.create_connect_args" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi.html" class="btn btn-neutral float-left" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args.html" class="btn btn-neutral float-right" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

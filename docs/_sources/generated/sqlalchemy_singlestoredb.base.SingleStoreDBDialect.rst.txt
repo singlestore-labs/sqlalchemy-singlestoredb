@@ -1,0 +1,150 @@
+﻿sqlalchemy\_singlestoredb.base.SingleStoreDBDialect
+===================================================
+
+.. currentmodule:: sqlalchemy_singlestoredb.base
+
+.. autoclass:: SingleStoreDBDialect
+
+
+   .. automethod:: __init__
+
+
+   .. rubric:: Methods
+
+   .. autosummary::
+
+      ~SingleStoreDBDialect.__init__
+      ~SingleStoreDBDialect.connect
+      ~SingleStoreDBDialect.create_connect_args
+      ~SingleStoreDBDialect.create_xid
+      ~SingleStoreDBDialect.dbapi
+      ~SingleStoreDBDialect.denormalize_name
+      ~SingleStoreDBDialect.do_begin
+      ~SingleStoreDBDialect.do_begin_twophase
+      ~SingleStoreDBDialect.do_close
+      ~SingleStoreDBDialect.do_commit
+      ~SingleStoreDBDialect.do_commit_twophase
+      ~SingleStoreDBDialect.do_execute
+      ~SingleStoreDBDialect.do_execute_no_params
+      ~SingleStoreDBDialect.do_executemany
+      ~SingleStoreDBDialect.do_ping
+      ~SingleStoreDBDialect.do_prepare_twophase
+      ~SingleStoreDBDialect.do_recover_twophase
+      ~SingleStoreDBDialect.do_release_savepoint
+      ~SingleStoreDBDialect.do_rollback
+      ~SingleStoreDBDialect.do_rollback_to_savepoint
+      ~SingleStoreDBDialect.do_rollback_twophase
+      ~SingleStoreDBDialect.do_savepoint
+      ~SingleStoreDBDialect.do_set_input_sizes
+      ~SingleStoreDBDialect.engine_created
+      ~SingleStoreDBDialect.get_check_constraints
+      ~SingleStoreDBDialect.get_columns
+      ~SingleStoreDBDialect.get_default_isolation_level
+      ~SingleStoreDBDialect.get_dialect_cls
+      ~SingleStoreDBDialect.get_dialect_pool_class
+      ~SingleStoreDBDialect.get_driver_connection
+      ~SingleStoreDBDialect.get_foreign_keys
+      ~SingleStoreDBDialect.get_indexes
+      ~SingleStoreDBDialect.get_isolation_level
+      ~SingleStoreDBDialect.get_pk_constraint
+      ~SingleStoreDBDialect.get_pool_class
+      ~SingleStoreDBDialect.get_schema_names
+      ~SingleStoreDBDialect.get_sequence_names
+      ~SingleStoreDBDialect.get_table_comment
+      ~SingleStoreDBDialect.get_table_names
+      ~SingleStoreDBDialect.get_table_options
+      ~SingleStoreDBDialect.get_temp_table_names
+      ~SingleStoreDBDialect.get_temp_view_names
+      ~SingleStoreDBDialect.get_unique_constraints
+      ~SingleStoreDBDialect.get_view_definition
+      ~SingleStoreDBDialect.get_view_names
+      ~SingleStoreDBDialect.has_index
+      ~SingleStoreDBDialect.has_sequence
+      ~SingleStoreDBDialect.has_table
+      ~SingleStoreDBDialect.import_dbapi
+      ~SingleStoreDBDialect.initialize
+      ~SingleStoreDBDialect.is_disconnect
+      ~SingleStoreDBDialect.load_provisioning
+      ~SingleStoreDBDialect.normalize_name
+      ~SingleStoreDBDialect.on_connect
+      ~SingleStoreDBDialect.on_connect_url
+      ~SingleStoreDBDialect.reset_isolation_level
+      ~SingleStoreDBDialect.set_connection_execution_options
+      ~SingleStoreDBDialect.set_engine_execution_options
+      ~SingleStoreDBDialect.set_isolation_level
+      ~SingleStoreDBDialect.type_descriptor
+      ~SingleStoreDBDialect.validate_identifier
+
+
+
+
+
+   .. rubric:: Attributes
+
+   .. autosummary::
+
+      ~SingleStoreDBDialect.CACHE_HIT
+      ~SingleStoreDBDialect.CACHE_MISS
+      ~SingleStoreDBDialect.CACHING_DISABLED
+      ~SingleStoreDBDialect.NO_CACHE_KEY
+      ~SingleStoreDBDialect.NO_DIALECT_SUPPORT
+      ~SingleStoreDBDialect.colspecs
+      ~SingleStoreDBDialect.connection_characteristics
+      ~SingleStoreDBDialect.construct_arguments
+      ~SingleStoreDBDialect.cte_follows_insert
+      ~SingleStoreDBDialect.dbapi_exception_translation_map
+      ~SingleStoreDBDialect.default_paramstyle
+      ~SingleStoreDBDialect.default_schema_name
+      ~SingleStoreDBDialect.default_sequence_base
+      ~SingleStoreDBDialect.description_encoding
+      ~SingleStoreDBDialect.dialect_description
+      ~SingleStoreDBDialect.dispatch
+      ~SingleStoreDBDialect.driver
+      ~SingleStoreDBDialect.engine_config_types
+      ~SingleStoreDBDialect.full_returning
+      ~SingleStoreDBDialect.implicit_returning
+      ~SingleStoreDBDialect.inline_comments
+      ~SingleStoreDBDialect.insert_executemany_returning
+      ~SingleStoreDBDialect.is_async
+      ~SingleStoreDBDialect.is_mariadb
+      ~SingleStoreDBDialect.ischema_names
+      ~SingleStoreDBDialect.isolation_level
+      ~SingleStoreDBDialect.logger
+      ~SingleStoreDBDialect.max_constraint_name_length
+      ~SingleStoreDBDialect.max_identifier_length
+      ~SingleStoreDBDialect.max_index_name_length
+      ~SingleStoreDBDialect.name
+      ~SingleStoreDBDialect.non_native_boolean_check_constraint
+      ~SingleStoreDBDialect.postfetch_lastrowid
+      ~SingleStoreDBDialect.preexecute_autoincrement_sequences
+      ~SingleStoreDBDialect.reflection_options
+      ~SingleStoreDBDialect.requires_name_normalize
+      ~SingleStoreDBDialect.returns_unicode_strings
+      ~SingleStoreDBDialect.sequences_optional
+      ~SingleStoreDBDialect.server_side_cursors
+      ~SingleStoreDBDialect.server_version_info
+      ~SingleStoreDBDialect.supports_alter
+      ~SingleStoreDBDialect.supports_comments
+      ~SingleStoreDBDialect.supports_default_metavalue
+      ~SingleStoreDBDialect.supports_default_values
+      ~SingleStoreDBDialect.supports_empty_insert
+      ~SingleStoreDBDialect.supports_for_update_of
+      ~SingleStoreDBDialect.supports_identity_columns
+      ~SingleStoreDBDialect.supports_is_distinct_from
+      ~SingleStoreDBDialect.supports_multivalues_insert
+      ~SingleStoreDBDialect.supports_native_boolean
+      ~SingleStoreDBDialect.supports_native_decimal
+      ~SingleStoreDBDialect.supports_native_enum
+      ~SingleStoreDBDialect.supports_sane_multi_rowcount
+      ~SingleStoreDBDialect.supports_sane_rowcount
+      ~SingleStoreDBDialect.supports_sane_rowcount_returning
+      ~SingleStoreDBDialect.supports_schemas
+      ~SingleStoreDBDialect.supports_sequences
+      ~SingleStoreDBDialect.supports_server_side_cursors
+      ~SingleStoreDBDialect.supports_simple_order_by_label
+      ~SingleStoreDBDialect.supports_statement_cache
+      ~SingleStoreDBDialect.supports_unicode_binds
+      ~SingleStoreDBDialect.supports_unicode_statements
+      ~SingleStoreDBDialect.supports_views
+      ~SingleStoreDBDialect.tuple_in_values
+      ~SingleStoreDBDialect.use_setinputsizes
