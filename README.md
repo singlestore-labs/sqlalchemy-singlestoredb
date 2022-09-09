@@ -1,18 +1,18 @@
-# <img src="resources/singlestore-logo.png" height="60" valign="middle"/> SingleStore SQLAlchemy Dialect
+# <img src="resources/singlestore-logo.png" height="60" valign="middle"/> SingleStoreDB SQLAlchemy Dialect
 
-This project contains a [SQLAlchemy](https://sqlalchemy.org) dialect which allows
-you to use the SQLAlchemy APIs with the [SingleStore](https://singlestore.com) database.
+This project contains a [SQLAlchemyDB](https://sqlalchemy.org) dialect which allows
+you to use the SQLAlchemy APIs with the [SingleStoreDB](https://singlestore.com) database.
 
 ## Install
 
 This package can be install from PyPI using `pip`:
 ```
-pip install sqlalchemy-singlestore
+pip install sqlalchemy-singlestoredb
 ```
 
 If you use Anaconda, you can install as follows:
 ```
-conda install -c singlestore sqlalchemy-singlestore
+conda install -c singlestore sqlalchemy-singlestoredb
 ```
 
 ## License
