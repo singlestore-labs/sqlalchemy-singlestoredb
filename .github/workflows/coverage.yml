@@ -1,0 +1,69 @@
+name: Coverage tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-coverage:
+    runs-on: ubuntu-latest
+
+    services:
+      singlestore:
+        image: singlestore/cluster-in-a-box:latest
+        ports:
+          - 3306:3306
+          - 8080:8080
+          - 9000:9000
+        env:
+          LICENSE_KEY: ${{ secrets.SINGLESTORE_LICENSE }}
+          ROOT_PASSWORD: "root"
+          START_AFTER_INIT: "Y"
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r test-requirements.txt
+
+      - name: Install SingleStore package
+        run: |
+          python setup.py install
+
+      - name: Run MySQL protocol tests
+        run: |
+          nose2 -q --with-coverage --coverage sqlalchemy_singlestoredb sqlalchemy_singlestoredb.tests
+          mv -f .coverage coverage-mysql.xml
+        env:
+          SINGLESTOREDB_URL: "root:root@127.0.0.1:3306"
+          SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
+
+      - name: Run HTTP protocol tests
+        run: |
+          nose2 -q --with-coverage --coverage sqlalchemy_singlestoredb sqlalchemy_singlestoredb.tests
+          mv -f .coverage coverage-http.xml
+        env:
+          SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9000"
+          SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
+          # Can not change databases using HTTP API. The URL below will be
+          # used to create the database and the generated database name will
+          # be applied to the above URL.
+          SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3306"
+
+      - name: Generate report
+        run: |
+          coverage combine coverage-mysql.xml coverage-http.xml
+          coverage report
+          coverage xml
+          coverage html
