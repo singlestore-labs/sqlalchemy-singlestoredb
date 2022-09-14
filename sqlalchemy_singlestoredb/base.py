@@ -2,10 +2,12 @@
 """Base classes for SingleStoreDB SQLAlchemy objects."""
 from __future__ import annotations
 
+import json
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Type
+from typing import Union
 
 import sqlalchemy.dialects.mysql.base as mybase
 from singlestoredb.connection import build_params
@@ -61,6 +63,21 @@ class JSON(mybase.JSON):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.pop('collate', None)
         mybase.JSON(*args, **kwargs)
+
+    def result_processor(self, dialect: Any, coltype: Any) -> Any:
+        string_process = self._str_impl.result_processor(dialect, coltype)
+        json_deserializer = dialect._json_deserializer or json.loads
+
+        def process(value: Union[str, bytes, Dict[str, Any], List[Any]]) -> Any:
+            if value is None:
+                return None
+            if string_process:
+                value = string_process(value)
+            if type(value) is dict or type(value) is list:
+                return value
+            return json_deserializer(value)  # type: ignore
+
+        return process
 
 
 ischema_names['json'] = JSON
