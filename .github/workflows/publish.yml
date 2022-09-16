@@ -75,7 +75,7 @@ jobs:
           conda install conda-build anaconda-client conda-verify
           mkdir artifacts
           cd conda.recipe
-          conda build -c singlestore -c conda-forge --no-anaconda-upload --output-folder ../artifacts .
+          conda build --override-channels -c singlestore -c conda-forge --no-anaconda-upload --output-folder ../artifacts .
         env:
           SINGLESTOREDB_URL: "root:root@127.0.0.1:3306"
 
