@@ -6,6 +6,7 @@ import json
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Type
 from typing import Union
 
@@ -13,14 +14,18 @@ import sqlalchemy.dialects.mysql.base as mybase
 from singlestoredb.connection import build_params
 from sqlalchemy import util
 from sqlalchemy.dialects.mysql.base import BIT  # noqa: F401
+from sqlalchemy.dialects.mysql.base import CHAR  # noqa: F401
+from sqlalchemy.dialects.mysql.base import ENUM  # noqa: F401
 from sqlalchemy.dialects.mysql.base import MySQLCompiler
 from sqlalchemy.dialects.mysql.base import MySQLDDLCompiler
 from sqlalchemy.dialects.mysql.base import MySQLDialect
 from sqlalchemy.dialects.mysql.base import MySQLExecutionContext
 from sqlalchemy.dialects.mysql.base import MySQLIdentifierPreparer
 from sqlalchemy.dialects.mysql.base import MySQLTypeCompiler
+from sqlalchemy.dialects.mysql.base import SET  # noqa: F401
 from sqlalchemy.dialects.mysql.base import TEXT  # noqa: F401
 from sqlalchemy.engine.url import URL
+from sqlalchemy.sql import sqltypes
 
 from . import reflection
 
@@ -89,6 +94,65 @@ class SingleStoreDBExecutionContext(MySQLExecutionContext):
 
 class SingleStoreDBCompiler(MySQLCompiler):
     """SingleStoreDB SQLAlchemy compiler."""
+
+    def visit_typeclause(
+        self, typeclause: Any, type_: Optional[Any] = None, **kw: Any,
+    ) -> Optional[str]:
+        if type_ is None:
+            type_ = typeclause.type.dialect_impl(self.dialect)
+        if isinstance(type_, sqltypes.TypeDecorator):
+            return self.visit_typeclause(typeclause, type_.impl, **kw)
+        elif isinstance(type_, sqltypes.Integer):
+            if getattr(type_, 'unsigned', False):
+                return 'UNSIGNED INTEGER'
+            else:
+                return 'SIGNED INTEGER'
+        elif isinstance(type_, sqltypes.TIMESTAMP):
+            return 'DATETIME'
+        elif isinstance(
+            type_,
+            (
+                sqltypes.DECIMAL,
+                sqltypes.DateTime,
+                sqltypes.Date,
+                sqltypes.Time,
+            ),
+        ):
+            return self.dialect.type_compiler.process(type_)
+        elif isinstance(type_, sqltypes.String) and not isinstance(
+            type_, (ENUM, SET),
+        ):
+            adapted = CHAR._adapt_string_for_cast(type_)
+            return self.dialect.type_compiler.process(adapted)
+        elif isinstance(type_, sqltypes._Binary):
+            return 'BINARY'
+        elif isinstance(type_, sqltypes.JSON):
+            return 'JSON'
+        elif isinstance(type_, sqltypes.NUMERIC):
+            return self.dialect.type_compiler.process(type_).replace(
+                'NUMERIC', 'DECIMAL',
+            )
+        elif isinstance(type_, sqltypes.Float):
+            return self.dialect.type_compiler.process(type_)
+        else:
+            return None
+
+    def visit_cast(self, cast: Any, **kw: Any) -> str:
+        type_ = self.process(cast.typeclause)
+        if type_ is None:
+            util.warn(
+                'Datatype %s does not support CAST on MySQL/MariaDb; '
+                'the CAST will be skipped.'
+                % self.dialect.type_compiler.process(cast.typeclause.type),
+            )
+            return self.process(cast.clause.self_group(), **kw)
+
+        # Use the older cast function for strings. The new cast operator
+        # will truncate numeric values without a supplied length.
+        if 'DOUBLE' in type_ or 'FLOAT' in type_:
+            return '%s :> %s' % (self.process(cast.clause, **kw), type_)
+
+        return 'CAST(%s AS %s)' % (self.process(cast.clause, **kw), type_)
 
 
 class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
