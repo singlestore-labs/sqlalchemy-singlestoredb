@@ -4,6 +4,14 @@ What's New
 
 This document outlines features and improvements from each release.
 
+v0.1.3 - September 30, 2022
+---------------------------
+* Fix data type casting issues
+
+v0.1.2 - September 22, 2022
+---------------------------
+* Updated SingleStoreDB package dependency
+
 v0.1.1 - September 14, 2022
 ---------------------------
 * Fix JSON deserialization
