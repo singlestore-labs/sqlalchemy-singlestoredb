@@ -36,5 +36,5 @@ about:
     license: Apache 2.0
     license_file: ../LICENSE
     summary: SingleStoreDB SQLAlchemy Dialect
-    doc_url: https://singlestore.github.io/sqlalchemy-singlestore/index.html
-    dev_url: https://github.com/singlestore/sqlalchemy-singlestoredb
+    doc_url: https://sqlalchemy-singlestoredb.labs.singlestore.com/index.html
+    dev_url: https://github.com/singlestore-labs/sqlalchemy-singlestoredb
