@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -11,6 +12,7 @@ from typing import Type
 from typing import Union
 
 import sqlalchemy.dialects.mysql.base as mybase
+import sqlalchemy.sql.elements as se
 from singlestoredb.connection import build_params
 from sqlalchemy import util
 from sqlalchemy.dialects.mysql.base import BIT  # noqa: F401
@@ -63,6 +65,14 @@ class CaseInsensitiveDict(Dict[str, Any]):
 ischema_names = CaseInsensitiveDict(MySQLDialect.ischema_names)
 
 
+def _json_deserializer(value: Union[str, bytes, Dict[str, Any], List[Any]]) -> Any:
+    if value is None:
+        return None
+    if type(value) is dict or type(value) is list:
+        return value
+    return json.loads(value)  # type: ignore
+
+
 class JSON(mybase.JSON):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
@@ -92,8 +102,18 @@ class SingleStoreDBExecutionContext(MySQLExecutionContext):
     """SingleStoreDB SQLAlchemy execution context."""
 
 
+class Array(se.Tuple):
+    __visit_name__ = 'array'
+
+
+array = Array
+
+
 class SingleStoreDBCompiler(MySQLCompiler):
     """SingleStoreDB SQLAlchemy compiler."""
+
+    def visit_array(self, clauselist: Any, **kw: Any) -> str:
+        return '[%s]' % self.visit_clauselist(clauselist, **kw)
 
     def visit_typeclause(
         self, typeclause: Any, type_: Optional[Any] = None, **kw: Any,
@@ -134,6 +154,8 @@ class SingleStoreDBCompiler(MySQLCompiler):
             )
         elif isinstance(type_, sqltypes.Float):
             return self.dialect.type_compiler.process(type_)
+        elif isinstance(type_, sqltypes.Boolean):
+            return 'BOOL'
         else:
             return None
 
@@ -149,7 +171,7 @@ class SingleStoreDBCompiler(MySQLCompiler):
 
         # Use the older cast function for strings. The new cast operator
         # will truncate numeric values without a supplied length.
-        if 'DOUBLE' in type_ or 'FLOAT' in type_:
+        if 'DOUBLE' in type_ or 'FLOAT' in type_ or 'BOOL' in type_:
             return '%s :> %s' % (self.process(cast.clause, **kw), type_)
 
         return 'CAST(%s AS %s)' % (self.process(cast.clause, **kw), type_)
@@ -206,6 +228,20 @@ class SingleStoreDBDialect(MySQLDialect):
     driver = ''
 
     supports_statement_cache = False
+
+    def __init__(
+        self,
+        isolation_level: Optional[str] = None,
+        json_serializer: Optional[Callable[..., Any]] = None,
+        json_deserializer: Optional[Callable[..., Any]] = None,
+        **kwargs: Any,
+    ):
+        MySQLDialect.__init__(
+            self, isolation_level=isolation_level,
+            json_serializer=json_serializer,
+            json_deserializer=json_deserializer or _json_deserializer,
+            is_mariadb=False, **kwargs,
+        )
 
     @classmethod
     def dbapi(cls) -> Any:

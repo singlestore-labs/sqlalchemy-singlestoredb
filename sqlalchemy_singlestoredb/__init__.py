@@ -16,7 +16,6 @@ from sqlalchemy.dialects.mysql.base import DOUBLE
 from sqlalchemy.dialects.mysql.base import ENUM
 from sqlalchemy.dialects.mysql.base import FLOAT
 from sqlalchemy.dialects.mysql.base import INTEGER
-from sqlalchemy.dialects.mysql.base import JSON
 from sqlalchemy.dialects.mysql.base import LONGBLOB
 from sqlalchemy.dialects.mysql.base import LONGTEXT
 from sqlalchemy.dialects.mysql.base import MEDIUMBLOB
@@ -42,6 +41,9 @@ from sqlalchemy.dialects.mysql.dml import insert
 from sqlalchemy.dialects.mysql.expression import match
 
 from . import base  # noqa
+from .base import JSON
+
+array = base.array
 
 # default dialect
 dialect = base.dialect
