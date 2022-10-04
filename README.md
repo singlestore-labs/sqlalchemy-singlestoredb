@@ -17,11 +17,11 @@ conda install -c singlestore sqlalchemy-singlestoredb
 
 ## License
 
-This library is licensed under the [Apache 2.0 License](https://raw.githubusercontent.com/singlestore-labs/singlestore-python/main/LICENSE?token=GHSAT0AAAAAABMGV6QPNR6N23BVICDYK5LAYTVK5EA).
+This library is licensed under the [Apache 2.0 License](https://raw.githubusercontent.com/singlestore-labs/singlestoredb-python/main/LICENSE?token=GHSAT0AAAAAABMGV6QPNR6N23BVICDYK5LAYTVK5EA).
 
 ## Resources
 
-* [Documentation](https://singlestore-labs.github.io/sqlalchemy-singlestore)
+* [Documentation](https://sqlalchemy-singlestoredb.labs.singlestore.com)
 * [SingleStore](https://www.singlestore.com)
 * [SQLAlchemy](https://sqlalchemy.org)
 
