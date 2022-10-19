@@ -7,7 +7,7 @@ import sys
 import uuid
 from optparse import OptionParser
 
-import singlestore as s2
+import singlestoredb as s2
 
 
 # Handle command-line options
@@ -58,7 +58,7 @@ if not database:
     database = 'TEMP_{}'.format(uuid.uuid4()).replace('-', '_')
 
 with s2.connect(
-    f'mysqlconnector://{options.host}:{options.port}',
+    f'pymysql://{options.host}:{options.port}',
     user=options.user, password=options.password,
 ) as conn:
     with conn.cursor() as cur:

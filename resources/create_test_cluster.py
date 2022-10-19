@@ -11,7 +11,7 @@ import sys
 import uuid
 from optparse import OptionParser
 
-import singlestore as s2
+import singlestoredb as s2
 
 
 # Handle command-line options
@@ -78,7 +78,7 @@ if '::' in options.region:
     pattern = options.region.replace('*', '.*')
     regions = cm.regions
     for item in random.sample(regions, k=len(regions)):
-        region_name = '{}::{}'.format(item.provider, item.region)
+        region_name = '{}::{}'.format(item.provider, item.name)
         if re.match(pattern, region_name):
             options.region = item.id
             break
@@ -93,7 +93,7 @@ if '::' in options.region:
 # Create cluster
 clus = cm.create_cluster(
     args[0],
-    region_id=options.region,
+    region=options.region,
     admin_password=options.password,
     # firewall_ranges=requests.get('https://api.github.com/meta').json()['actions'],
     firewall_ranges=['0.0.0.0/0'],
@@ -120,10 +120,11 @@ if options.output == 'env':
     print(f'CLUSTER_PORT={port}')
     print(f'CLUSTER_DATABASE={database}')
 elif options.output == 'github':
-    print(f'::set-output name=cluster-id::{clus.id}')
-    print(f'::set-output name=cluster-host::{host}')
-    print(f'::set-output name=cluster-port::{port}')
-    print(f'::set-output name=cluster-database::{database}')
+    with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+        print(f'cluster-id={clus.id}', file=output)
+        print(f'cluster-host={host}', file=output)
+        print(f'cluster-port={port}', file=output)
+        print(f'cluster-database={database}', file=output)
 elif options.output == 'json':
     print('{')
     print(f'  "cluster-id": "{clus.id}",')
