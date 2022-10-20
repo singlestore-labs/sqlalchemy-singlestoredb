@@ -25,11 +25,10 @@ test:
         - sqlalchemy_singlestoredb
     requires:
         - coverage
-        - nose2
         - pandas
         - pytest
     commands:
-        - nose2 -v sqlalchemy_singlestoredb.tests.test_basics
+        - pytest -q sqlalchemy_singlestoredb/tests/test_basics.py
 
 about:
     home: https://github.com/singlestore-labs/sqlalchemy-singlestoredb

@@ -43,16 +43,14 @@ jobs:
 
       - name: Run MySQL protocol tests
         run: |
-          nose2 -q --with-coverage --coverage sqlalchemy_singlestoredb sqlalchemy_singlestoredb.tests
-          mv -f .coverage coverage-mysql.xml
+          pytest -q --cov=sqlalchemy_singlestoredb --cov-report=xml:coverage-mysql.xml sqlalchemy_singlestoredb/tests
         env:
           SINGLESTOREDB_URL: "root:root@127.0.0.1:3306"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Run HTTP protocol tests
         run: |
-          nose2 -q --with-coverage --coverage sqlalchemy_singlestoredb sqlalchemy_singlestoredb.tests
-          mv -f .coverage coverage-http.xml
+          pytest -q --cov=sqlalchemy_singlestoredb --cov-report=xml:coverage-http.xml sqlalchemy_singlestoredb/tests
         env:
           SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9000"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
