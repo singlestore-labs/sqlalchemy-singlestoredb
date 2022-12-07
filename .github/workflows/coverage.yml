@@ -43,15 +43,17 @@ jobs:
 
       - name: Run MySQL protocol tests
         run: |
-          pytest -q --cov=sqlalchemy_singlestoredb --cov-report=xml:coverage-mysql.xml sqlalchemy_singlestoredb/tests
+          pytest -q --cov=sqlalchemy_singlestoredb sqlalchemy_singlestoredb/tests
         env:
+          COVERAGE_FILE: "coverage-mysql.cov"
           SINGLESTOREDB_URL: "root:root@127.0.0.1:3306"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Run HTTP protocol tests
         run: |
-          pytest -q --cov=sqlalchemy_singlestoredb --cov-report=xml:coverage-http.xml sqlalchemy_singlestoredb/tests
+          pytest -q --cov=sqlalchemy_singlestoredb sqlalchemy_singlestoredb/tests
         env:
+          COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9000"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
           # Can not change databases using HTTP API. The URL below will be
@@ -61,7 +63,7 @@ jobs:
 
       - name: Generate report
         run: |
-          coverage combine coverage-mysql.xml coverage-http.xml
+          coverage combine coverage-mysql.cov coverage-http.cov
           coverage report
           coverage xml
           coverage html
