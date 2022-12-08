@@ -10,11 +10,6 @@ This package can be install from PyPI using `pip`:
 pip install sqlalchemy-singlestoredb
 ```
 
-If you use Anaconda, you can install as follows:
-```
-conda install -c singlestore sqlalchemy-singlestoredb
-```
-
 ## License
 
 This library is licensed under the [Apache 2.0 License](https://raw.githubusercontent.com/singlestore-labs/singlestoredb-python/main/LICENSE?token=GHSAT0AAAAAABMGV6QPNR6N23BVICDYK5LAYTVK5EA).

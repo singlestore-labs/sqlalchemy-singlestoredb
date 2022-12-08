@@ -252,7 +252,10 @@ class SingleStoreDBDialect(MySQLDialect):
         return __import__('singlestoredb')
 
     def initialize(self, connection: Any) -> Any:
-        self.driver = connection.connection._driver.name
+        if hasattr(connection.connection, 'driver'):
+            self.driver = connection.connection.driver
+        else:
+            self.driver = connection.connection._driver.name
         return MySQLDialect.initialize(self, connection)
 
     def create_connect_args(self, url: URL) -> List[Any]:
