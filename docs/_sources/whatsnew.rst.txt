@@ -4,6 +4,14 @@ What's New
 
 This document outlines features and improvements from each release.
 
+.. note:: All releases before v1.0.0 are considered pre-release and
+   are for non-production testing and evaluation, and may include
+   changes to the API.
+
+v0.2.0 - December 8, 2022
+-------------------------
+* Sync with SingleStoreDB Python v0.5.0
+
 v0.1.4 - October 19, 2022
 -------------------------
 * Sync with SingleStoreDB Python v0.4.0
@@ -20,6 +28,6 @@ v0.1.1 - September 14, 2022
 ---------------------------
 * Fix JSON deserialization
 
-v0.1.0 - Pre-Release
---------------------
+v0.1.0 - September 9, 2022
+--------------------------
 * Initial implementation

@@ -14,6 +14,10 @@ SingleStore SQLAlchemy Dialect
 The SingleStore SQLAlchemy dialect is an SQLAlchemy dialect customized for use
 with the `SingleStore <https://singlestore.com>`_ database.
 
+.. note:: All releases before v1.0.0 are considered pre-release and
+   are for non-production testing and evaluation, and may include
+   changes to the API.
+
 
 .. toctree::
    :maxdepth: 3
