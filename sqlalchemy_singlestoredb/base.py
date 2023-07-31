@@ -128,7 +128,7 @@ class SingleStoreDBCompiler(MySQLCompiler):
             else:
                 return 'SIGNED INTEGER'
         elif isinstance(type_, sqltypes.TIMESTAMP):
-            return 'DATETIME'
+            return 'TIMESTAMP'
         elif isinstance(
             type_,
             (
@@ -163,7 +163,7 @@ class SingleStoreDBCompiler(MySQLCompiler):
         type_ = self.process(cast.typeclause)
         if type_ is None:
             util.warn(
-                'Datatype %s does not support CAST on MySQL/MariaDb; '
+                'Datatype %s does not support CAST on SingleStoreDB; '
                 'the CAST will be skipped.'
                 % self.dialect.type_compiler.process(cast.typeclause.type),
             )
@@ -171,7 +171,8 @@ class SingleStoreDBCompiler(MySQLCompiler):
 
         # Use the older cast function for strings. The new cast operator
         # will truncate numeric values without a supplied length.
-        if 'DOUBLE' in type_ or 'FLOAT' in type_ or 'BOOL' in type_:
+        if 'DOUBLE' in type_ or 'FLOAT' in type_ or 'BOOL' in type_ or \
+                'JSON' in type_ or 'TIMESTAMP' in type_ or 'DATETIME' in type_:
             return '%s :> %s' % (self.process(cast.clause, **kw), type_)
 
         return 'CAST(%s AS %s)' % (self.process(cast.clause, **kw), type_)
@@ -210,7 +211,7 @@ class SingleStoreDBDialect(MySQLDialect):
 
     name = 'singlestoredb'
 
-    default_paramstyle = 'named'
+    default_paramstyle = 'pyformat'
 
     ischema_names = ischema_names
 
