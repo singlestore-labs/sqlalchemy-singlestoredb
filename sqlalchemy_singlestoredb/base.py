@@ -260,7 +260,7 @@ class SingleStoreDBDialect(MySQLDialect):
         return MySQLDialect.initialize(self, connection)
 
     def create_connect_args(self, url: URL) -> List[Any]:
-        return [[], build_params(host=str(url))]
+        return [[], build_params(host=url.render_as_string(hide_password=False))]
 
     def _extract_error_code(self, exception: Exception) -> int:
         return getattr(exception, 'errno', -1)

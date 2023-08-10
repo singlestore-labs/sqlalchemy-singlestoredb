@@ -38,7 +38,6 @@ from sqlalchemy.dialects.mysql.base import VARCHAR
 from sqlalchemy.dialects.mysql.base import YEAR
 from sqlalchemy.dialects.mysql.dml import Insert
 from sqlalchemy.dialects.mysql.dml import insert
-from sqlalchemy.dialects.mysql.expression import match
 
 from . import base  # noqa
 from .base import JSON
@@ -89,5 +88,4 @@ __all__ = (
     'dialect',
     'insert',
     'Insert',
-    'match',
 )
