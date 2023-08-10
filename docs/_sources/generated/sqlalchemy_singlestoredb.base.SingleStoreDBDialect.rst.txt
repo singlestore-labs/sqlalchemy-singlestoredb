@@ -1,18 +1,10 @@
 ﻿sqlalchemy\_singlestoredb.base.SingleStoreDBDialect
 ===================================================
-
 .. currentmodule:: sqlalchemy_singlestoredb.base
-
 .. autoclass:: SingleStoreDBDialect
-
-
    .. automethod:: __init__
-
-
    .. rubric:: Methods
-
    .. autosummary::
-
       ~SingleStoreDBDialect.__init__
       ~SingleStoreDBDialect.connect
       ~SingleStoreDBDialect.create_connect_args
@@ -87,15 +79,8 @@
       ~SingleStoreDBDialect.set_isolation_level
       ~SingleStoreDBDialect.type_descriptor
       ~SingleStoreDBDialect.validate_identifier
-
-
-
-
-
    .. rubric:: Attributes
-
    .. autosummary::
-
       ~SingleStoreDBDialect.CACHE_HIT
       ~SingleStoreDBDialect.CACHE_MISS
       ~SingleStoreDBDialect.CACHING_DISABLED

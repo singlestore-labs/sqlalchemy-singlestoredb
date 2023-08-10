@@ -9,14 +9,12 @@
  *
  */
 "use strict";
-
 const BLACKLISTED_KEY_CONTROL_ELEMENTS = new Set([
   "TEXTAREA",
   "INPUT",
   "SELECT",
   "BUTTON",
 ]);
-
 const _ready = (callback) => {
   if (document.readyState !== "loading") {
     callback();
@@ -24,7 +22,6 @@ const _ready = (callback) => {
     document.addEventListener("DOMContentLoaded", callback);
   }
 };
-
 /**
  * Small JavaScript module for the documentation.
  */
@@ -33,14 +30,12 @@ const Documentation = {
     Documentation.initDomainIndexTable();
     Documentation.initOnKeyListeners();
   },
-
   /**
    * i18n support
    */
   TRANSLATIONS: {},
   PLURAL_EXPR: (n) => (n === 1 ? 0 : 1),
   LOCALE: "unknown",
-
   // gettext and ngettext don't access this so that the functions
   // can safely bound to a different name (_ = Documentation.gettext)
   gettext: (string) => {
@@ -54,14 +49,12 @@ const Documentation = {
         return translated[0]; // (singular, plural) translation tuple exists
     }
   },
-
   ngettext: (singular, plural, n) => {
     const translated = Documentation.TRANSLATIONS[singular];
     if (typeof translated !== "undefined")
       return translated[Documentation.PLURAL_EXPR(n)];
     return n === 1 ? singular : plural;
   },
-
   addTranslations: (catalog) => {
     Object.assign(Documentation.TRANSLATIONS, catalog.messages);
     Documentation.PLURAL_EXPR = new Function(
@@ -70,14 +63,12 @@ const Documentation = {
     );
     Documentation.LOCALE = catalog.locale;
   },
-
   /**
    * helper function to focus on search bar
    */
   focusSearchBar: () => {
     document.querySelectorAll("input[name=q]")[0]?.focus();
   },
-
   /**
    * Initialise the domain index toggle buttons
    */
@@ -93,7 +84,6 @@ const Documentation = {
         toggledRows.forEach((el) => (el.style.display = ""));
       }
     };
-
     const togglerElements = document.querySelectorAll("img.toggler");
     togglerElements.forEach((el) =>
       el.addEventListener("click", (event) => toggler(event.currentTarget))
@@ -101,7 +91,6 @@ const Documentation = {
     togglerElements.forEach((el) => (el.style.display = ""));
     if (DOCUMENTATION_OPTIONS.COLLAPSE_INDEX) togglerElements.forEach(toggler);
   },
-
   initOnKeyListeners: () => {
     // only install a listener if it is really needed
     if (
@@ -109,18 +98,15 @@ const Documentation = {
       !DOCUMENTATION_OPTIONS.ENABLE_SEARCH_SHORTCUTS
     )
       return;
-
     document.addEventListener("keydown", (event) => {
       // bail for input elements
       if (BLACKLISTED_KEY_CONTROL_ELEMENTS.has(document.activeElement.tagName)) return;
       // bail with special keys
       if (event.altKey || event.ctrlKey || event.metaKey) return;
-
       if (!event.shiftKey) {
         switch (event.key) {
           case "ArrowLeft":
             if (!DOCUMENTATION_OPTIONS.NAVIGATION_WITH_KEYS) break;
-
             const prevLink = document.querySelector('link[rel="prev"]');
             if (prevLink && prevLink.href) {
               window.location.href = prevLink.href;
@@ -129,7 +115,6 @@ const Documentation = {
             break;
           case "ArrowRight":
             if (!DOCUMENTATION_OPTIONS.NAVIGATION_WITH_KEYS) break;
-
             const nextLink = document.querySelector('link[rel="next"]');
             if (nextLink && nextLink.href) {
               window.location.href = nextLink.href;
@@ -138,7 +123,6 @@ const Documentation = {
             break;
         }
       }
-
       // some keyboard layouts may need Shift to get /
       switch (event.key) {
         case "/":
@@ -149,8 +133,6 @@ const Documentation = {
     });
   },
 };
-
 // quick alias for translations
 const _ = Documentation.gettext;
-
 _ready(Documentation.init);

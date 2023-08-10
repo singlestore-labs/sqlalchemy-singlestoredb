@@ -1,6 +1,4 @@
 ﻿sqlalchemy\_singlestoredb.base.SingleStoreDBDialect.create\_connect\_args
 =========================================================================
-
 .. currentmodule:: sqlalchemy_singlestoredb.base
-
 .. automethod:: SingleStoreDBDialect.create_connect_args
