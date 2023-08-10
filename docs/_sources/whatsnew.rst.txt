@@ -8,6 +8,11 @@ This document outlines features and improvements from each release.
    are for non-production testing and evaluation, and may include
    changes to the API.
 
+v0.3.0 - August 10, 2023
+------------------------
+* Add support for SQLAlchemy v2
+* Drop support for Python 3.6 and 3.7
+
 v0.2.0 - December 8, 2022
 -------------------------
 * Sync with SingleStoreDB Python v0.5.0

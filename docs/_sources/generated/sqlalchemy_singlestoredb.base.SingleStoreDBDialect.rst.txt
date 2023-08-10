@@ -36,7 +36,9 @@
       ~SingleStoreDBDialect.do_rollback_twophase
       ~SingleStoreDBDialect.do_savepoint
       ~SingleStoreDBDialect.do_set_input_sizes
+      ~SingleStoreDBDialect.do_terminate
       ~SingleStoreDBDialect.engine_created
+      ~SingleStoreDBDialect.get_async_dialect_cls
       ~SingleStoreDBDialect.get_check_constraints
       ~SingleStoreDBDialect.get_columns
       ~SingleStoreDBDialect.get_default_isolation_level
@@ -46,6 +48,16 @@
       ~SingleStoreDBDialect.get_foreign_keys
       ~SingleStoreDBDialect.get_indexes
       ~SingleStoreDBDialect.get_isolation_level
+      ~SingleStoreDBDialect.get_isolation_level_values
+      ~SingleStoreDBDialect.get_materialized_view_names
+      ~SingleStoreDBDialect.get_multi_check_constraints
+      ~SingleStoreDBDialect.get_multi_columns
+      ~SingleStoreDBDialect.get_multi_foreign_keys
+      ~SingleStoreDBDialect.get_multi_indexes
+      ~SingleStoreDBDialect.get_multi_pk_constraint
+      ~SingleStoreDBDialect.get_multi_table_comment
+      ~SingleStoreDBDialect.get_multi_table_options
+      ~SingleStoreDBDialect.get_multi_unique_constraints
       ~SingleStoreDBDialect.get_pk_constraint
       ~SingleStoreDBDialect.get_pool_class
       ~SingleStoreDBDialect.get_schema_names
@@ -59,6 +71,7 @@
       ~SingleStoreDBDialect.get_view_definition
       ~SingleStoreDBDialect.get_view_names
       ~SingleStoreDBDialect.has_index
+      ~SingleStoreDBDialect.has_schema
       ~SingleStoreDBDialect.has_sequence
       ~SingleStoreDBDialect.has_table
       ~SingleStoreDBDialect.import_dbapi
@@ -88,27 +101,42 @@
       ~SingleStoreDBDialect.CACHING_DISABLED
       ~SingleStoreDBDialect.NO_CACHE_KEY
       ~SingleStoreDBDialect.NO_DIALECT_SUPPORT
+      ~SingleStoreDBDialect.bind_typing
       ~SingleStoreDBDialect.colspecs
       ~SingleStoreDBDialect.connection_characteristics
       ~SingleStoreDBDialect.construct_arguments
       ~SingleStoreDBDialect.cte_follows_insert
       ~SingleStoreDBDialect.dbapi_exception_translation_map
+      ~SingleStoreDBDialect.default_metavalue_token
       ~SingleStoreDBDialect.default_paramstyle
       ~SingleStoreDBDialect.default_schema_name
       ~SingleStoreDBDialect.default_sequence_base
-      ~SingleStoreDBDialect.description_encoding
+      ~SingleStoreDBDialect.delete_executemany_returning
+      ~SingleStoreDBDialect.delete_returning
+      ~SingleStoreDBDialect.delete_returning_multifrom
       ~SingleStoreDBDialect.dialect_description
       ~SingleStoreDBDialect.dispatch
+      ~SingleStoreDBDialect.div_is_floordiv
       ~SingleStoreDBDialect.driver
       ~SingleStoreDBDialect.engine_config_types
+      ~SingleStoreDBDialect.exclude_set_input_sizes
+      ~SingleStoreDBDialect.favor_returning_over_lastrowid
       ~SingleStoreDBDialect.full_returning
-      ~SingleStoreDBDialect.implicit_returning
+      ~SingleStoreDBDialect.has_terminate
+      ~SingleStoreDBDialect.include_set_input_sizes
       ~SingleStoreDBDialect.inline_comments
       ~SingleStoreDBDialect.insert_executemany_returning
+      ~SingleStoreDBDialect.insert_executemany_returning_sort_by_parameter_order
+      ~SingleStoreDBDialect.insert_null_pk_still_autoincrements
+      ~SingleStoreDBDialect.insert_returning
+      ~SingleStoreDBDialect.insertmanyvalues_implicit_sentinel
+      ~SingleStoreDBDialect.insertmanyvalues_max_parameters
+      ~SingleStoreDBDialect.insertmanyvalues_page_size
       ~SingleStoreDBDialect.is_async
       ~SingleStoreDBDialect.is_mariadb
       ~SingleStoreDBDialect.ischema_names
       ~SingleStoreDBDialect.isolation_level
+      ~SingleStoreDBDialect.loaded_dbapi
       ~SingleStoreDBDialect.logger
       ~SingleStoreDBDialect.max_constraint_name_length
       ~SingleStoreDBDialect.max_identifier_length
@@ -119,12 +147,13 @@
       ~SingleStoreDBDialect.preexecute_autoincrement_sequences
       ~SingleStoreDBDialect.reflection_options
       ~SingleStoreDBDialect.requires_name_normalize
-      ~SingleStoreDBDialect.returns_unicode_strings
+      ~SingleStoreDBDialect.returns_native_bytes
       ~SingleStoreDBDialect.sequences_optional
       ~SingleStoreDBDialect.server_side_cursors
       ~SingleStoreDBDialect.server_version_info
       ~SingleStoreDBDialect.supports_alter
       ~SingleStoreDBDialect.supports_comments
+      ~SingleStoreDBDialect.supports_constraint_comments
       ~SingleStoreDBDialect.supports_default_metavalue
       ~SingleStoreDBDialect.supports_default_values
       ~SingleStoreDBDialect.supports_empty_insert
@@ -135,6 +164,7 @@
       ~SingleStoreDBDialect.supports_native_boolean
       ~SingleStoreDBDialect.supports_native_decimal
       ~SingleStoreDBDialect.supports_native_enum
+      ~SingleStoreDBDialect.supports_native_uuid
       ~SingleStoreDBDialect.supports_sane_multi_rowcount
       ~SingleStoreDBDialect.supports_sane_rowcount
       ~SingleStoreDBDialect.supports_sane_rowcount_returning
@@ -143,8 +173,17 @@
       ~SingleStoreDBDialect.supports_server_side_cursors
       ~SingleStoreDBDialect.supports_simple_order_by_label
       ~SingleStoreDBDialect.supports_statement_cache
-      ~SingleStoreDBDialect.supports_unicode_binds
-      ~SingleStoreDBDialect.supports_unicode_statements
       ~SingleStoreDBDialect.supports_views
       ~SingleStoreDBDialect.tuple_in_values
-      ~SingleStoreDBDialect.use_setinputsizes
+      ~SingleStoreDBDialect.update_executemany_returning
+      ~SingleStoreDBDialect.update_returning
+      ~SingleStoreDBDialect.update_returning_multifrom
+      ~SingleStoreDBDialect.use_insertmanyvalues
+      ~SingleStoreDBDialect.use_insertmanyvalues_wo_returning
+      ~SingleStoreDBDialect.positional
+      ~SingleStoreDBDialect.paramstyle
+      ~SingleStoreDBDialect.compiler_linting
+      ~SingleStoreDBDialect.type_compiler_instance
+      ~SingleStoreDBDialect.identifier_preparer
+      ~SingleStoreDBDialect.default_isolation_level
+      ~SingleStoreDBDialect.label_length

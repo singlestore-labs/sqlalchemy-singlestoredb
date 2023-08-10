@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>API Reference &mdash; SingleStoreDB SQLAlchemy Dialect 0.2.0 documentation</title>
+  <title>API Reference &mdash; SingleStoreDB SQLAlchemy Dialect 0.3.0 documentation</title>
       <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -13,9 +13,8 @@
   <![endif]-->
 
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
         <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -28,14 +27,18 @@
     <nav data-toggle="wy-nav-shift" class="wy-nav-side">
       <div class="wy-side-scroll">
         <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> SingleStoreDB SQLAlchemy Dialect
+
+
+
+          <a href="index.html" class="icon icon-home">
+            SingleStoreDB SQLAlchemy Dialect
           </a>
               <div class="version">
-                0.2.0
+                0.3.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
     <input type="hidden" name="check_keywords" value="yes" />
     <input type="hidden" name="area" value="default" />
   </form>
@@ -76,8 +79,8 @@
         <div class="rst-content">
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>API Reference</li>
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -88,21 +91,17 @@
            <div itemprop="articleBody">
 
   <span class="target" id="module-sqlalchemy_singlestoredb"></span><section id="api-reference">
-<span id="api"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this headline">¶</a></h1>
+<span id="api"></span><h1>API Reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">¶</a></h1>
 <section id="connections">
-<span id="api-functions"></span><h2>Connections<a class="headerlink" href="#connections" title="Permalink to this headline">¶</a></h2>
+<span id="api-functions"></span><h2>Connections<a class="headerlink" href="#connections" title="Permalink to this heading">¶</a></h2>
 <p>Connections to SingleStoreDB should be done by creating an SQLAlchemy engine
 first, then calling the <code class="xref py py-meth docutils literal notranslate"><span class="pre">connect()</span></code> method on that engine. See the
 Getting Started section for more information.</p>
 <p>The dialect class below is used by SQLAlchemy, but is typically
 not worked with directly.</p>
 <section id="dialect">
-<h3>Dialect<a class="headerlink" href="#dialect" title="Permalink to this headline">¶</a></h3>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
+<h3>Dialect<a class="headerlink" href="#dialect" title="Permalink to this heading">¶</a></h3>
+<table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.base.SingleStoreDBDialect.html#sqlalchemy_singlestoredb.base.SingleStoreDBDialect" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SingleStoreDBDialect</span></code></a>([isolation_level, ...])</p></td>
 <td><p>SingleStoreDB SQLAlchemy dialect.</p></td>
@@ -111,7 +110,7 @@ not worked with directly.</p>
 <td><p></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi.html#sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SingleStoreDBDialect.import_dbapi</span></code></a>()</p></td>
-<td><p></p></td>
+<td><p>Import the DBAPI module that is used by this dialect.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize.html#sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize" title="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SingleStoreDBDialect.initialize</span></code></a>(connection)</p></td>
 <td><p>Called during strategized creation of the dialect with a connection.</p></td>
