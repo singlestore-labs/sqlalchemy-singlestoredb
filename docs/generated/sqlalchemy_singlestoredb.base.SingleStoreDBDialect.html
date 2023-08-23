@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sqlalchemy_singlestoredb.base.SingleStoreDBDialect &mdash; SingleStoreDB SQLAlchemy Dialect 0.3.0 documentation</title>
+  <title>sqlalchemy_singlestoredb.base.SingleStoreDBDialect &mdash; SingleStoreDB SQLAlchemy Dialect 0.3.1 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
@@ -28,7 +28,7 @@
             SingleStoreDB SQLAlchemy Dialect
           </a>
               <div class="version">
-                0.3.0
+                0.3.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -46,11 +46,11 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="../api.html#connections">Connections</a><ul class="current">
 <li class="toctree-l3 current"><a class="reference internal" href="../api.html#dialect">Dialect</a><ul class="current">
-<li class="toctree-l4 current"><a class="current reference internal" href="#">sqlalchemy_singlestoredb.base.SingleStoreDBDialect</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.dbapi.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.dbapi</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize</a></li>
-<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args.html">sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">SingleStoreDBDialect</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.dbapi.html">SingleStoreDBDialect.dbapi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.import_dbapi.html">SingleStoreDBDialect.import_dbapi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.initialize.html">SingleStoreDBDialect.initialize</a></li>
+<li class="toctree-l4"><a class="reference internal" href="sqlalchemy_singlestoredb.base.SingleStoreDBDialect.create_connect_args.html">SingleStoreDBDialect.create_connect_args</a></li>
 </ul>
 </li>
 </ul>
@@ -415,7 +415,7 @@
 <td><p>dialect / driver / database supports some means of providing INSERT...RETURNING support when dialect.do_executemany() is used.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_executemany_returning_sort_by_parameter_order</span></code></p></td>
-<td><p>dialect / driver / database supports some means of providing INSERT...RETURNING support when dialect.do_executemany() is used along with the <a href="#id1"><span class="problematic" id="id2">:paramref:`_dml.Insert.returning.sort_by_parameter_order`</span></a> parameter being set.</p></td>
+<td><p>dialect / driver / database supports some means of providing INSERT...RETURNING support when dialect.do_executemany() is used along with the <a href="#id1"><span class="problematic" id="id2">`_dml.Insert.returning.sort_by_parameter_order`</span></a> parameter being set.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_null_pk_still_autoincrements</span></code></p></td>
 <td><p></p></td>
@@ -472,7 +472,7 @@
 <td><p>True if 'implicit' primary key functions must be executed separately in order to get their value, if RETURNING is not used.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reflection_options</span></code></p></td>
-<td><p>Sequence of string names indicating keyword arguments that can be established on a <code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code> object which will be passed as &quot;reflection options&quot; when using <a href="#id3"><span class="problematic" id="id4">:paramref:`.Table.autoload_with`</span></a>.</p></td>
+<td><p>Sequence of string names indicating keyword arguments that can be established on a <code class="xref py py-class docutils literal notranslate"><span class="pre">Table</span></code> object which will be passed as &quot;reflection options&quot; when using <a href="#id3"><span class="problematic" id="id4">`.Table.autoload_with`</span></a>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_name_normalize</span></code></p></td>
 <td><p></p></td>
@@ -481,7 +481,7 @@
 <td><p>indicates if Python bytes() objects are returned natively by the driver for SQL &quot;binary&quot; datatypes.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sequences_optional</span></code></p></td>
-<td><p>If True, indicates if the <a href="#id5"><span class="problematic" id="id6">:paramref:`_schema.Sequence.optional`</span></a> parameter on the <code class="xref py py-class docutils literal notranslate"><span class="pre">_schema.Sequence</span></code> construct should signal to not generate a CREATE SEQUENCE. Applies only to dialects that support sequences. Currently used only to allow PostgreSQL SERIAL to be used on a column that specifies Sequence() for usage on other backends.</p></td>
+<td><p>If True, indicates if the <a href="#id5"><span class="problematic" id="id6">`_schema.Sequence.optional`</span></a> parameter on the <code class="xref py py-class docutils literal notranslate"><span class="pre">_schema.Sequence</span></code> construct should signal to not generate a CREATE SEQUENCE. Applies only to dialects that support sequences. Currently used only to allow PostgreSQL SERIAL to be used on a column that specifies Sequence() for usage on other backends.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">server_side_cursors</span></code></p></td>
 <td><p>deprecated; indicates if the dialect should attempt to use server side cursors by default</p></td>

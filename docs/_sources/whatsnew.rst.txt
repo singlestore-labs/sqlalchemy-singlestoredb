@@ -5,6 +5,9 @@ This document outlines features and improvements from each release.
 .. note:: All releases before v1.0.0 are considered pre-release and
    are for non-production testing and evaluation, and may include
    changes to the API.
+v0.3.1 - August 23, 2023
+------------------------
+* Fix issue with escaping ``%`` characters in queries
 v0.3.0 - August 10, 2023
 ------------------------
 * Add support for SQLAlchemy v2

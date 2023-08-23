@@ -51,11 +51,14 @@ for file in sorted(txt_files):
 
         # Remove module names from hidden modules
         txt = re.sub(
-            r'(">)singlestoredb\.(manager|connection)\.([\w\.]+</a>)', r'\1\3', txt,
+            r'(">)sqlalchemy_singlestoredb\.(base)\.([\w\.]+</a>)', r'\1\3', txt,
         )
 
         # Change ShowAccessor to Connection.show
         txt = re.sub(r'>ShowAccessor\.', r'>Connection.show.', txt)
+
+        # Remove paramrefs
+        txt = re.sub(r':paramref:', r'', txt)
 
         # Fix class / method links
         txt = re.sub(
