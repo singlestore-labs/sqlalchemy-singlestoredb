@@ -28,6 +28,8 @@ from sqlalchemy.dialects.mysql.base import SET  # noqa: F401
 from sqlalchemy.dialects.mysql.base import TEXT  # noqa: F401
 from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import sqltypes
+from sqlalchemy.sql.compiler import BIND_PARAMS
+from sqlalchemy.sql.compiler import BIND_PARAMS_ESC
 
 from . import reflection
 
@@ -177,6 +179,51 @@ class SingleStoreDBCompiler(MySQLCompiler):
 
         return 'CAST(%s AS %s)' % (self.process(cast.clause, **kw), type_)
 
+    def post_process_text(self, text: str, has_params: bool = False) -> str:
+        if has_params and self.preparer._double_percents:
+            text = text.replace('%', '%%')
+        return text
+
+#   def escape_literal_column(self, text: str, has_params: bool = False) -> str:
+#       if has_params and self.preparer._double_percents:
+#           text = text.replace("%", "%%")
+#       return text
+
+    def visit_textclause(
+        self,
+        textclause: Any,
+        add_to_result_map: Any = None,
+        **kw: Any,
+    ) -> str:
+        def do_bindparam(m: Any) -> str:
+            name = m.group(1)
+            if name in textclause._bindparams:
+                return self.process(textclause._bindparams[name], **kw)
+            else:
+                return self.bindparam_string(name, **kw)
+
+        if not self.stack:
+            self.isplaintext = True
+
+        if add_to_result_map:
+            # text() object is present in the columns clause of a
+            # select().   Add a no-name entry to the result map so that
+            # row[text()] produces a result
+            add_to_result_map(None, None, (textclause,), sqltypes.NULLTYPE)
+
+        has_params = len(textclause._bindparams) > 0
+
+        # un-escape any \:params
+        return BIND_PARAMS_ESC.sub(
+            lambda m: m.group(1),
+            BIND_PARAMS.sub(
+                do_bindparam, self.post_process_text(
+                    textclause.text,
+                    has_params=has_params,
+                ),
+            ),
+        )
+
 
 class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
@@ -198,6 +245,20 @@ class SingleStoreDBTypeCompiler(MySQLTypeCompiler):
 
 class SingleStoreDBIdentifierPreparer(MySQLIdentifierPreparer):
     """SingleStoreDB SQLAlchemy identifier preparer."""
+
+    @property
+    def _double_percents(self) -> bool:
+        return self.dialect._double_percents
+
+    @_double_percents.setter
+    def _double_percents(self, value: bool) -> None:
+        pass
+
+    def _escape_identifier(self, value: str) -> str:
+        value = value.replace(self.escape_quote, self.escape_to_quote)
+        if self.dialect._double_percents:
+            value = value.replace('%', '%%')
+        return value
 
 
 class _myconnpyBIT(BIT):
@@ -229,6 +290,8 @@ class SingleStoreDBDialect(MySQLDialect):
     driver = ''
 
     supports_statement_cache = False
+
+    _double_percents = True
 
     def __init__(
         self,

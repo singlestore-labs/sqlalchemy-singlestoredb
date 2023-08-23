@@ -8,7 +8,7 @@ import re
 import unittest
 
 import singlestoredb.tests.utils as utils
-import sqlalchemy
+import sqlalchemy as sa
 
 
 class TestBasics(unittest.TestCase):
@@ -35,7 +35,7 @@ class TestBasics(unittest.TestCase):
         if url.endswith('/'):
             url = url[:-1]
         url = url + '/' + self.__class__.dbname
-        self.engine = sqlalchemy.create_engine(url)
+        self.engine = sa.create_engine(url)
         self.conn = self.engine.connect()
 
     def tearDown(self):
@@ -54,13 +54,13 @@ class TestBasics(unittest.TestCase):
             pass
 
     def test_connection(self):
-        dbs = [x[0] for x in list(self.conn.execute('show databases'))]
+        dbs = [x[0] for x in list(self.conn.exec_driver_sql('show databases'))]
         assert type(self).dbname in dbs, dbs
 
     def test_alltypes(self):
-        meta = sqlalchemy.MetaData()
-        tbl = sqlalchemy.Table('alltypes', meta)
-        insp = sqlalchemy.inspect(self.engine)
+        meta = sa.MetaData()
+        tbl = sa.Table('alltypes', meta)
+        insp = sa.inspect(self.engine)
         insp.reflect_table(tbl, None)
 
         cols = {col.name: col for col in tbl.columns}
@@ -247,3 +247,42 @@ class TestBasics(unittest.TestCase):
         assert dtype(cols['set']) == 'set', dtype(cols['set'])
         assert cols['set'].nullable is True
         assert cols['set'].type.values == ('one', 'two', 'three'), cols['set'].type.values
+
+    def test_double_percents(self):
+        # Direct to driver, no params
+        out = list(self.conn.exec_driver_sql('select 21 % 2, 101 % 2'))
+        assert out == [(1, 1)]
+
+        # Direct to driver, positional params
+        out = list(self.conn.exec_driver_sql('select 21 %% 2, %s %% 2', (101,)))
+        assert out == [(1, 1)]
+
+        # Direct to driver, dict params
+        out = list(
+            self.conn.exec_driver_sql(
+                'select 21 %% 2, %(num)s %% 2', dict(num=101),
+            ),
+        )
+        assert out == [(1, 1)]
+
+        with self.assertRaises(ValueError):
+            self.conn.exec_driver_sql('select 21 % 2, %(num)s % 2', dict(foo=101))
+
+        # Direct to driver, no params (with dummy param)
+        out = list(self.conn.exec_driver_sql('select 21 %% 2, 101 %% 2', dict(foo=100)))
+        assert out == [(1, 1)]
+
+        with self.assertRaises(ValueError):
+            self.conn.exec_driver_sql('select 21 % 2, 101 % 2', dict(foo=100))
+
+        # Text clause, no params
+        out = list(self.conn.execute(sa.text('select 21 % 2, 101 % 2')))
+        assert out == [(1, 1)]
+
+        # Texx clause, dict params
+        out = list(self.conn.execute(sa.text('select 21 % 2, :num % 2'), dict(num=101)))
+        assert out == [(1, 1)]
+
+        # Text clause, dict params (with dummy param)
+        out = list(self.conn.execute(sa.text('select 21 % 2, 101 % 2'), dict(foo=100)))
+        assert out == [(1, 1)]
