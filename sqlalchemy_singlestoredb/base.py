@@ -320,6 +320,14 @@ class SingleStoreDBDialect(MySQLDialect):
             self.driver = connection.connection.driver
         else:
             self.driver = connection.connection._driver.name
+
+        params = connection.connection.dbapi_connection.connection_params
+        if params['host'] == 'singlestore.com':
+            self.server_version_info = None
+            self.default_schema_name = None
+            self.default_isolation_level = 'READ COMMITTED'
+            return
+
         return MySQLDialect.initialize(self, connection)
 
     def create_connect_args(self, url: URL) -> List[Any]:
@@ -347,6 +355,12 @@ class SingleStoreDBDialect(MySQLDialect):
         from . import reflection
         preparer = self.identifier_preparer
         return reflection.SingleStoreDBTableDefinitionParser(self, preparer)
+
+    def do_rollback(self, dbapi_connection: Any) -> None:
+        params = dbapi_connection.connection_params
+        if params['host'] == 'singlestore.com':
+            return
+        dbapi_connection.rollback()
 
 
 dialect: Type[SingleStoreDBDialect] = SingleStoreDBDialect
