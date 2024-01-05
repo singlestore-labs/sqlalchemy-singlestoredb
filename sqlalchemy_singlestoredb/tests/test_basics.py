@@ -28,8 +28,9 @@ class TestBasics(unittest.TestCase):
 
     def setUp(self):
         url = os.environ['SINGLESTOREDB_URL']
-        if re.match(r'^\w+://', url):
-            url = 'singlestoredb+' + url
+        if re.match(r'^[\w\-\+]+://', url):
+            if not url.startswith('singlestoredb'):
+                url = 'singlestoredb+' + url
         else:
             url = 'singlestoredb://' + url
         if url.endswith('/'):
