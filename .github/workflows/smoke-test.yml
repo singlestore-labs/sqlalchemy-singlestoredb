@@ -1,0 +1,99 @@
+name: Smoke test
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+
+jobs:
+
+  setup-database:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          python --version
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize database
+        id: initialize-database
+        run: |
+          python resources/create_test_cluster.py --password="${{ secrets.CLUSTER_PASSWORD }}" --token="${{ secrets.CLUSTER_API_KEY }}" --output=github --expires=2h "singlestore-python - $GITHUB_WORKFLOW"
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+
+    outputs:
+      cluster-id: ${{ steps.initialize-database.outputs.cluster-id }}
+      cluster-host: ${{ steps.initialize-database.outputs.cluster-host }}
+      cluster-database: ${{ steps.initialize-database.outputs.cluster-database }}
+
+
+  smoke-test:
+    needs: setup-database
+
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        python-version:
+          - "3.8"
+          - "3.12"
+        driver:
+          - "singlestoredb"
+          - "singlestoredb+http"
+        sqlalchemy-version:
+          - "~=1.4.0"
+          - "~=2.0.0"
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install "sqlalchemy${{ matrix.sqlalchemy-version }}"
+          pip install -r requirements.txt
+          pip install -r test-requirements.txt
+
+      - name: Install SingleStoreDB SQLAlchemy package
+        run: |
+          pip install .
+
+      - name: Run tests
+        if: ${{ matrix.driver == 'singlestoredb' }}
+        run: pytest -q sqlalchemy_singlestoredb/tests/test_basics.py
+        env:
+          SINGLESTOREDB_URL: "${{ matrix.driver }}://${{ secrets.CLUSTER_USER }}:${{ secrets.CLUSTER_PASSWORD }}@${{ needs.setup-database.outputs.cluster-host }}:3306/${{ needs.setup-database.outputs.cluster-database }}"
+
+      - name: Run tests
+        if: ${{ matrix.driver == 'singlestoredb+http' }}
+        run: pytest -q sqlalchemy_singlestoredb/tests/test_basics.py
+        env:
+          SINGLESTOREDB_URL: "${{ matrix.driver }}://${{ secrets.CLUSTER_USER }}:${{ secrets.CLUSTER_PASSWORD }}@${{ needs.setup-database.outputs.cluster-host }}:9000/${{ needs.setup-database.outputs.cluster-database }}"
+
+
+  shutdown-database:
+    needs: [setup-database, smoke-test]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+
+    steps:
+      # Just use curl here so we don't have to check out the package source again.
+      - name: Shutdown database
+        run: |
+          curl -H "Accept: application/json" -H "Authorization: Bearer ${{ secrets.CLUSTER_API_KEY }}" -X DELETE "https://api.singlestore.com/v0beta/clusters/${{ env.CLUSTER_ID }}"
+        env:
+          CLUSTER_ID: ${{ needs.setup-database.outputs.cluster-id }}
