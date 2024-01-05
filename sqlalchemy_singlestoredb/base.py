@@ -321,7 +321,7 @@ class SingleStoreDBDialect(MySQLDialect):
         else:
             self.driver = connection.connection._driver.name
 
-        params = connection.connection.dbapi_connection.connection_params
+        params = connection.connection.connection_params
         if params['host'] == 'singlestore.com':
             self.server_version_info = None
             self.default_schema_name = None
