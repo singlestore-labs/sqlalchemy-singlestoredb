@@ -53,7 +53,7 @@ jobs:
           - "3.12"
         driver:
           - "singlestoredb"
-          - "singlestoredb+http"
+          - "singlestoredb+https"
         sqlalchemy-version:
           - "~=1.4.0"
           - "~=2.0.0"
@@ -85,7 +85,7 @@ jobs:
           SINGLESTOREDB_URL: "${{ matrix.driver }}://${{ secrets.CLUSTER_USER }}:${{ secrets.CLUSTER_PASSWORD }}@${{ needs.setup-database.outputs.cluster-host }}:3306/${{ needs.setup-database.outputs.cluster-database }}"
 
       - name: Run tests
-        if: ${{ matrix.driver == 'singlestoredb+http' }}
+        if: ${{ matrix.driver == 'singlestoredb+https' }}
         run: pytest -q sqlalchemy_singlestoredb/tests/test_basics.py
         env:
           SINGLESTOREDB_URL: "${{ matrix.driver }}://${{ secrets.CLUSTER_USER }}:${{ secrets.CLUSTER_PASSWORD }}@${{ needs.setup-database.outputs.cluster-host }}:443/${{ needs.setup-database.outputs.cluster-database }}"
