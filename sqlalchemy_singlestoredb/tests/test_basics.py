@@ -58,6 +58,21 @@ class TestBasics(unittest.TestCase):
         dbs = [x[0] for x in list(self.conn.exec_driver_sql('show databases'))]
         assert type(self).dbname in dbs, dbs
 
+    def test_deferred_connection(self):
+        url = os.environ['SINGLESTOREDB_URL']
+        try:
+            del os.environ['SINGLESTOREDB_URL']
+            eng = sa.create_engine('singlestoredb://:@singlestore.com')
+            conn = eng.connect()
+            with self.assertRaises(sa.exc.InterfaceError):
+                conn.exec_driver_sql('show databases')
+            os.environ['SINGLESTOREDB_URL'] = url
+            out = conn.exec_driver_sql('show databases')
+            assert len(out.fetchall()) > 0
+            conn.close()
+        finally:
+            os.environ['SINGLESTOREDB_URL'] = url
+
     def test_alltypes(self):
         meta = sa.MetaData()
         tbl = sa.Table('alltypes', meta)
