@@ -53,7 +53,7 @@ jobs:
           - "3.12"
         driver:
           - "singlestoredb"
-#         - "singlestoredb+http"
+          - "singlestoredb+http"
         sqlalchemy-version:
           - "~=1.4.0"
           - "~=2.0.0"
