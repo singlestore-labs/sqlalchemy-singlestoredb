@@ -60,9 +60,12 @@ class TestBasics(unittest.TestCase):
 
     def test_deferred_connection(self):
         url = os.environ['SINGLESTOREDB_URL']
-        scheme = url.split('://', 1)[0]
-        if 'singlestoredb' not in scheme:
-            scheme = f'singlestoredb+{scheme}'
+        if '://' in url:
+            scheme = url.split('://', 1)[0]
+            if 'singlestoredb' not in scheme:
+                scheme = f'singlestoredb+{scheme}'
+        else:
+            scheme = 'singlestoredb'
         try:
             del os.environ['SINGLESTOREDB_URL']
             eng = sa.create_engine(f'{scheme}://:@singlestore.com')
