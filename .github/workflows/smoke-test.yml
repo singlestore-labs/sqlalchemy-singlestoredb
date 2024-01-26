@@ -80,13 +80,13 @@ jobs:
 
       - name: Run tests
         if: ${{ matrix.driver == 'singlestoredb' }}
-        run: pytest -q sqlalchemy_singlestoredb/tests/test_basics.py
+        run: pytest -v --pyargs sqlalchemy_singlestoredb.tests.test_basics
         env:
           SINGLESTOREDB_URL: "${{ matrix.driver }}://${{ secrets.CLUSTER_USER }}:${{ secrets.CLUSTER_PASSWORD }}@${{ needs.setup-database.outputs.cluster-host }}:3306/${{ needs.setup-database.outputs.cluster-database }}"
 
       - name: Run tests
         if: ${{ matrix.driver == 'singlestoredb+https' }}
-        run: pytest -q sqlalchemy_singlestoredb/tests/test_basics.py
+        run: pytest -v --pyargs sqlalchemy_singlestoredb.tests.test_basics
         env:
           SINGLESTOREDB_URL: "${{ matrix.driver }}://${{ secrets.CLUSTER_USER }}:${{ secrets.CLUSTER_PASSWORD }}@${{ needs.setup-database.outputs.cluster-host }}:443/${{ needs.setup-database.outputs.cluster-database }}"
 

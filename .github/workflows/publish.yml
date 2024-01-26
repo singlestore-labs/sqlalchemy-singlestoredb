@@ -38,9 +38,9 @@ jobs:
       singlestore:
         image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
         ports:
-          - 3306:3306
-          - 8080:8080
-          - 9000:9000
+          - 3307:3306
+          - 8081:8080
+          - 9080:9000
         env:
           SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
           ROOT_PASSWORD: "root"
@@ -77,7 +77,7 @@ jobs:
 #         cd conda.recipe
 #         conda build --override-channels -c singlestore -c conda-forge --no-anaconda-upload --output-folder ../artifacts .
 #       env:
-#         SINGLESTOREDB_URL: "root:root@127.0.0.1:3306"
+#         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
 
       - name: Publish PyPI package
         if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}
