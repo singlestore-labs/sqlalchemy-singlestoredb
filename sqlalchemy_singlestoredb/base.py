@@ -2,16 +2,13 @@
 """Base classes for SingleStoreDB SQLAlchemy objects."""
 from __future__ import annotations
 
-import json
 from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
-from typing import Union
 
-import sqlalchemy.dialects.mysql.base as mybase
 import sqlalchemy.sql.elements as se
 from singlestoredb.connection import build_params
 from sqlalchemy import util
@@ -32,6 +29,9 @@ from sqlalchemy.sql.compiler import BIND_PARAMS
 from sqlalchemy.sql.compiler import BIND_PARAMS_ESC
 
 from . import reflection
+from .dtypes import _json_deserializer
+from .dtypes import JSON
+from .dtypes import VECTOR
 
 
 class CaseInsensitiveDict(Dict[str, Any]):
@@ -65,39 +65,8 @@ class CaseInsensitiveDict(Dict[str, Any]):
 
 
 ischema_names = CaseInsensitiveDict(MySQLDialect.ischema_names)
-
-
-def _json_deserializer(value: Union[str, bytes, Dict[str, Any], List[Any]]) -> Any:
-    if value is None:
-        return None
-    if type(value) is dict or type(value) is list:
-        return value
-    return json.loads(value)  # type: ignore
-
-
-class JSON(mybase.JSON):
-
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
-        kwargs.pop('collate', None)
-        mybase.JSON(*args, **kwargs)
-
-    def result_processor(self, dialect: Any, coltype: Any) -> Any:
-        string_process = self._str_impl.result_processor(dialect, coltype)
-        json_deserializer = dialect._json_deserializer or json.loads
-
-        def process(value: Union[str, bytes, Dict[str, Any], List[Any]]) -> Any:
-            if value is None:
-                return None
-            if string_process:
-                value = string_process(value)
-            if type(value) is dict or type(value) is list:
-                return value
-            return json_deserializer(value)  # type: ignore
-
-        return process
-
-
 ischema_names['json'] = JSON
+ischema_names['vector'] = VECTOR
 
 
 class SingleStoreDBExecutionContext(MySQLExecutionContext):
@@ -146,6 +115,8 @@ class SingleStoreDBCompiler(MySQLCompiler):
         ):
             adapted = CHAR._adapt_string_for_cast(type_)
             return self.dialect.type_compiler.process(adapted)
+        elif isinstance(type_, VECTOR):
+            return 'VECTOR'
         elif isinstance(type_, sqltypes._Binary):
             return 'BINARY'
         elif isinstance(type_, sqltypes.JSON):
@@ -241,6 +212,9 @@ class SingleStoreDBTypeCompiler(MySQLTypeCompiler):
         if getattr(type_, 'fsp', None):
             return 'TIMESTAMP(%d)' % type_.fsp
         return 'TIMESTAMP'
+
+    def visit_VECTOR(self, type_: Any, **kw: Any) -> str:
+        return 'VECTOR(%d, %s)' % (type_.n_elems, type_.elem_type)
 
 
 class SingleStoreDBIdentifierPreparer(MySQLIdentifierPreparer):

@@ -10,8 +10,17 @@ from typing import Tuple
 from sqlalchemy import log
 from sqlalchemy import util
 from sqlalchemy.dialects.mysql.reflection import _re_compile
+from sqlalchemy.dialects.mysql.reflection import _strip_values
+from sqlalchemy.dialects.mysql.reflection import cleanup_text
 from sqlalchemy.dialects.mysql.reflection import MySQLTableDefinitionParser
 from sqlalchemy.dialects.mysql.reflection import ReflectedState
+from sqlalchemy.sql import sqltypes
+
+from . import DATETIME
+from . import ENUM
+from . import SET
+from . import TIME
+from . import TIMESTAMP
 
 
 @log.class_logger
@@ -102,3 +111,146 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             r'(?: +/\*(?P<version_sql>.+)\*/ *)?'
             r',?$' % quotes,
         )
+
+        # `colname` <type> [type opts]
+        #  (NOT NULL | NULL)
+        #   DEFAULT ('value' | CURRENT_TIMESTAMP...)
+        #   COMMENT 'comment'
+        #  COLUMN_FORMAT (FIXED|DYNAMIC|DEFAULT)
+        #  STORAGE (DISK|MEMORY)
+        self._re_column = _re_compile(
+            r'  '
+            r'%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s +'
+            r'(?P<coltype>\w+)'
+            r'(?:\((?P<arg>(?:\d+|\d+,\s*(?:F|I)\d+|'
+            r"(?:'(?:''|[^'])*',?)+))\))?"
+            r'(?: +(?P<unsigned>UNSIGNED))?'
+            r'(?: +(?P<zerofill>ZEROFILL))?'
+            r'(?: +CHARACTER SET +(?P<charset>[\w_]+))?'
+            r'(?: +COLLATE +(?P<collate>[\w_]+))?'
+            r'(?: +(?P<notnull>(?:NOT )?NULL))?'
+            r'(?: +DEFAULT +(?P<default>'
+            r"(?:NULL|'(?:''|[^'])*'|[\-\w\.\(\)]+"
+            r'(?: +ON UPDATE [\-\w\.\(\)]+)?)'
+            r'))?'
+            r'(?: +(?:GENERATED ALWAYS)? ?AS +(?P<generated>\('
+            r'.*\))? ?(?P<persistence>VIRTUAL|STORED)?)?'
+            r'(?: +(?P<autoincr>AUTO_INCREMENT))?'
+            r"(?: +COMMENT +'(?P<comment>(?:''|[^'])*)')?"
+            r'(?: +COLUMN_FORMAT +(?P<colfmt>\w+))?'
+            r'(?: +STORAGE +(?P<storage>\w+))?'
+            r'(?: +(?P<extra>.*))?'
+            r',?$' % quotes,
+        )
+
+    def _parse_column(self, line: str, state: Any) -> None:  # noqa: C901
+        """
+        Extract column details.
+
+        Falls back to a 'minimal support' variant if full parse fails.
+
+        Paraemeters
+        -----------
+        line :
+            Any column-bearing line from SHOW CREATE TABLE
+
+        """
+        spec = None
+        m = self._re_column.match(line)
+        if m:
+            spec = m.groupdict()
+            spec['full'] = True
+        else:
+            m = self._re_column_loose.match(line)
+            if m:
+                spec = m.groupdict()
+                spec['full'] = False
+        if not spec:
+            util.warn('Unknown column definition %r' % line)
+            return
+        if not spec['full']:
+            util.warn('Incomplete reflection of column definition %r' % line)
+
+        name, type_, args = spec['name'], spec['coltype'], spec['arg']
+
+        try:
+            col_type = self.dialect.ischema_names[type_]
+        except KeyError:
+            util.warn(
+                "Did not recognize type '%s' of column '%s'" % (type_, name),
+            )
+            col_type = sqltypes.NullType
+
+        # Column type positional arguments eg. varchar(32)
+        if args is None or args == '':
+            type_args = []
+        elif args[0] == "'" and args[-1] == "'":
+            type_args = self._re_csv_str.findall(args)
+        else:
+            type_args = []
+            for v in re.split(r'\s*,\s*', args):
+                try:
+                    type_args.append(int(v))
+                except ValueError:
+                    type_args.append(v)
+
+        # Column type keyword options
+        type_kw = {}
+
+        if issubclass(col_type, (DATETIME, TIME, TIMESTAMP)):
+            if type_args:
+                type_kw['fsp'] = type_args.pop(0)
+
+        for kw in ('unsigned', 'zerofill'):
+            if spec.get(kw, False):
+                type_kw[kw] = True
+        for kw in ('charset', 'collate'):
+            if spec.get(kw, False):
+                type_kw[kw] = spec[kw]
+        if issubclass(col_type, (ENUM, SET)):
+            type_args = _strip_values(type_args)
+
+            if issubclass(col_type, SET) and '' in type_args:
+                type_kw['retrieve_as_bitwise'] = True
+
+        type_instance = col_type(*type_args, **type_kw)
+
+        col_kw: Dict[str, Any] = {}
+
+        # NOT NULL
+        col_kw['nullable'] = True
+        # this can be "NULL" in the case of TIMESTAMP
+        if spec.get('notnull', False) == 'NOT NULL':
+            col_kw['nullable'] = False
+
+        # AUTO_INCREMENT
+        if spec.get('autoincr', False):
+            col_kw['autoincrement'] = True
+        elif issubclass(col_type, sqltypes.Integer):
+            col_kw['autoincrement'] = False
+
+        # DEFAULT
+        default = spec.get('default', None)
+
+        if default == 'NULL':
+            # eliminates the need to deal with this later.
+            default = None
+
+        comment = spec.get('comment', None)
+
+        if comment is not None:
+            comment = cleanup_text(comment)
+
+        sqltext = spec.get('generated')
+        if sqltext is not None:
+            computed = dict(sqltext=sqltext)
+            persisted = spec.get('persistence')
+            if persisted is not None:
+                computed['persisted'] = persisted == 'STORED'
+            col_kw['computed'] = computed
+
+        col_d = dict(
+            name=name, type=type_instance, default=default, comment=comment,
+        )
+        col_d.update(col_kw)
+        state.columns.append(col_d)

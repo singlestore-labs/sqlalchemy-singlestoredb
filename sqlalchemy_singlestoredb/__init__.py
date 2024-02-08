@@ -40,7 +40,9 @@ from sqlalchemy.dialects.mysql.dml import Insert
 from sqlalchemy.dialects.mysql.dml import insert
 
 from . import base  # noqa
-from .base import JSON
+from .dtypes import JSON
+from .dtypes import VECTOR
+# These imports must come before `from . import base`
 
 array = base.array
 
@@ -84,6 +86,7 @@ __all__ = (
     'TINYTEXT',
     'VARBINARY',
     'VARCHAR',
+    'VECTOR',
     'YEAR',
     'dialect',
     'insert',
