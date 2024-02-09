@@ -39,10 +39,9 @@ from sqlalchemy.dialects.mysql.base import YEAR
 from sqlalchemy.dialects.mysql.dml import Insert
 from sqlalchemy.dialects.mysql.dml import insert
 
-from . import base  # noqa
+from . import base
 from .dtypes import JSON
 from .dtypes import VECTOR
-# These imports must come before `from . import base`
 
 array = base.array
 
