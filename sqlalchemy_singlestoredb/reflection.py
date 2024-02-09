@@ -122,7 +122,7 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             r'  '
             r'%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s +'
             r'(?P<coltype>\w+)'
-            r'(?:\((?P<arg>(?:\d+|\d+,\s*(?:F|I)\d+|'
+            r'(?:\((?P<arg>(?:\d+|\d+,\s*(?:F|I)?\d+|'
             r"(?:'(?:''|[^'])*',?)+))\))?"
             r'(?: +(?P<unsigned>UNSIGNED))?'
             r'(?: +(?P<zerofill>ZEROFILL))?'
