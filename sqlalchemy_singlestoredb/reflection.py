@@ -5,13 +5,11 @@ from __future__ import annotations
 import re
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Tuple
 
 from sqlalchemy import log
 from sqlalchemy import util
-from sqlalchemy.dialects.mysql.reflection import _re_compile
-from sqlalchemy.dialects.mysql.reflection import _strip_values
-from sqlalchemy.dialects.mysql.reflection import cleanup_text
 from sqlalchemy.dialects.mysql.reflection import MySQLTableDefinitionParser
 from sqlalchemy.dialects.mysql.reflection import ReflectedState
 from sqlalchemy.sql import sqltypes
@@ -21,6 +19,47 @@ from . import ENUM
 from . import SET
 from . import TIME
 from . import TIMESTAMP
+
+
+_control_char_map = {
+    '\\\\': '\\',
+    '\\0': '\0',
+    '\\a': '\a',
+    '\\b': '\b',
+    '\\t': '\t',
+    '\\n': '\n',
+    '\\v': '\v',
+    '\\f': '\f',
+    '\\r': '\r',
+    # '\\e':'\e',
+}
+_control_char_regexp = re.compile(
+    '|'.join(re.escape(k) for k in _control_char_map),
+)
+
+
+def _re_compile(regex: str) -> Any:
+    """Compile a string to regex, I and UNICODE."""
+    return re.compile(regex, re.I | re.UNICODE)
+
+
+def _strip_values(values: List[str]) -> List[str]:
+    """Strip reflected values quotes"""
+    strip_values = []
+    for a in values:
+        if a[0:1] == '"' or a[0:1] == "'":
+            # strip enclosing quotes and unquote interior
+            a = a[1:-1].replace(a[0] * 2, a[0])
+        strip_values.append(a)
+    return strip_values
+
+
+def cleanup_text(raw_text: str) -> str:
+    if '\\' in raw_text:
+        raw_text = re.sub(
+            _control_char_regexp, lambda s: _control_char_map[s[0]], raw_text,
+        )
+    return raw_text.replace("''", "'")
 
 
 @log.class_logger
