@@ -10,7 +10,6 @@ from typing import Optional
 from typing import Type
 
 import sqlalchemy.sql.elements as se
-from singlestoredb.connection import build_params
 from sqlalchemy import util
 from sqlalchemy.dialects.mysql.base import BIT  # noqa: F401
 from sqlalchemy.dialects.mysql.base import CHAR  # noqa: F401
@@ -305,6 +304,7 @@ class SingleStoreDBDialect(MySQLDialect):
         return MySQLDialect.initialize(self, connection)
 
     def create_connect_args(self, url: URL) -> List[Any]:
+        from singlestoredb.connection import build_params
         return [[], build_params(host=url.render_as_string(hide_password=False))]
 
     def _extract_error_code(self, exception: Exception) -> int:
