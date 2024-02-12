@@ -8,6 +8,10 @@ This document outlines features and improvements from each release.
    are for non-production testing and evaluation, and may include
    changes to the API.
 
+v1.0.0 - February 12, 2024
+--------------------------
+* Add support for vector data type
+
 v0.3.1 - August 23, 2023
 ------------------------
 * Fix issue with escaping ``%`` characters in queries
