@@ -1,4 +1,4 @@
-# <img src="resources/singlestore-logo.png" height="60" valign="middle"/> SingleStoreDB SQLAlchemy Dialect
+# <img src="https://raw.githubusercontent.com/singlestore-labs/singlestoredb-python/main/resources/singlestore-logo.png" height="60" valign="middle"/> SingleStoreDB SQLAlchemy Dialect
 
 This project contains a [SQLAlchemyDB](https://sqlalchemy.org) dialect which allows
 you to use the SQLAlchemy APIs with the [SingleStoreDB](https://singlestore.com) database.
