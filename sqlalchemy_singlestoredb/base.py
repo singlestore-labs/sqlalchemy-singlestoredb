@@ -30,9 +30,9 @@ from sqlalchemy.sql.schema import SchemaConst
 
 from . import reflection
 from .column import PersistedColumn
+from .dtypes import _json_deserializer
 from .dtypes import JSON
 from .dtypes import VECTOR
-from .dtypes import _json_deserializer
 
 
 class CaseInsensitiveDict(Dict[str, Any]):
@@ -199,25 +199,26 @@ class SingleStoreDBCompiler(MySQLCompiler):
 
 class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
-    def visit_create_table(self, create, **kw):
+
+    def visit_create_table(self, create: Any, **kw: Any) -> str:
         create_table_sql = super().visit_create_table(create, **kw)
         shard_key = create.element.info.get('singlestoredb_shard_key')
         if shard_key is not None:
-            shard_columns = ", ".join(shard_key.columns)
-            shard_key_sql = f"SHARD KEY ({shard_columns})"
+            shard_columns = ', '.join(shard_key.columns)
+            shard_key_sql = f'SHARD KEY ({shard_columns})'
             # Append the SHARD KEY definition to the original SQL
-            create_table_sql = f"{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)"
+            create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)'
 
         sort_key = create.element.info.get('singlestoredb_sort_key')
         if sort_key is not None:
-            sort_columns = ", ".join(sort_key.columns)
-            sort_key_sql = f"SORT KEY ({sort_columns})"
+            sort_columns = ', '.join(sort_key.columns)
+            sort_key_sql = f'SORT KEY ({sort_columns})'
             # Append the SHARD KEY definition to the original SQL
-            create_table_sql = f"{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)"
+            create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
 
         return create_table_sql
 
-    def get_column_specification(self, column, **kw):
+    def get_column_specification(self, column: Any, **kw: Any) -> str:
         """Builds column DDL."""
         if not isinstance(column, PersistedColumn):
             return super().get_column_specification(column, **kw)
@@ -230,11 +231,11 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
             column.nullable = True
         colspec = [
             self.preparer.format_column(column),
-            "AS",
+            'AS',
             column.persisted_expression,
-            "PERSISTED",
+            'PERSISTED',
             self.dialect.type_compiler_instance.process(
-                column.type, type_expression=column
+                column.type, type_expression=column,
             ),
         ]
 
@@ -247,23 +248,23 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
         )
 
         if not column.nullable:
-            colspec.append("NOT NULL")
+            colspec.append('NOT NULL')
 
         # see: https://docs.sqlalchemy.org/en/latest/dialects/mysql.html#mysql_timestamp_null  # noqa
         elif column.nullable and is_timestamp:
-            colspec.append("NULL")
+            colspec.append('NULL')
 
         comment = column.comment
         if comment is not None:
             literal = self.sql_compiler.render_literal_value(
-                comment, sqltypes.String()
+                comment, sqltypes.String(),
             )
-            colspec.append("COMMENT " + literal)
+            colspec.append('COMMENT ' + literal)
 
         default = self.get_column_default_string(column)
         if default is not None:
-            colspec.append("DEFAULT " + default)
-        return " ".join(colspec)
+            colspec.append('DEFAULT ' + default)
+        return ' '.join(colspec)
 
 
 class SingleStoreDBTypeCompiler(MySQLTypeCompiler):
