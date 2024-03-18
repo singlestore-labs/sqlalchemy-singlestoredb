@@ -40,6 +40,9 @@ from sqlalchemy.dialects.mysql.dml import Insert
 from sqlalchemy.dialects.mysql.dml import insert
 
 from . import base
+from .column import PersistedColumn
+from .ddlelement import ShardKey
+from .ddlelement import SortKey
 from .dtypes import JSON
 from .dtypes import VECTOR
 
@@ -74,8 +77,11 @@ __all__ = (
     'NCHAR',
     'NVARCHAR',
     'NUMERIC',
+    'PersistedColumn',
     'SET',
     'SMALLINT',
+    'ShardKey',
+    'SortKey',
     'REAL',
     'TEXT',
     'TIME',
