@@ -26,7 +26,10 @@ from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.sql.compiler import BIND_PARAMS
 from sqlalchemy.sql.compiler import BIND_PARAMS_ESC
-from sqlalchemy.sql.schema import SchemaConst
+try:
+    from sqlalchemy.sql.schema import SchemaConst
+except ImportError:
+    from sqlalchemy.sql import schema as SchemaConst
 
 from . import reflection
 from .column import PersistedColumn
