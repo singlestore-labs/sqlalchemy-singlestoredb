@@ -108,8 +108,9 @@ jobs:
       - name: Install dependencies
         run: |
           python --version
-          python -m pip install --upgrade pip
+          python -m pip install pip
           pip install -r requirements.txt
+          ls -l /opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/sqlalchemy_singlestoredb
 
       - name: Drop database
         if: ${{ always() }}
