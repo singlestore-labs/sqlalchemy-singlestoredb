@@ -77,7 +77,7 @@ jobs:
       - name: Install SingleStoreDB SQLAlchemy package
         run: |
           pip install .
-          ls -R $(basename $(python3 -c 'import sqlalchemy_singlestoredb; print(sqlalchemy_singlestoredb.__file__)'))
+          ls -R $(dirname $(python3 -c 'import sqlalchemy_singlestoredb; print(sqlalchemy_singlestoredb.__file__)'))
 
       - name: Run tests
         if: ${{ matrix.driver == 'singlestoredb' }}
