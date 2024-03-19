@@ -76,7 +76,7 @@ jobs:
 
       - name: Install SingleStoreDB SQLAlchemy package
         run: |
-          pip install .
+          pip install --upgrade .
 
       - name: Run tests
         if: ${{ matrix.driver == 'singlestoredb' }}
