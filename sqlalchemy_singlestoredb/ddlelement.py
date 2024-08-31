@@ -3,10 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.schema import DDLElement
-
-Base = declarative_base()
 
 
 class ShardKey(DDLElement):
