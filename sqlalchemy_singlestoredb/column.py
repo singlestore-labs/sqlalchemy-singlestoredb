@@ -3,10 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import Column
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql.expression import TextClause
-
-Base = declarative_base()
 
 
 class PersistedColumn(Column):
