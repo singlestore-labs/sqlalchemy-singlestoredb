@@ -199,6 +199,13 @@ class SingleStoreDBCompiler(MySQLCompiler):
             ),
         )
 
+    def visit_primary_key_constraint(self, constraint: Any, **kw: Any) -> str:
+        text = super().visit_primary_key_constraint(constraint)
+        using = constraint.dialect_options['mysql']['using']
+        if using:
+            text += ' USING %s' % (self.preparer.quote(using))
+        return text
+
 
 class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
