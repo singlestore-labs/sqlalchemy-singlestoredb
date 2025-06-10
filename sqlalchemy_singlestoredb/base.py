@@ -8,6 +8,8 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Type
+from urllib.parse import quote
+from urllib.parse import quote_plus
 
 import sqlalchemy.sql.elements as se
 from sqlalchemy import util
@@ -318,6 +320,33 @@ class _myconnpyBIT(BIT):
         return None
 
 
+def render_as_string(url: URL) -> str:
+    s = url.drivername + '://'
+    if url.username is not None:
+        s += quote(url.username)
+        if url.password is not None:
+            s += ':' + quote(str(url.password))
+        s += '@'
+    if url.host is not None:
+        if ':' in url.host:
+            s += f'[{url.host}]'
+        else:
+            s += url.host
+    if url.port is not None:
+        s += ':' + str(url.port)
+    if url.database is not None:
+        s += '/' + url.database
+    if url.query:
+        keys = list(url.query)
+        keys.sort()
+        s += '?' + '&'.join(
+            f'{quote_plus(k)}={quote_plus(element)}'
+            for k in keys
+            for element in util.to_list(url.query[k])
+        )
+    return s
+
+
 class SingleStoreDBDialect(MySQLDialect):
     """SingleStoreDB SQLAlchemy dialect."""
 
@@ -383,7 +412,7 @@ class SingleStoreDBDialect(MySQLDialect):
 
     def create_connect_args(self, url: URL) -> List[Any]:
         from singlestoredb.connection import build_params
-        return [[], build_params(host=url.render_as_string(hide_password=False))]
+        return [[], build_params(host=render_as_string(url))]
 
     def _extract_error_code(self, exception: Exception) -> int:
         return getattr(exception, 'errno', -1)
