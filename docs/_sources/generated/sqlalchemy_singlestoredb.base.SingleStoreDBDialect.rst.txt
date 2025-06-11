@@ -146,6 +146,7 @@
       ~SingleStoreDBDialect.supports_identity_columns
       ~SingleStoreDBDialect.supports_is_distinct_from
       ~SingleStoreDBDialect.supports_multivalues_insert
+      ~SingleStoreDBDialect.supports_native_bit
       ~SingleStoreDBDialect.supports_native_boolean
       ~SingleStoreDBDialect.supports_native_decimal
       ~SingleStoreDBDialect.supports_native_enum
