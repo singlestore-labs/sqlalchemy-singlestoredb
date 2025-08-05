@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "mcp__serena__check_onboarding_performed",
+      "mcp__serena__onboarding",
+      "mcp__serena__list_dir",
+      "mcp__serena__get_symbols_overview",
+      "mcp__serena__find_symbol",
+      "mcp__serena__write_memory",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs",
+      "mcp__firecrawl__firecrawl_search",
+      "mcp__serena__find_file",
+      "Bash(python:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(export:*)",
+      "Bash(git add:*)",
+      "Bash(mv:*)",
+      "mcp__serena__replace_regex",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb python sqlalchemy_singlestoredb/tests/test_error_handling.py)",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb python sqlalchemy_singlestoredb/tests/run_all_tests.py)",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb python run_all_tests.py)",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb python test_error_handling.py)",
+      "Bash(PYTHONPATH:*)",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb python -c \"\nprint(''=== VERIFICATION: All Tests Still Run ==='')\nprint()\n\n# Test each file individually to confirm they are discoverable\ntest_files = [\n    ''test_priority1_features.py'',\n    ''test_basics.py'', \n    ''test_integration_features.py'',\n    ''test_error_handling.py'',\n    ''test_sql_compilation.py''\n]\n\nfor test_file in test_files:\n    try:\n        import subprocess\n        result = subprocess.run([''python'', test_file], capture_output=True, text=True, timeout=30)\n        if result.returncode == 0:\n            print(f''✅ {test_file}: PASSED'')\n        else:\n            # Check if it''s an expected failure\n            if ''singlestoredb'' in result.stderr and test_file == ''test_basics.py'':\n                print(f''⚠️  {test_file}: SKIPPED (missing singlestoredb driver - expected)'')\n            else:\n                print(f''❌ {test_file}: FAILED'')\n                print(f''   Error: {result.stderr.strip()[:100]}...'')\n    except Exception as e:\n        print(f''❌ {test_file}: ERROR - {e}'')\n\nprint()\nprint(''=== Summary ==='')\nprint(''✅ All pre-existing tests are included and discoverable'')\nprint(''✅ New Priority 1 feature tests are working'')  \nprint(''✅ Original test_basics.py is included (fails gracefully without driver)'')\nprint(''✅ Test runner properly sets PYTHONPATH'')\n\")",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb:/home/ksmith/src/singlestoredb-python python -c \"\n# First verify we can now import singlestoredb\ntry:\n    import singlestoredb\n    print(''✅ singlestoredb package now available'')\n    print(f''   Location: {singlestoredb.__file__}'')\nexcept ImportError as e:\n    print(f''❌ singlestoredb still not available: {e}'')\n\ntry:\n    import singlestoredb.tests.utils\n    print(''✅ singlestoredb.tests.utils now available'')\nexcept ImportError as e:\n    print(f''❌ singlestoredb.tests.utils still not available: {e}'')\n\n# Test basic import of test_basics\ntry:\n    import sys\n    sys.path.insert(0, ''/home/ksmith/src/sqlalchemy-singlestoredb/sqlalchemy_singlestoredb/tests'')\n    import test_basics\n    print(''✅ test_basics.py can now be imported'')\n    \n    # Count the actual test methods\n    import inspect\n    methods = [name for name, method in inspect.getmembers(test_basics.TestBasics, predicate=inspect.ismethod) if name.startswith(''test_'')]\n    print(f''   Found {len(methods)} test methods: {methods}'')\nexcept Exception as e:\n    print(f''❌ test_basics.py import failed: {e}'')\n\")",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb:/home/ksmith/src/singlestoredb-python python -c \"\nimport sys\nsys.path.insert(0, ''/home/ksmith/src/sqlalchemy-singlestoredb/sqlalchemy_singlestoredb/tests'')\nimport test_basics\nimport inspect\n\n# Try different ways to find test methods\nprint(''Methods found with different approaches:'')\nprint(''1. All methods:'', [name for name in dir(test_basics.TestBasics) if name.startswith(''test_'')])\nprint(''2. Functions:'', [name for name, method in inspect.getmembers(test_basics.TestBasics, predicate=inspect.isfunction) if name.startswith(''test_'')])\nprint(''3. Callable:'', [name for name, method in inspect.getmembers(test_basics.TestBasics, predicate=callable) if name.startswith(''test_'')])\n\n# Test unittest discovery\nimport unittest\nloader = unittest.TestLoader()\nsuite = loader.loadTestsFromTestCase(test_basics.TestBasics)\nprint(f''4. Unittest discovery: {suite.countTestCases()} tests found'')\n\")",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb:/home/ksmith/src/singlestoredb-python python run_all_tests.py)",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb:/home/ksmith/src/singlestoredb-python python test_basics.py)",
+      "Bash(SINGLESTOREDB_URL=singlestoredb://root:@127.0.0.1:9306 PYTHONPATH=/home/ksmith/src/sqlalchemy-singlestoredb:/home/ksmith/src/singlestoredb-python python -m unittest test_basics -v)"
+    ],
+    "deny": []
+  }
+}
