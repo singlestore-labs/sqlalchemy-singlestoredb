@@ -35,6 +35,9 @@ except ImportError:
 
 from . import reflection
 from .column import PersistedColumn
+from .compat import supports_statement_cache
+from .compat import get_dialect_features
+from .compat import has_feature
 from .dtypes import _json_deserializer
 from .dtypes import JSON
 from .dtypes import VECTOR
@@ -77,6 +80,20 @@ ischema_names['vector'] = VECTOR
 
 class SingleStoreDBExecutionContext(MySQLExecutionContext):
     """SingleStoreDB SQLAlchemy execution context."""
+
+    def create_server_side_cursor(self) -> Optional[Any]:
+        """Create a server-side cursor for streaming results."""
+        if self.dialect.supports_server_side_cursors:
+            cursor = self._dbapi_connection.cursor()
+            # Configure cursor for server-side operation if supported by driver
+            if hasattr(cursor, 'buffered'):
+                cursor.buffered = False
+            return cursor
+        return None
+
+    def handle_dbapi_exception(self, e: Any) -> Any:
+        """Handle DBAPI exceptions with proper error context."""
+        return super().handle_dbapi_exception(e)
 
 
 class Array(se.Tuple):
@@ -360,16 +377,18 @@ class SingleStoreDBDialect(MySQLDialect):
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = True
     supports_native_decimal = True
+    supports_server_side_cursors = True
     colspecs = util.update_copy(MySQLDialect.colspecs, {BIT: _myconnpyBIT})
 
     statement_compiler = SingleStoreDBCompiler
     ddl_compiler = SingleStoreDBDDLCompiler
     type_compiler = SingleStoreDBTypeCompiler
     preparer = SingleStoreDBIdentifierPreparer
+    execution_ctx_cls = SingleStoreDBExecutionContext
 
     driver = ''
 
-    supports_statement_cache = False
+    supports_statement_cache = supports_statement_cache()
 
     _double_percents = True
 
@@ -386,6 +405,16 @@ class SingleStoreDBDialect(MySQLDialect):
             json_deserializer=json_deserializer or _json_deserializer,
             is_mariadb=False, **kwargs,
         )
+
+        # Apply SQLAlchemy version-specific dialect features
+        dialect_features = get_dialect_features()
+        for feature_name, feature_value in dialect_features.items():
+            if hasattr(self, feature_name):
+                setattr(self, feature_name, feature_value)
+
+        # Enable server-side cursors if supported
+        if has_feature('server_side_cursors'):
+            self.supports_server_side_cursors = True
 
     @classmethod
     def dbapi(cls) -> Any:
@@ -408,7 +437,14 @@ class SingleStoreDBDialect(MySQLDialect):
             self.default_isolation_level = 'READ COMMITTED'
             return
 
-        return MySQLDialect.initialize(self, connection)
+        # Initialize connection pool optimization settings
+        result = MySQLDialect.initialize(self, connection)
+
+        # Configure pool settings based on SingleStore capabilities
+        if hasattr(connection.engine.pool, 'pre_ping'):
+            connection.engine.pool.pre_ping = True
+
+        return result
 
     def create_connect_args(self, url: URL) -> List[Any]:
         from singlestoredb.connection import build_params
@@ -445,6 +481,95 @@ class SingleStoreDBDialect(MySQLDialect):
         if params['host'] == 'singlestore.com':
             return
         dbapi_connection.rollback()
+
+    def _execute_context(
+        self,
+        dialect: Any,
+        constructor: Any,
+        statement: Any,
+        parameters: Any,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Override to handle stream_results execution option."""
+        execution_options = getattr(constructor, 'execution_options', {})
+
+        # Check for stream_results option
+        stream_results = execution_options.get('stream_results', False)
+        if stream_results and self.supports_server_side_cursors:
+            # Enable server-side cursor for streaming
+            kwargs.setdefault('server_side_cursor', True)
+
+        return super()._execute_context(
+            dialect, constructor, statement, parameters, *args, **kwargs,
+        )
+
+    def get_default_isolation_level(self, dbapi_conn: Any) -> str:
+        """Get the default isolation level."""
+        params = getattr(dbapi_conn, 'connection_params', {})
+        if params.get('host') == 'singlestore.com':
+            return 'READ COMMITTED'
+        return super().get_default_isolation_level(dbapi_conn)
+
+    def do_ping(self, dbapi_connection: Any) -> bool:
+        """Ping the database connection to test if it's alive."""
+        try:
+            # Try to execute a simple query
+            cursor = dbapi_connection.cursor()
+            try:
+                cursor.execute('SELECT 1')
+                cursor.fetchone()
+                return True
+            finally:
+                cursor.close()
+        except Exception:
+            return False
+
+    def is_disconnect(
+        self, e: Any, connection: Any, cursor: Any,
+    ) -> bool:
+        """Check if an exception indicates a disconnected state."""
+        if super().is_disconnect(e, connection, cursor):
+            return True
+
+        # SingleStore-specific disconnect error codes
+        error_codes = {
+            2006,  # MySQL server has gone away
+            2013,  # Lost connection to MySQL server during query
+            2055,  # Lost connection to server at '%s', system error: %d
+        }
+
+        if hasattr(e, 'errno') and e.errno in error_codes:
+            return True
+
+        # Check error message for disconnect indicators
+        error_msg = str(e).lower()
+        disconnect_indicators = [
+            'connection lost',
+            'server has gone away',
+            'lost connection',
+            'broken pipe',
+            'connection reset',
+        ]
+
+        return any(indicator in error_msg for indicator in disconnect_indicators)
+
+    def on_connect(self) -> Optional[Callable[[Any], None]]:
+        """Return a callable that will be executed on new connections."""
+        def connect(dbapi_connection: Any) -> None:
+            # Set connection charset
+            cursor = dbapi_connection.cursor()
+            try:
+                cursor.execute("SET NAMES 'utf8mb4'")
+                # Set session variables if needed
+                cursor.execute("SET sql_mode = 'TRADITIONAL'")
+            except Exception:
+                # Ignore errors for cloud connections or unsupported features
+                pass
+            finally:
+                cursor.close()
+
+        return connect
 
 
 dialect: Type[SingleStoreDBDialect] = SingleStoreDBDialect
