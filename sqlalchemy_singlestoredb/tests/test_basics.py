@@ -306,32 +306,30 @@ class TestBasics:
         """Test handling of double percent signs in SQL queries."""
         with test_engine.connect() as conn:
             # Direct to driver, no params
-            out = list(conn.execute(text('select 21 % 2, 101 % 2')))
+            out = list(conn.exec_driver_sql('select 21 % 2, 101 % 2'))
             assert out == [(1, 1)]
 
             # Direct to driver, positional params
-            out = list(conn.execute(text('select 21 %% 2, %s %% 2', (101,))))
+            out = list(conn.exec_driver_sql('select 21 %% 2, %s %% 2', (101,)))
             assert out == [(1, 1)]
 
             # Direct to driver, dict params
             out = list(
-                conn.execute(
-                    text(
-                        'select 21 %% 2, %(num)s %% 2', dict(num=101),
-                    ),
+                conn.exec_driver_sql(
+                    'select 21 %% 2, %(num)s %% 2', dict(num=101),
                 ),
             )
             assert out == [(1, 1)]
 
             with pytest.raises(ValueError):
-                conn.execute(text('select 21 % 2, %(num)s % 2', dict(foo=101)))
+                conn.exec_driver_sql('select 21 % 2, %(num)s % 2', dict(foo=101))
 
             # Direct to driver, no params (with dummy param)
-            out = list(conn.execute(text('select 21 %% 2, 101 %% 2', dict(foo=100))))
+            out = list(conn.exec_driver_sql('select 21 %% 2, 101 %% 2', dict(foo=100)))
             assert out == [(1, 1)]
 
             with pytest.raises(ValueError):
-                conn.execute(text('select 21 % 2, 101 % 2', dict(foo=100)))
+                conn.exec_driver_sql('select 21 % 2, 101 % 2', dict(foo=100))
 
             # Text clause, no params
             out = list(conn.execute(sa.text('select 21 % 2, 101 % 2')))
