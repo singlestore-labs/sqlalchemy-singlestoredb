@@ -172,16 +172,17 @@ class TestIntegrationFeatures:
         """Test VECTOR type basic functionality (if supported by SingleStore)."""
         try:
             with test_engine.connect() as conn:
-                # Try to create table with VECTOR column
-                conn.execute(
-                    text("""
-                    CREATE TABLE IF NOT EXISTS test_vector_table (
-                        id INT PRIMARY KEY,
-                        embedding VECTOR(128, F32),
-                        description VARCHAR(255)
+                with conn.begin():
+                    # Try to create table with VECTOR column
+                    conn.execute(
+                        text("""
+                        CREATE TABLE IF NOT EXISTS test_vector_table (
+                            id INT PRIMARY KEY,
+                            embedding VECTOR(128, F32),
+                            description VARCHAR(255)
+                        )
+                    """),
                     )
-                """),
-                )
 
                 # If table creation succeeded, test basic operations
                 # Note: We can't easily insert vector data without proper driver support,
@@ -213,19 +214,20 @@ class TestIntegrationFeatures:
         """Test SHARD KEY and SORT KEY DDL compilation."""
         try:
             with test_engine.connect() as conn:
-                # Test SHARD KEY syntax
-                conn.execute(
-                    text("""
-                    CREATE TABLE IF NOT EXISTS test_shard_table (
-                        id INT,
-                        user_id INT,
-                        created_at TIMESTAMP,
-                        data VARCHAR(255),
-                        SHARD KEY (user_id),
-                        SORT KEY (created_at)
+                with conn.begin():
+                    # Test SHARD KEY syntax
+                    conn.execute(
+                        text("""
+                        CREATE TABLE IF NOT EXISTS test_shard_table (
+                            id INT,
+                            user_id INT,
+                            created_at TIMESTAMP,
+                            data VARCHAR(255),
+                            SHARD KEY (user_id),
+                            SORT KEY (created_at)
+                        )
+                    """),
                     )
-                """),
-                )
 
                 # If successful, verify table structure
                 result = conn.execute(

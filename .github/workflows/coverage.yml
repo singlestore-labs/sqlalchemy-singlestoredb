@@ -37,15 +37,16 @@ jobs:
           pip install -r requirements.txt
           pip install -r test-requirements.txt
 
-      - name: Install SingleStore package
+      - name: Install SingleStore package and SQLAlchemy 2.0.x
         run: |
+          pip install 'sqlalchemy~=2.0.0'
           pip install .
 
       - name: Run MySQL protocol tests
         run: |
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
-          COVERAGE_FILE: "coverage-mysql.cov"
+          COVERAGE_FILE: "coverage-mysql-2-0.cov"
           SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
@@ -61,9 +62,21 @@ jobs:
           # be applied to the above URL.
           SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3307"
 
+      - name: Install SingleStore package and SQLAlchemy 1.4.x
+        run: |
+          pip install 'sqlalchemy~=1.4.0'
+
+      - name: Run MySQL protocol tests
+        run: |
+          pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+        env:
+          COVERAGE_FILE: "coverage-mysql-1-4.cov"
+          SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
+          SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
+
       - name: Generate report
         run: |
-          coverage combine coverage-mysql.cov coverage-http.cov
+          coverage combine coverage-mysql-2-0.cov coverage-mysql-1-4.cov coverage-http.cov
           coverage report
           coverage xml
           coverage html

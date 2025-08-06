@@ -239,19 +239,19 @@ def clean_tables(
 
     # After the test, drop only tables created by this test (with our prefix)
     with test_engine.connect() as conn:
-        result = conn.execute(
-            text(
-                'SELECT table_name FROM information_schema.tables '
-                "WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' "
-                f"AND table_name LIKE '{table_name_prefix}%'",
-            ),
-        )
-        current_tables = {row[0] for row in result}
+        with conn.begin():
+            result = conn.execute(
+                text(
+                    'SELECT table_name FROM information_schema.tables '
+                    "WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' "
+                    f"AND table_name LIKE '{table_name_prefix}%'",
+                ),
+            )
+            current_tables = {row[0] for row in result}
 
-        # Drop only newly created tables (those not in existing_tables)
-        new_tables = current_tables - existing_tables
-        for table in new_tables:
-            with conn.begin():
+            # Drop only newly created tables (those not in existing_tables)
+            new_tables = current_tables - existing_tables
+            for table in new_tables:
                 conn.execute(text(f'DROP TABLE IF EXISTS {table}'))
 
 
