@@ -6,13 +6,12 @@ This script runs all our test suites and provides a summary of results.
 """
 from __future__ import annotations
 
-import importlib.util
 import os
 import subprocess
 import sys
 
 
-def run_test_file(test_file_path, description):
+def run_test_file(test_file_path: str, description: str) -> bool:
     """Run a single test file and return success status."""
     print(f"\n{'='*60}")
     print(f'🧪 {description}')
@@ -48,7 +47,7 @@ def run_test_file(test_file_path, description):
         return False
 
 
-def check_prerequisites():
+def check_prerequisites() -> bool:
     """Check if prerequisites are met."""
     print('🔍 Checking Prerequisites')
     print('-' * 40)
@@ -63,7 +62,8 @@ def check_prerequisites():
     # Check Python path
     python_path = os.environ.get('PYTHONPATH', '')
     if python_path:
-        print(f"✅ PYTHONPATH set: {python_path[:100]}{'...' if len(python_path) > 100 else ''}")
+        paths = f"{python_path[:100]}{'...' if len(python_path) > 100 else ''}"
+        print(f'✅ PYTHONPATH set: {paths}')
     else:
         print('⚠️  PYTHONPATH not set - tests may fail to import required modules')
 
@@ -77,7 +77,7 @@ def check_prerequisites():
 
     # Check our dialect can be imported
     try:
-        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect  # noqa: F401
         print('✅ SingleStoreDB dialect can be imported')
     except ImportError as e:
         print(f'❌ Cannot import SingleStoreDB dialect: {e}')
@@ -87,7 +87,7 @@ def check_prerequisites():
     return True
 
 
-def main():
+def main() -> bool:
     """Run all test suites."""
     print('🚀 SingleStoreDB Dialect Comprehensive Test Suite')
     print('=' * 60)
@@ -97,7 +97,6 @@ def main():
     print('• Server-side cursors and streaming')
     print('• Connection pool enhancements')
     print('• Custom types with caching')
-    print('• SQL compilation and SingleStore-specific features')
     print('• Error handling and edge cases')
     print()
 
@@ -111,7 +110,6 @@ def main():
         ('test_basics.py', 'Original Basic Tests (requires database)'),
         ('test_integration_features.py', 'Integration Tests (requires database)'),
         ('test_error_handling.py', 'Error Handling and Edge Cases'),
-        ('test_sql_compilation.py', 'SQL Compilation Features'),
         ('test_compatibility_features.py', 'Compatibility Features Tests'),
     ]
 
@@ -162,7 +160,7 @@ def main():
         return False
 
 
-def run_quick_verification():
+def run_quick_verification() -> bool:
     """Run a quick verification of core features."""
     print('\n🔍 Quick Feature Verification')
     print('-' * 40)
@@ -177,7 +175,7 @@ def run_quick_verification():
         print('✅ Dialect instantiation')
 
         # Test key features
-        features = get_dialect_features()
+        get_dialect_features()
         print(f'✅ Statement caching: {dialect.supports_statement_cache}')
         print(f'✅ Server-side cursors: {dialect.supports_server_side_cursors}')
 

@@ -27,7 +27,7 @@ class JSON(mybase.JSON):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.pop('collate', None)
-        mybase.JSON(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def result_processor(self, dialect: Any, coltype: Any) -> Any:
         string_process = self._str_impl.result_processor(dialect, coltype)
