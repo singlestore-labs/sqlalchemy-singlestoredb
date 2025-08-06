@@ -1,4 +1,6 @@
 ## Editor temporary/working/backup files
+.hypothesis
+.serena
 .claude
 CLAUDE.md
 dev-docs
