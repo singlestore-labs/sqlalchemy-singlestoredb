@@ -22,13 +22,13 @@ def get_connection_url() -> str:
     """Get the SingleStoreDB connection URL from environment variable."""
     url = os.environ.get('SINGLESTOREDB_URL')
     if not url:
-        pytest.skip(
+        raise ValueError(
             'Environment variable SINGLESTOREDB_URL is not set. '
             'Please set it to run the tests.',
         )
-        # This line is never reached due to pytest.skip, but helps mypy
-        return ''
-    if not url.startswith('singlestoredb://'):
+    if url.startswith('http://') or url.startswith('https://'):
+        return 'singlestoredb+' + url
+    elif not url.startswith('singlestoredb://'):
         return 'singlestoredb://' + url
     return url
 
