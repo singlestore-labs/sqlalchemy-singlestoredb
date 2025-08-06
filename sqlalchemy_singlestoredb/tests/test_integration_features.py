@@ -86,13 +86,13 @@ class TestIntegrationFeatures:
             )
 
             # Insert test data
-            with conn.begin():
-                conn.execute(
-                    text("""
-                    INSERT INTO test_cache_table (id, name, value)
-                    VALUES (1, 'test1', 100), (2, 'test2', 200)
-                """),
-                )
+            conn.execute(
+                text("""
+                INSERT INTO test_cache_table (id, name, value)
+                VALUES (1, 'test1', 100), (2, 'test2', 200)
+            """),
+            )
+            conn.commit()
 
             # Execute the same query multiple times (should use caching)
             query = text('SELECT * FROM test_cache_table WHERE value > :min_val')
@@ -136,20 +136,20 @@ class TestIntegrationFeatures:
             )
 
             # Insert JSON data (test deserialization)
-            with conn.begin():
-                conn.execute(
-                    text("""
-                    INSERT INTO test_json_table (id, data, metadata)
-                    VALUES (:id, :data, :metadata)
-                """), {
-                        'id': 1,
-                        'data': (
-                            '{"name": "test", "values": [1, 2, 3], '
-                            '"nested": {"key": "value"}}'
-                        ),
-                        'metadata': '{"created": "2024-01-01", "version": 1}',
-                    },
-                )
+            conn.execute(
+                text("""
+                INSERT INTO test_json_table (id, data, metadata)
+                VALUES (:id, :data, :metadata)
+            """), {
+                    'id': 1,
+                    'data': (
+                        '{"name": "test", "values": [1, 2, 3], '
+                        '"nested": {"key": "value"}}'
+                    ),
+                    'metadata': '{"created": "2024-01-01", "version": 1}',
+                },
+            )
+            conn.commit()
 
             # Query and verify JSON data
             query = 'SELECT data, metadata FROM test_json_table WHERE id = 1'
@@ -259,14 +259,14 @@ class TestIntegrationFeatures:
             )
 
             # Insert multiple rows
-            with conn.begin():
-                for i in range(10):
-                    conn.execute(
-                        text("""
-                        INSERT IGNORE INTO test_cache_table (id, name, value)
-                        VALUES (:id, :name, :value)
-                    """), {'id': i, 'name': f'test{i}', 'value': i * 10},
-                    )
+            for i in range(10):
+                conn.execute(
+                    text("""
+                    INSERT IGNORE INTO test_cache_table (id, name, value)
+                    VALUES (:id, :name, :value)
+                """), {'id': i, 'name': f'test{i}', 'value': i * 10},
+                )
+            conn.commit()
 
             # Test with stream_results execution option
             query = text('SELECT * FROM test_cache_table ORDER BY id')
