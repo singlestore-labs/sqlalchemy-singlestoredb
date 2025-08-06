@@ -68,7 +68,7 @@ class TestBasics:
     def test_connection(self, test_engine: Engine, test_database: str) -> None:
         """Test that we can connect to the test database."""
         with test_engine.connect() as conn:
-            dbs = [x[0] for x in list(conn.exec_driver_sql('show databases'))]
+            dbs = [x[0] for x in list(conn.execute(text('show databases')))]
             assert test_database in dbs, f'Database {test_database} not found in {dbs}'
 
     def test_deferred_connection(self, base_connection_url: str) -> None:
@@ -91,11 +91,11 @@ class TestBasics:
             eng = sa.create_engine(f'{scheme}://:@singlestore.com')
             conn = eng.connect()
             with pytest.raises(sa.exc.InterfaceError):
-                conn.exec_driver_sql('show databases')
+                conn.execute(text('show databases'))
 
             # Restore URL and test connection works
             os.environ['SINGLESTOREDB_URL'] = url
-            out = conn.exec_driver_sql('show databases')
+            out = conn.execute(text('show databases'))
             assert len(out.fetchall()) > 0
             conn.close()
         finally:
@@ -306,30 +306,32 @@ class TestBasics:
         """Test handling of double percent signs in SQL queries."""
         with test_engine.connect() as conn:
             # Direct to driver, no params
-            out = list(conn.exec_driver_sql('select 21 % 2, 101 % 2'))
+            out = list(conn.execute(text('select 21 % 2, 101 % 2')))
             assert out == [(1, 1)]
 
             # Direct to driver, positional params
-            out = list(conn.exec_driver_sql('select 21 %% 2, %s %% 2', (101,)))
+            out = list(conn.execute(text('select 21 %% 2, %s %% 2', (101,))))
             assert out == [(1, 1)]
 
             # Direct to driver, dict params
             out = list(
-                conn.exec_driver_sql(
-                    'select 21 %% 2, %(num)s %% 2', dict(num=101),
+                conn.execute(
+                    text(
+                        'select 21 %% 2, %(num)s %% 2', dict(num=101),
+                    ),
                 ),
             )
             assert out == [(1, 1)]
 
             with pytest.raises(ValueError):
-                conn.exec_driver_sql('select 21 % 2, %(num)s % 2', dict(foo=101))
+                conn.execute(text('select 21 % 2, %(num)s % 2', dict(foo=101)))
 
             # Direct to driver, no params (with dummy param)
-            out = list(conn.exec_driver_sql('select 21 %% 2, 101 %% 2', dict(foo=100)))
+            out = list(conn.execute(text('select 21 %% 2, 101 %% 2', dict(foo=100))))
             assert out == [(1, 1)]
 
             with pytest.raises(ValueError):
-                conn.exec_driver_sql('select 21 % 2, 101 % 2', dict(foo=100))
+                conn.execute(text('select 21 % 2, 101 % 2', dict(foo=100)))
 
             # Text clause, no params
             out = list(conn.execute(sa.text('select 21 % 2, 101 % 2')))
