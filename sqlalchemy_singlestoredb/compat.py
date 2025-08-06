@@ -11,7 +11,6 @@ from typing import Optional
 from typing import Type
 from typing import TYPE_CHECKING
 
-import sqlalchemy
 from sqlalchemy import __version__ as sqlalchemy_version
 
 # Version detection
@@ -54,7 +53,7 @@ else:
 
 def get_sqlalchemy_version() -> tuple[int, int]:
     """Get the current SQLAlchemy version as a tuple (major, minor)."""
-    return SQLALCHEMY_VERSION
+    return (SQLALCHEMY_VERSION[0], SQLALCHEMY_VERSION[1])
 
 
 def has_feature(feature_name: str) -> bool:

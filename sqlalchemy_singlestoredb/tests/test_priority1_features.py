@@ -6,8 +6,6 @@ This test verifies the core features work without requiring database connection.
 """
 from __future__ import annotations
 
-import os
-
 import sqlalchemy as sa
 
 from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
@@ -20,7 +18,8 @@ from sqlalchemy_singlestoredb.compat import supports_statement_cache
 from sqlalchemy_singlestoredb.dtypes import JSON
 from sqlalchemy_singlestoredb.dtypes import VECTOR
 
-def test_version_detection():
+
+def test_version_detection() -> None:
     """Test SQLAlchemy version detection."""
     print('=== SQLAlchemy Version Detection ===')
     print(f'SQLAlchemy version: {sa.__version__}')
@@ -30,11 +29,13 @@ def test_version_detection():
 
     # Verify version detection is correct
     actual_version = tuple(int(x) for x in sa.__version__.split('.')[:2])
-    assert SQLALCHEMY_VERSION == actual_version, f'Version mismatch: {SQLALCHEMY_VERSION} != {actual_version}'
+    msg = f'Version mismatch: {SQLALCHEMY_VERSION} != {actual_version}'
+    assert SQLALCHEMY_VERSION == actual_version, msg
     print('✅ Version detection working correctly')
     print()
 
-def test_dialect_features():
+
+def test_dialect_features() -> None:
     """Test dialect feature configuration."""
     print('=== Dialect Features ===')
 
@@ -45,8 +46,9 @@ def test_dialect_features():
     print(f'Server-side cursors supported: {dialect.supports_server_side_cursors}')
 
     # Verify key features are enabled
-    assert dialect.supports_statement_cache == True, 'Statement caching should be enabled'
-    assert dialect.supports_server_side_cursors == True, 'Server-side cursors should be enabled'
+    assert dialect.supports_statement_cache is True, 'Statement caching should be enabled'
+    msg = 'Server-side cursors should be enabled'
+    assert dialect.supports_server_side_cursors is True, msg
 
     print('Available dialect features:')
     for feature, value in features.items():
@@ -55,7 +57,8 @@ def test_dialect_features():
     print('✅ Dialect features configured correctly')
     print()
 
-def test_custom_types():
+
+def test_custom_types() -> None:
     """Test custom type instantiation and basic properties."""
     print('=== Custom Types ===')
 
@@ -77,7 +80,8 @@ def test_custom_types():
     print('✅ Custom types created with cache support')
     print()
 
-def test_connection_pool_methods():
+
+def test_connection_pool_methods() -> None:
     """Test connection pool enhancement methods."""
     print('=== Connection Pool Methods ===')
 
@@ -105,7 +109,8 @@ def test_connection_pool_methods():
     print('✅ All connection pool methods available')
     print()
 
-def test_feature_flags():
+
+def test_feature_flags() -> None:
     """Test feature flag functions."""
     print('=== Feature Flags ===')
 
@@ -126,7 +131,8 @@ def test_feature_flags():
     print('✅ Feature flags working correctly')
     print()
 
-def test_compat_module():
+
+def test_compat_module() -> None:
     """Test compatibility module functionality."""
     print('=== Compatibility Module ===')
 
@@ -135,7 +141,6 @@ def test_compat_module():
         get_insert_class,
         get_update_class,
         get_delete_class,
-        make_cache_key,
         HAS_CACHE_KEY,
     )
 
@@ -159,7 +164,8 @@ def test_compat_module():
     print('✅ Compatibility module working correctly')
     print()
 
-def main():
+
+def main() -> bool:
     """Run all tests."""
     print('🧪 Testing Priority 1 Features for SingleStoreDB Dialect')
     print('=' * 60)
@@ -192,6 +198,7 @@ def main():
         return False
 
     return True
+
 
 if __name__ == '__main__':
     success = main()

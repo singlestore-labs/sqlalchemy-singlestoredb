@@ -46,6 +46,7 @@ from .dtypes import VECTOR
 class CaseInsensitiveDict(Dict[str, Any]):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__()
         data = dict(*args, **kwargs)
         self._data = dict((k.lower(), k) for k in data)
         for k in data:
