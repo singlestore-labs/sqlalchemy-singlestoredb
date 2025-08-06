@@ -96,7 +96,7 @@ def test_connection(
 ) -> Generator[singlestoredb.Connection, None, None]:
     """Create a raw singlestoredb connection to the test database."""
     # Get the URL from the engine
-    url = str(test_engine.url)
+    url = test_engine.url.render_as_string(hide_password=False)
     connection = singlestoredb.connect(url)
 
     yield connection
