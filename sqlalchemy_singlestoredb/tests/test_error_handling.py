@@ -6,7 +6,6 @@ Tests error conditions, edge cases, and robustness of our Priority 1 features.
 """
 from __future__ import annotations
 
-import os
 import unittest
 from unittest.mock import Mock
 from unittest.mock import patch
@@ -20,20 +19,10 @@ from sqlalchemy_singlestoredb.compat import HAS_CACHE_KEY
 from sqlalchemy_singlestoredb.compat import warn_version_compatibility
 from sqlalchemy_singlestoredb.dtypes import JSON
 from sqlalchemy_singlestoredb.dtypes import VECTOR
+from sqlalchemy_singlestoredb.tests.conftest import get_connection_url
+
+
 # Import our dialect components
-
-
-def get_connection_url() -> str:
-    """Get the SingleStoreDB connection URL from environment variable."""
-    url = os.environ.get('SINGLESTOREDB_URL')
-    if not url:
-        raise EnvironmentError(
-            'Environment variable SINGLESTOREDB_URL is not set. '
-            'Please set it to run the tests.',
-        )
-    if not url.startswith('singlestoredb://'):
-        return 'singlestoredb://' + url
-    return url
 
 
 class TestErrorHandling(unittest.TestCase):

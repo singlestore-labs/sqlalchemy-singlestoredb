@@ -74,25 +74,26 @@ class TestIntegrationFeatures:
     ) -> None:
         """Test statement caching works with real queries."""
         with test_engine.connect() as conn:
-            # Create a simple test table
-            conn.execute(
-                text("""
-                CREATE TABLE IF NOT EXISTS test_cache_table (
-                    id INT PRIMARY KEY,
-                    name VARCHAR(100),
-                    value INT
-                )
-            """),
-            )
 
-            # Insert test data
-            conn.execute(
-                text("""
-                INSERT INTO test_cache_table (id, name, value)
-                VALUES (1, 'test1', 100), (2, 'test2', 200)
-            """),
-            )
-            conn.commit()
+            with conn.begin():
+                # Create a simple test table
+                conn.execute(
+                    text("""
+                    CREATE TABLE IF NOT EXISTS test_cache_table (
+                        id INT PRIMARY KEY,
+                        name VARCHAR(100),
+                        value INT
+                    )
+                """),
+                )
+
+                # Insert test data
+                conn.execute(
+                    text("""
+                    INSERT INTO test_cache_table (id, name, value)
+                    VALUES (1, 'test1', 100), (2, 'test2', 200)
+                """),
+                )
 
             # Execute the same query multiple times (should use caching)
             query = text('SELECT * FROM test_cache_table WHERE value > :min_val')
@@ -124,32 +125,33 @@ class TestIntegrationFeatures:
     ) -> None:
         """Test our enhanced JSON type works with real data."""
         with test_engine.connect() as conn:
-            # Create table with JSON column
-            conn.execute(
-                text("""
-                CREATE TABLE IF NOT EXISTS test_json_table (
-                    id INT PRIMARY KEY,
-                    data JSON,
-                    metadata JSON
-                )
-            """),
-            )
 
-            # Insert JSON data (test deserialization)
-            conn.execute(
-                text("""
-                INSERT INTO test_json_table (id, data, metadata)
-                VALUES (:id, :data, :metadata)
-            """), {
-                    'id': 1,
-                    'data': (
-                        '{"name": "test", "values": [1, 2, 3], '
-                        '"nested": {"key": "value"}}'
-                    ),
-                    'metadata': '{"created": "2024-01-01", "version": 1}',
-                },
-            )
-            conn.commit()
+            with conn.begin():
+                # Create table with JSON column
+                conn.execute(
+                    text("""
+                    CREATE TABLE IF NOT EXISTS test_json_table (
+                        id INT PRIMARY KEY,
+                        data JSON,
+                        metadata JSON
+                    )
+                """),
+                )
+
+                # Insert JSON data (test deserialization)
+                conn.execute(
+                    text("""
+                    INSERT INTO test_json_table (id, data, metadata)
+                    VALUES (:id, :data, :metadata)
+                """), {
+                        'id': 1,
+                        'data': (
+                            '{"name": "test", "values": [1, 2, 3], '
+                            '"nested": {"key": "value"}}'
+                        ),
+                        'metadata': '{"created": "2024-01-01", "version": 1}',
+                    },
+                )
 
             # Query and verify JSON data
             query = 'SELECT data, metadata FROM test_json_table WHERE id = 1'
@@ -247,26 +249,27 @@ class TestIntegrationFeatures:
     ) -> None:
         """Test stream_results execution option."""
         with test_engine.connect() as conn:
-            # Create test data
-            conn.execute(
-                text("""
-                CREATE TABLE IF NOT EXISTS test_cache_table (
-                    id INT PRIMARY KEY,
-                    name VARCHAR(100),
-                    value INT
-                )
-            """),
-            )
 
-            # Insert multiple rows
-            for i in range(10):
+            with conn.begin():
+                # Create test data
                 conn.execute(
                     text("""
-                    INSERT IGNORE INTO test_cache_table (id, name, value)
-                    VALUES (:id, :name, :value)
-                """), {'id': i, 'name': f'test{i}', 'value': i * 10},
+                    CREATE TABLE IF NOT EXISTS test_cache_table (
+                        id INT PRIMARY KEY,
+                        name VARCHAR(100),
+                        value INT
+                    )
+                """),
                 )
-            conn.commit()
+
+                # Insert multiple rows
+                for i in range(10):
+                    conn.execute(
+                        text("""
+                        INSERT IGNORE INTO test_cache_table (id, name, value)
+                        VALUES (:id, :name, :value)
+                    """), {'id': i, 'name': f'test{i}', 'value': i * 10},
+                    )
 
             # Test with stream_results execution option
             query = text('SELECT * FROM test_cache_table ORDER BY id')

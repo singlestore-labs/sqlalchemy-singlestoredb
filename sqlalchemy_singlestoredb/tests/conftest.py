@@ -44,10 +44,11 @@ def base_connection_url() -> str:
     """Get the base connection URL without a specific database."""
     url = get_connection_url()
     # Remove any database name from the URL
-    if '/' in url.split('://', 1)[1]:
-        # Has a database specified
-        parts = url.split('/')
-        return '/'.join(parts[:-1])
+    if '://' in url:
+        if '/' in url.split('://', 1)[1]:
+            # Has a database specified
+            parts = url.split('/')
+            return '/'.join(parts[:-1])
     return url
 
 
