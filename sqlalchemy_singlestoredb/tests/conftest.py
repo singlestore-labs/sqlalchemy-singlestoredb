@@ -132,6 +132,12 @@ def generate_test_db_name() -> str:
     return f'test_sqlalchemy_{random_suffix}'
 
 
+def generate_table_name_prefix() -> str:
+    """Generate a random table name prefix for test isolation."""
+    random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=6))
+    return f'tbl_{random_suffix}_'
+
+
 @pytest.fixture(scope='session')
 def base_connection_url(_docker_server: Optional[Any]) -> str:
     """Get the base connection URL without a specific database."""
@@ -145,9 +151,9 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     return url
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='session')
 def test_database(base_connection_url: str) -> Generator[str, None, None]:
-    """Create a test database with a random name and clean it up after the test."""
+    """Create a single test database for the entire test session."""
     db_name = generate_test_db_name()
 
     # Connect without specifying a database
@@ -158,10 +164,13 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
         with conn.begin():
             conn.execute(text(f'CREATE DATABASE IF NOT EXISTS {db_name}'))
 
-    # Yield the database name for the test to use
+    print(f'Created shared test database: {db_name}')
+
+    # Yield the database name for all tests to use
     yield db_name
 
-    # Cleanup: Drop the test database
+    # Cleanup: Drop the test database at the end of the session
+    print(f'Cleaning up shared test database: {db_name}')
     with engine.connect() as conn:
         with conn.begin():
             conn.execute(text(f'DROP DATABASE IF EXISTS {db_name}'))
@@ -169,19 +178,25 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
     engine.dispose()
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope='session')
 def test_engine(
     base_connection_url: str, test_database: str,
 ) -> Generator[Engine, None, None]:
-    """Create a SQLAlchemy engine connected to the test database."""
+    """Create a SQLAlchemy engine connected to the shared test database."""
     # Create engine with the test database
     test_url = f'{base_connection_url}/{test_database}'
     engine = create_engine(test_url)
 
     yield engine
 
-    # Cleanup: dispose of the engine
+    # Cleanup: dispose of the engine at session end
     engine.dispose()
+
+
+@pytest.fixture(scope='function')
+def table_name_prefix() -> str:
+    """Generate a unique table name prefix for each test."""
+    return generate_table_name_prefix()
 
 
 @pytest.fixture(scope='function')
@@ -205,23 +220,37 @@ def test_connection(
 
 
 @pytest.fixture(scope='function')
-def clean_tables(test_engine: Engine) -> Generator[None, None, None]:
-    """Fixture that cleans up any tables created during the test."""
-    yield
-
-    # After the test, drop all tables in the test database
+def clean_tables(
+    test_engine: Engine, table_name_prefix: str,
+) -> Generator[None, None, None]:
+    """Fixture that cleans up tables created with the test's table prefix."""
+    # Track tables that exist before the test
     with test_engine.connect() as conn:
-        # Get all table names
         result = conn.execute(
             text(
                 'SELECT table_name FROM information_schema.tables '
-                "WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE'",
+                "WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' "
+                f"AND table_name LIKE '{table_name_prefix}%'",
             ),
         )
-        tables = [row[0] for row in result]
+        existing_tables = {row[0] for row in result}
 
-        # Drop each table
-        for table in tables:
+    yield
+
+    # After the test, drop only tables created by this test (with our prefix)
+    with test_engine.connect() as conn:
+        result = conn.execute(
+            text(
+                'SELECT table_name FROM information_schema.tables '
+                "WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE' "
+                f"AND table_name LIKE '{table_name_prefix}%'",
+            ),
+        )
+        current_tables = {row[0] for row in result}
+
+        # Drop only newly created tables (those not in existing_tables)
+        new_tables = current_tables - existing_tables
+        for table in new_tables:
             with conn.begin():
                 conn.execute(text(f'DROP TABLE IF EXISTS {table}'))
 

@@ -32,14 +32,15 @@ class TestDatabaseFixtures:
             assert current_db.startswith('test_sqlalchemy_')
 
     def test_tables_are_cleaned_up(
-        self, test_engine: Engine, clean_tables: None,
+        self, test_engine: Engine, table_name_prefix: str, clean_tables: None,
     ) -> None:
         """Test that tables are automatically cleaned up after the test."""
         metadata = MetaData()
 
-        # Create a test table
+        # Create a test table with unique name
+        table_name = f'{table_name_prefix}cleanup_table'
         Table(
-            'test_cleanup_table',
+            table_name,
             metadata,
             Column('id', Integer, primary_key=True),
             Column('name', String(50)),
@@ -54,7 +55,7 @@ class TestDatabaseFixtures:
                 text(
                     'SELECT COUNT(*) FROM information_schema.tables '
                     'WHERE table_schema = DATABASE() '
-                    "AND table_name = 'test_cleanup_table'",
+                    f"AND table_name = '{table_name}'",
                 ),
             )
             assert result.scalar() == 1
@@ -62,14 +63,15 @@ class TestDatabaseFixtures:
         # The table will be automatically cleaned up after this test
 
     def test_vector_type_with_real_database(
-        self, test_engine: Engine, clean_tables: None,
+        self, test_engine: Engine, table_name_prefix: str, clean_tables: None,
     ) -> None:
         """Test VECTOR type with a real database connection."""
         metadata = MetaData()
 
-        # Create table with VECTOR column
+        # Create table with VECTOR column using unique name
+        table_name = f'{table_name_prefix}vector'
         Table(
-            'test_vector',
+            table_name,
             metadata,
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
@@ -83,7 +85,7 @@ class TestDatabaseFixtures:
             with test_engine.connect() as conn:
                 result = conn.execute(
                     text(
-                        'SHOW CREATE TABLE test_vector',
+                        f'SHOW CREATE TABLE {table_name}',
                     ),
                 )
                 create_statement = result.fetchone()[1]
@@ -94,14 +96,15 @@ class TestDatabaseFixtures:
             pytest.skip(f'VECTOR type not supported: {e}')
 
     def test_json_type_with_real_database(
-        self, test_engine: Engine, clean_tables: None,
+        self, test_engine: Engine, table_name_prefix: str, clean_tables: None,
     ) -> None:
         """Test JSON type with a real database connection."""
         metadata = MetaData()
 
-        # Create table with JSON column
+        # Create table with JSON column using unique name
+        table_name = f'{table_name_prefix}json'
         json_table = Table(
-            'test_json',
+            table_name,
             metadata,
             Column('id', Integer, primary_key=True),
             Column('data', JSON),
@@ -132,17 +135,19 @@ class TestDatabaseFixtures:
         assert test_database.startswith('test_sqlalchemy_')
         assert len(test_database) == len('test_sqlalchemy_') + 8  # 8 random chars
 
-    @pytest.mark.parametrize('table_name', ['users', 'products', 'orders'])
+    @pytest.mark.parametrize('base_table_name', ['users', 'products', 'orders'])
     def test_parametrized_with_database(
         self,
         test_engine: Engine,
+        table_name_prefix: str,
         clean_tables: None,
-        table_name: str,
+        base_table_name: str,
     ) -> None:
         """Test that parametrized tests work correctly with database fixtures."""
         metadata = MetaData()
 
-        # Create a table with the parametrized name
+        # Create a table with the parametrized name and unique prefix
+        table_name = f'{table_name_prefix}{base_table_name}'
         Table(
             table_name,
             metadata,
@@ -157,8 +162,8 @@ class TestDatabaseFixtures:
         with test_engine.connect() as conn:
             result = conn.execute(
                 text(
-                    f'SELECT COUNT(*) FROM information_schema.tables '
-                    f'WHERE table_schema = DATABASE() '
+                    'SELECT COUNT(*) FROM information_schema.tables '
+                    'WHERE table_schema = DATABASE() '
                     f"AND table_name = '{table_name}'",
                 ),
             )

@@ -12,20 +12,39 @@ from sqlalchemy.engine import Engine
 
 
 @pytest.fixture(scope='function')
-def test_data_loaded(test_engine: Engine) -> Generator[None, None, None]:
-    """Load test data from test.sql file for tests that need it."""
+def test_data_loaded(
+    test_engine: Engine, table_name_prefix: str,
+) -> Generator[dict[str, str], None, None]:
+    """Load test data from test.sql file with randomized table names."""
     # Get path to test.sql file
     sql_file = os.path.join(os.path.dirname(__file__), 'test.sql')
 
-    # Read and execute test.sql
+    # Read and execute test.sql with table name replacements
     with open(sql_file) as f:
         sql_content = f.read()
+
+    # Create mapping of original table names to randomized names
+    table_mapping = {
+        'data': f'{table_name_prefix}data',
+        'alltypes': f'{table_name_prefix}alltypes',
+    }
+
+    # Replace table names in SQL content
+    modified_sql = sql_content
+    for original_name, new_name in table_mapping.items():
+        # Replace table references in various contexts
+        modified_sql = modified_sql.replace(f'TABLE {original_name}', f'TABLE {new_name}')
+        modified_sql = modified_sql.replace(f'INTO {original_name}', f'INTO {new_name}')
+        modified_sql = modified_sql.replace(f'FROM {original_name}', f'FROM {new_name}')
+        modified_sql = modified_sql.replace(
+            f'TABLE IF NOT EXISTS {original_name}', f'TABLE IF NOT EXISTS {new_name}',
+        )
 
     # Execute the SQL statements
     with test_engine.connect() as conn:
         with conn.begin():
             # Split on COMMIT statements and execute each block
-            statements = sql_content.split('COMMIT;')
+            statements = modified_sql.split('COMMIT;')
             for stmt_block in statements:
                 if stmt_block.strip():
                     # Split individual statements and execute them
@@ -38,7 +57,7 @@ def test_data_loaded(test_engine: Engine) -> Generator[None, None, None]:
                                 # Some statements might fail, continue
                                 pass
 
-    yield
+    yield table_mapping
 
     # Cleanup is handled by clean_tables fixture
 
@@ -86,12 +105,15 @@ class TestBasics:
     def test_alltypes(
         self,
         test_engine: Engine,
-        test_data_loaded: None,
+        test_data_loaded: dict[str, str],
         clean_tables: None,
     ) -> None:
         """Test reflection of all SingleStore data types."""
+        # Get the randomized table name
+        alltypes_table_name = test_data_loaded['alltypes']
+
         meta = sa.MetaData()
-        tbl = sa.Table('alltypes', meta)
+        tbl = sa.Table(alltypes_table_name, meta)
         insp = sa.inspect(test_engine)
         insp.reflect_table(tbl, None)
 
