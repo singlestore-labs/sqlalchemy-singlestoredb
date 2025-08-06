@@ -149,11 +149,11 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     """Get the base connection URL without a specific database."""
     url = get_connection_url(_docker_server)
     # Remove any database name from the URL
-    if '://' in url:
-        if '/' in url.split('://', 1)[1]:
-            # Has a database specified
-            parts = url.split('/')
-            return '/'.join(parts[:-1])
+    # if '://' in url:
+    #     if '/' in url.split('://', 1)[1]:
+    #         # Has a database specified
+    #         parts = url.split('/')
+    #         return '/'.join(parts[:-1])
     return url
 
 
@@ -161,6 +161,11 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
 def test_database(base_connection_url: str) -> Generator[str, None, None]:
     """Create a single test database for the entire test session."""
     db_name = generate_test_db_name()
+
+    # Always use the standard connection URL for database creation
+    if _docker_server_instance is not None:
+        if 'http://' in base_connection_url or 'https://' in base_connection_url:
+            base_connection_url = _docker_server_instance.connection_url
 
     # Connect without specifying a database
     engine = create_engine(base_connection_url)
