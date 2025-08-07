@@ -145,6 +145,15 @@ def generate_table_name_prefix() -> str:
 def test_database(base_connection_url: str) -> Generator[str, None, None]:
     """Create a single test database for the entire test session."""
 
+    # If SINGLESTOREDB_INIT_DB_URL is set, use it to create the database
+    if os.environ.get('SINGLESTOREDB_INIT_DB_URL', '').strip():
+        base_connection_url = os.environ['SINGLESTOREDB_INIT_DB_URL'].strip()
+        base_connection_url = base_connection_url.replace(
+            'singlestoredb://', '',
+        ).replace(
+                'singlestoredb+', '',
+        )
+
     if base_connection_url.startswith('http://') or \
             base_connection_url.startswith('https://'):
         base_connection_url = 'singlestoredb+' + base_connection_url
