@@ -7,11 +7,11 @@ from __future__ import annotations
 
 import os
 import random
-import re
 import string
 from typing import Any
 from typing import Generator
 from typing import Optional
+from urllib.parse import urlparse
 
 import pytest
 import singlestoredb
@@ -113,7 +113,7 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     # First check environment variable
     url = os.environ.get('SINGLESTOREDB_URL', '').strip()
     if url:
-        return url.replace('singlestoredb://', '').replace('singlestoredb+', '')
+        return ensure_standard_url(url)
 
     # If no env var, use Docker server if available
     if _docker_server:
@@ -141,33 +141,88 @@ def generate_table_name_prefix() -> str:
     return f'tbl_{random_suffix}_'
 
 
+def ensure_sqlalchemy_url(url: str) -> str:
+    """
+    Ensure the URL is in the correct format for SQLAlchemy.
+
+    Parameters
+    ----------
+    url : str
+        The connection URL to validate.
+
+    Returns
+    -------
+    str
+        The formatted URL ready for SQLAlchemy.
+    """
+    if url.startswith('http://') or url.startswith('https://'):
+        return 'singlestoredb+' + url
+    if url.startswith('singlestoredb+') or url.startswith('singlestoredb://'):
+        return url
+    return 'singlestoredb://' + url
+
+
+def ensure_standard_url(url: str) -> str:
+    """
+    Ensure the URL is in standard format for SingleStoreDB.
+
+    Parameters
+    ----------
+    url : str
+        The connection URL to validate.
+
+    Returns
+    -------
+    str
+        The formatted URL ready for SingleStoreDB.
+    """
+    return url.replace('singlestoredb://', '').replace('singlestoredb+', '')
+
+
+def get_url_components(url: str) -> tuple[str, str, str]:
+    """
+    Extract components from a SingleStoreDB connection URL.
+
+    Parameters
+    ----------
+    url : str
+        The connection URL to parse.
+
+    Returns
+    -------
+    tuple[str, str, str, str]
+        A tuple containing (base_url, database, query).
+
+    """
+    parts = urlparse(url)
+    return (
+        parts.scheme + '://' + parts.netloc,
+        parts.path.replace('/', ''),
+        parts.query,
+    )
+
+
 @pytest.fixture(scope='session')
 def test_database(base_connection_url: str) -> Generator[str, None, None]:
     """Create a single test database for the entire test session."""
 
     # If SINGLESTOREDB_INIT_DB_URL is set, use it to create the database
+    db_connection_url = base_connection_url
     if os.environ.get('SINGLESTOREDB_INIT_DB_URL', '').strip():
-        base_connection_url = os.environ['SINGLESTOREDB_INIT_DB_URL'].strip()
-        base_connection_url = base_connection_url.replace(
-            'singlestoredb://', '',
-        ).replace(
-                'singlestoredb+', '',
+        db_connection_url = ensure_standard_url(
+            os.environ['SINGLESTOREDB_INIT_DB_URL'].strip(),
         )
 
-    if base_connection_url.startswith('http://') or \
-            base_connection_url.startswith('https://'):
-        base_connection_url = 'singlestoredb+' + base_connection_url
-    else:
-        base_connection_url = 'singlestoredb://' + base_connection_url
+    db_connection_url = ensure_sqlalchemy_url(db_connection_url)
+    base_connection_url = ensure_sqlalchemy_url(base_connection_url)
 
-    engine = create_engine(base_connection_url)
+    engine = create_engine(db_connection_url)
 
     # If the URL specifies a database, use it as-is
     has_database = False
-    m = re.search(r'/(\w+)($|\?)', base_connection_url.split('://')[-1])
-    if m and m.group(1):
+    _, db_name, _ = get_url_components(base_connection_url)
+    if db_name:
         has_database = True
-        db_name = m.group(1)
     else:
         db_name = generate_test_db_name()
 
@@ -198,14 +253,17 @@ def test_engine(
     base_connection_url: str, test_database: str,
 ) -> Generator[Engine, None, None]:
     """Create a SQLAlchemy engine connected to the shared test database."""
-    if base_connection_url.startswith('http://') or \
-            base_connection_url.startswith('https://'):
-        base_connection_url = 'singlestoredb+' + base_connection_url
-    else:
-        base_connection_url = 'singlestoredb://' + base_connection_url
+    base_connection_url = ensure_sqlalchemy_url(base_connection_url)
+    base_url, db_name, query = get_url_components(base_connection_url)
 
     # Create engine with the test database
-    test_url = f'{base_connection_url}/{test_database}'
+    if db_name != test_database:
+        test_url = f'{base_url}/{test_database}'
+        if query:
+            test_url += f'?{query}'
+    else:
+        test_url = f'{base_connection_url}/{test_database}'
+
     engine = create_engine(test_url)
 
     yield engine
@@ -223,7 +281,7 @@ def table_name_prefix() -> str:
 @pytest.fixture(scope='function')
 def test_connection(
     test_engine: Engine,
-) -> Generator[singlestoredb.Connection, None, None]:
+) -> Generator[singlestoredb.connection.Connection, None, None]:
     """Create a raw singlestoredb connection to the test database."""
     # Get the URL from the engine
     url = test_engine.url.render_as_string(hide_password=False)
