@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import random
+import re
 import string
 from typing import Any
 from typing import Generator
@@ -143,7 +144,6 @@ def generate_table_name_prefix() -> str:
 @pytest.fixture(scope='session')
 def test_database(base_connection_url: str) -> Generator[str, None, None]:
     """Create a single test database for the entire test session."""
-    db_name = generate_test_db_name()
 
     if base_connection_url.startswith('http://') or \
             base_connection_url.startswith('https://'):
@@ -153,21 +153,33 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
 
     engine = create_engine(base_connection_url)
 
-    # Create the test database
-    with engine.connect() as conn:
-        with conn.begin():
-            conn.execute(text(f'CREATE DATABASE IF NOT EXISTS {db_name}'))
+    # If the URL specifies a database, use it as-is
+    has_database = False
+    m = re.search(r'/(\w+)($|\?)', base_connection_url.split('://')[-1])
+    if m and m.group(1):
+        has_database = True
+        db_name = m.group(1)
+    else:
+        db_name = generate_test_db_name()
 
-    print(f'Created shared test database: {db_name}')
+    # Create the test database
+    if not has_database:
+        with engine.connect() as conn:
+            with conn.begin():
+                conn.execute(text(f'CREATE DATABASE IF NOT EXISTS {db_name}'))
+        print(f'Created shared test database: {db_name}')
+    else:
+        print(f'Using existing database from connection URL: {db_name}')
 
     # Yield the database name for all tests to use
     yield db_name
 
     # Cleanup: Drop the test database at the end of the session
-    print(f'Cleaning up shared test database: {db_name}')
-    with engine.connect() as conn:
-        with conn.begin():
-            conn.execute(text(f'DROP DATABASE IF EXISTS {db_name}'))
+    if not has_database:
+        print(f'Cleaning up shared test database: {db_name}')
+        with engine.connect() as conn:
+            with conn.begin():
+                conn.execute(text(f'DROP DATABASE IF EXISTS {db_name}'))
 
     engine.dispose()
 
