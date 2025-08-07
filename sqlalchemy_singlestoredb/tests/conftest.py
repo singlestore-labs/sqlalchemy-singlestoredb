@@ -96,7 +96,8 @@ def _docker_server() -> Optional[Any]:
                 print(f'Warning: Failed to stop Docker container: {e}')
 
 
-def get_connection_url(_docker_server: Optional[Any] = None) -> str:
+@pytest.fixture(scope='session')
+def base_connection_url(_docker_server: Optional[Any]) -> str:
     """
     Get the SingleStoreDB connection URL from environment variable or Docker.
 
@@ -109,14 +110,9 @@ def get_connection_url(_docker_server: Optional[Any] = None) -> str:
     str : Connection URL for SingleStoreDB
     """
     # First check environment variable
-    url = os.environ.get('SINGLESTOREDB_URL')
+    url = os.environ.get('SINGLESTOREDB_URL', '').strip()
     if url:
-        # Format the URL properly
-        if url.startswith('http://') or url.startswith('https://'):
-            return 'singlestoredb+' + url
-        elif not url.startswith('singlestoredb://'):
-            return 'singlestoredb://' + url
-        return url
+        return url.replace('singlestoredb://', '').replace('singlestoredb+', '')
 
     # If no env var, use Docker server if available
     if _docker_server:
@@ -145,29 +141,16 @@ def generate_table_name_prefix() -> str:
 
 
 @pytest.fixture(scope='session')
-def base_connection_url(_docker_server: Optional[Any]) -> str:
-    """Get the base connection URL without a specific database."""
-    url = get_connection_url(_docker_server)
-    # Remove any database name from the URL
-    # if '://' in url:
-    #     if '/' in url.split('://', 1)[1]:
-    #         # Has a database specified
-    #         parts = url.split('/')
-    #         return '/'.join(parts[:-1])
-    return url
-
-
-@pytest.fixture(scope='session')
 def test_database(base_connection_url: str) -> Generator[str, None, None]:
     """Create a single test database for the entire test session."""
     db_name = generate_test_db_name()
 
-    # Always use the standard connection URL for database creation
-    if _docker_server_instance is not None:
-        if 'http://' in base_connection_url or 'https://' in base_connection_url:
-            base_connection_url = _docker_server_instance.connection_url
+    if base_connection_url.startswith('http://') or \
+            base_connection_url.startswith('https://'):
+        base_connection_url = 'singlestoredb+' + base_connection_url
+    else:
+        base_connection_url = 'singlestoredb://' + base_connection_url
 
-    # Connect without specifying a database
     engine = create_engine(base_connection_url)
 
     # Create the test database
@@ -194,6 +177,12 @@ def test_engine(
     base_connection_url: str, test_database: str,
 ) -> Generator[Engine, None, None]:
     """Create a SQLAlchemy engine connected to the shared test database."""
+    if base_connection_url.startswith('http://') or \
+            base_connection_url.startswith('https://'):
+        base_connection_url = 'singlestoredb+' + base_connection_url
+    else:
+        base_connection_url = 'singlestoredb://' + base_connection_url
+
     # Create engine with the test database
     test_url = f'{base_connection_url}/{test_database}'
     engine = create_engine(test_url)
