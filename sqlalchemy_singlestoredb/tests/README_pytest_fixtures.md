@@ -6,7 +6,7 @@ This directory contains pytest fixtures that provide isolated test databases and
 
 ### `base_connection_url`
 - **Scope**: session
-- **Purpose**: Provides the base SingleStoreDB connection URL without a specific database
+- **Purpose**: Provides the base SingleStoreDB connection URL
 - **Usage**: Automatically used by other fixtures
 
 ### `test_database`

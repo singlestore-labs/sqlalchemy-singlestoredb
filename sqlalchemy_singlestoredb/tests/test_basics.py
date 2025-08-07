@@ -71,7 +71,7 @@ class TestBasics:
             dbs = [x[0] for x in list(conn.execute(text('show databases')))]
             assert test_database in dbs, f'Database {test_database} not found in {dbs}'
 
-    def test_deferred_connection(self, base_connection_url: str) -> None:
+    def test_deferred_connection(self) -> None:
         """Test deferred connection functionality."""
         # Skip this test if using Docker (no external URL to defer to)
         if not os.environ.get('SINGLESTOREDB_URL'):
