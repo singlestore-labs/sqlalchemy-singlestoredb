@@ -235,8 +235,12 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
     else:
         print(f'Using existing database from connection URL: {db_name}')
 
+    engine.dispose()
+
     # Yield the database name for all tests to use
     yield db_name
+
+    engine = create_engine(db_connection_url)
 
     # Cleanup: Drop the test database at the end of the session
     if not has_database:
@@ -264,6 +268,7 @@ def test_engine(
     else:
         test_url = f'{base_connection_url}/{test_database}'
 
+    print(f'Using engine URL: {test_url}')
     engine = create_engine(test_url)
 
     yield engine
