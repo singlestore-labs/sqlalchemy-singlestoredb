@@ -43,7 +43,7 @@ jobs:
 
       - name: Run MySQL protocol tests
         run: |
-          pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+          pytest -v -s --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-2-0.cov"
           SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
@@ -51,7 +51,7 @@ jobs:
 
       - name: Run HTTP protocol tests
         run: |
-          pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+          pytest -v -s --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
