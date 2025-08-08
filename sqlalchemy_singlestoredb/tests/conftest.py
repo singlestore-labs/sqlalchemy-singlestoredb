@@ -5,8 +5,6 @@ Provides fixtures for database connection management and test isolation.
 """
 from __future__ import annotations
 
-import http.client as http_client
-import logging
 import os
 import random
 import string
@@ -21,15 +19,6 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
-# Enable HTTPConnection debug logging
-http_client.HTTPConnection.debuglevel = 1
-
-# Initialize logging
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
-requests_log = logging.getLogger('requests.packages.urllib3')
-requests_log.setLevel(logging.DEBUG)
-requests_log.propagate = True
 
 # Global variable to store Docker server instance
 _docker_server_instance = None
