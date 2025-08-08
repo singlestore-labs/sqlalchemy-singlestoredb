@@ -113,11 +113,6 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     # First check environment variable
     url = os.environ.get('SINGLESTOREDB_URL', '').strip()
     if url:
-        import base64
-        raise Exception(
-            f'Using SINGLESTOREDB_URL from environment: '
-            f'{base64.b64encode(url.encode("utf-8"))!r}',
-        )
         return ensure_standard_url(url)
 
     # If no env var, use Docker server if available
@@ -240,12 +235,8 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
     else:
         print(f'Using existing database from connection URL: {db_name}')
 
-    engine.dispose()
-
     # Yield the database name for all tests to use
     yield db_name
-
-    engine = create_engine(db_connection_url)
 
     # Cleanup: Drop the test database at the end of the session
     if not has_database:
@@ -269,8 +260,9 @@ def test_engine(
     if query:
         test_url += f'?{query}'
 
-    raise Exception(f'Using engine URL: {test_url}')
+    print(f'Using engine URL: {test_url}')
     engine = create_engine(test_url)
+    print(f'Using engine URL: {engine.url.render_as_string(hide_password=False)}')
 
     yield engine
 
