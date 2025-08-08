@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies
@@ -41,17 +41,9 @@ jobs:
           pip install 'sqlalchemy~=2.0.0'
           pip install .
 
-      - name: Run MySQL protocol tests
-        run: |
-          pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
-        env:
-          COVERAGE_FILE: "coverage-mysql-2-0.cov"
-          SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
-          SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
-
       - name: Run HTTP protocol tests
         run: |
-          pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+          pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests -k alltypes
         env:
           COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
@@ -60,6 +52,14 @@ jobs:
           # used to create the database and the generated database name will
           # be applied to the above URL.
           SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3307"
+
+      - name: Run MySQL protocol tests
+        run: |
+          pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+        env:
+          COVERAGE_FILE: "coverage-mysql-2-0.cov"
+          SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
+          SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Install SingleStore package and SQLAlchemy 1.4.x
         run: |
