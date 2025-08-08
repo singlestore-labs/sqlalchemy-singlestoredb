@@ -113,18 +113,18 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     # First check environment variable
     url = os.environ.get('SINGLESTOREDB_URL', '').strip()
     if url:
-        raise Exception(f'Using SINGLESTOREDB_URL from environment: {url}')
+        import base64
+        raise Exception(
+            f'Using SINGLESTOREDB_URL from environment: '
+            f'{base64.b64encode(url.encode("utf-8"))!r}',
+        )
         return ensure_standard_url(url)
 
     # If no env var, use Docker server if available
     if _docker_server:
         if os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on'):
             # Use Data API connection URL
-            raise Exception(
-                f'Using Docker Data API URL: {_docker_server.http_connection_url}',
-            )
             return _docker_server.http_connection_url
-        raise Exception(f'Using Docker connection URL: {_docker_server.connection_url}')
         return _docker_server.connection_url
 
     # Neither env var nor Docker available
