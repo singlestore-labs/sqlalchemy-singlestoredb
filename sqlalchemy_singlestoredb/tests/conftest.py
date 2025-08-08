@@ -260,15 +260,11 @@ def test_engine(
     base_connection_url = ensure_sqlalchemy_url(base_connection_url)
     base_url, db_name, query = get_url_components(base_connection_url)
 
-    # Create engine with the test database
-    if db_name != test_database:
-        test_url = f'{base_url}/{test_database}'
-        if query:
-            test_url += f'?{query}'
-    else:
-        test_url = f'{base_connection_url}/{test_database}'
+    test_url = f'{base_url}/{test_database}'
+    if query:
+        test_url += f'?{query}'
 
-    print(f'Using engine URL: {test_url}')
+    raise Exception(f'Using engine URL: {test_url}')
     engine = create_engine(test_url)
 
     yield engine
