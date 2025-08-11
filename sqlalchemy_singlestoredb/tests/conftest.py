@@ -249,7 +249,7 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
                 cur.execute(f'DROP DATABASE IF EXISTS {db_name}')
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 def test_engine(
     base_connection_url: str, test_database: str,
 ) -> Generator[Engine, None, None]:
