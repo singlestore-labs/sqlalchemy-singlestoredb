@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import random
+import re
 import string
 from typing import Any
 from typing import Generator
@@ -176,7 +177,7 @@ def ensure_standard_url(url: str) -> str:
     str
         The formatted URL ready for SingleStoreDB.
     """
-    return url.replace('singlestoredb://', '').replace('singlestoredb+', '')
+    return re.sub(r'^(singlestoredb\+|singlestoredb://)', '', url, count=1)
 
 
 def get_url_components(url: str) -> tuple[str, str, str]:
@@ -194,6 +195,8 @@ def get_url_components(url: str) -> tuple[str, str, str]:
         A tuple containing (base_url, database, query).
 
     """
+    if '://' not in url:
+        url = 'singlestoredb://' + url
     parts = urlparse(url)
     return (
         parts.scheme + '://' + parts.netloc,
@@ -213,11 +216,10 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
             os.environ['SINGLESTOREDB_INIT_DB_URL'].strip(),
         )
 
-    db_connection_url = ensure_sqlalchemy_url(db_connection_url)
-    base_connection_url = ensure_sqlalchemy_url(base_connection_url)
+    db_connection_url = ensure_standard_url(db_connection_url)
+    base_connection_url = ensure_standard_url(base_connection_url)
 
-    print(f'Using base connection URL: {base_connection_url} for database creation')
-    engine = create_engine(db_connection_url)
+    print(f'Using base connection URL: {db_connection_url} for database creation')
 
     # If the URL specifies a database, use it as-is
     has_database = False
@@ -229,9 +231,9 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
 
     # Create the test database
     if not has_database:
-        with engine.connect() as conn:
-            with conn.begin():
-                conn.execute(text(f'CREATE DATABASE IF NOT EXISTS {db_name}'))
+        with singlestoredb.connect(db_connection_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f'CREATE DATABASE IF NOT EXISTS {db_name}')
         print(f'Created shared test database: {db_name}')
     else:
         print(f'Using existing database from connection URL: {db_name}')
@@ -242,11 +244,9 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
     # Cleanup: Drop the test database at the end of the session
     if not has_database:
         print(f'Cleaning up shared test database: {db_name}')
-        with engine.connect() as conn:
-            with conn.begin():
-                conn.execute(text(f'DROP DATABASE IF EXISTS {db_name}'))
-
-    engine.dispose()
+        with singlestoredb.connect(db_connection_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute(f'DROP DATABASE IF EXISTS {db_name}')
 
 
 @pytest.fixture(scope='session')
@@ -283,6 +283,7 @@ def test_connection(
     """Create a raw singlestoredb connection to the test database."""
     # Get the URL from the engine
     url = test_engine.url.render_as_string(hide_password=False)
+
     connection = singlestoredb.connect(url)
 
     yield connection
