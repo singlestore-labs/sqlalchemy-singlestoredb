@@ -76,7 +76,6 @@ jobs:
 
       - name: Generate report
         run: |
-#         coverage combine coverage-mysql-2-0.cov coverage-mysql-1-4.cov coverage-http.cov
           coverage combine coverage-mysql-2-0.cov coverage-mysql-1-4.cov
           coverage report
           coverage xml
