@@ -52,6 +52,7 @@ jobs:
           # used to create the database and the generated database name will
           # be applied to the above URL.
           SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3307"
+          SINGLESTOREDB_DEBUG_QUERIES: "1"
 
       - name: Run MySQL protocol tests
         run: |
