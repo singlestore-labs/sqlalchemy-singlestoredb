@@ -57,6 +57,12 @@ def test_data_loaded(
                                 # Some statements might fail, continue
                                 pass
 
+    print(f'URL for test data: {test_engine.url.render_as_string(hide_password=False)}')
+    with test_engine.connect() as conn:
+        print('Databases available after loading test data:')
+        for row in conn.execute(text('SHOW DATABASES')):
+            print('   *', *row)
+
     yield table_mapping
 
     # Cleanup is handled by clean_tables fixture
