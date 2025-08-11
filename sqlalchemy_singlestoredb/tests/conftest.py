@@ -216,6 +216,7 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
     db_connection_url = ensure_sqlalchemy_url(db_connection_url)
     base_connection_url = ensure_sqlalchemy_url(base_connection_url)
 
+    print(f'Using base connection URL: {base_connection_url} for database creation')
     engine = create_engine(db_connection_url)
 
     # If the URL specifies a database, use it as-is
@@ -262,7 +263,6 @@ def test_engine(
 
     print(f'Using engine URL: {test_url}')
     engine = create_engine(test_url)
-    print(f'Using engine URL: {engine.url.render_as_string(hide_password=False)}')
 
     yield engine
 
