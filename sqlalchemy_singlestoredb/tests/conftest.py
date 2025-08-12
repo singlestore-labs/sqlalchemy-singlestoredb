@@ -46,11 +46,21 @@ def _docker_server() -> Optional[Any]:
         import time
 
         print('\nStarting SingleStoreDB Docker container for testing...')
+
+        url = os.environ.get('SINGLESTOREDB_URL')
+
         _docker_server_instance = docker.start()
+
+        if url is None:
+            del os.environ['SINGLESTOREDB_URL']
+        elif url:
+            os.environ['SINGLESTOREDB_URL'] = url
+
         if os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on'):
             conn_url = _docker_server_instance.http_connection_url
         else:
             conn_url = _docker_server_instance.connection_url
+
         print(f'Docker container started. Connection URL: {conn_url}')
 
         # Wait for the container to be ready by testing the connection
@@ -114,13 +124,22 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     # First check environment variable
     url = os.environ.get('SINGLESTOREDB_URL', '').strip()
     if url:
+        print(f'Using SINGLESTOREDB_URL from environment: {url}')
         return ensure_standard_url(url)
 
     # If no env var, use Docker server if available
     if _docker_server:
         if os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on'):
             # Use Data API connection URL
+            print(
+                'Using SingleStoreDB Docker container with Data API connection URL: ' +
+                _docker_server.http_connection_url,
+            )
             return _docker_server.http_connection_url
+        print(
+            'Using SingleStoreDB Docker container with direct connection URL: ' +
+            _docker_server.connection_url,
+        )
         return _docker_server.connection_url
 
     # Neither env var nor Docker available
