@@ -7,7 +7,6 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Type
 from urllib.parse import quote
 from urllib.parse import quote_plus
@@ -25,7 +24,6 @@ from sqlalchemy.dialects.mysql.base import MySQLIdentifierPreparer
 from sqlalchemy.dialects.mysql.base import MySQLTypeCompiler
 from sqlalchemy.dialects.mysql.base import SET  # noqa: F401
 from sqlalchemy.dialects.mysql.base import TEXT  # noqa: F401
-from sqlalchemy.engine import Connection
 from sqlalchemy.engine.url import URL
 from sqlalchemy.sql import sqltypes
 from sqlalchemy.sql.compiler import BIND_PARAMS
@@ -448,24 +446,6 @@ class SingleStoreDBDialect(MySQLDialect):
             connection.engine.pool.pre_ping = True
 
         return result
-
-    def _get_server_version_info(
-        self, connection: Connection,
-    ) -> Tuple[int, ...]:
-        # get database server version info explicitly over the wire
-        # to avoid proxy servers like MaxScale getting in the
-        # way with their own values, see #4205
-        dbapi_con = connection.connection
-        cursor = dbapi_con.cursor()
-        # cursor.execute("SELECT VERSION()")
-        cursor.execute("SELECT '5.7.32'")
-
-        val = cursor.fetchone()[0]
-        cursor.close()
-        if isinstance(val, bytes):
-            val = val.decode()
-
-        return self._parse_server_version(val)
 
     def create_connect_args(self, url: URL) -> List[Any]:
         from singlestoredb.connection import build_params
