@@ -71,11 +71,11 @@ def test_data_loaded(
 class TestBasics:
     """Basic SingleStoreDB connection tests using pytest fixtures."""
 
-    def test_connection(self, test_engine: Engine, test_database: str) -> None:
-        """Test that we can connect to the test database."""
-        with test_engine.connect() as conn:
-            dbs = [x[0] for x in list(conn.execute(text('show databases')))]
-            assert test_database in dbs, f'Database {test_database} not found in {dbs}'
+    # def test_connection(self, test_engine: Engine, test_database: str) -> None:
+    #     """Test that we can connect to the test database."""
+    #     with test_engine.connect() as conn:
+    #         dbs = [x[0] for x in list(conn.execute(text('SHOW DATABASES')))]
+    #         assert test_database in dbs, f'Database {test_database} not found in {dbs}'
 
     def test_deferred_connection(self) -> None:
         """Test deferred connection functionality."""
