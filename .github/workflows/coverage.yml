@@ -42,8 +42,10 @@ jobs:
           pip install .
 
       - name: Run HTTP protocol tests
+        if: always()
         run: |
-          pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+          pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests.test_basics
+          curl ${{ env.SINGLESTOREDB_URL }}/ping
         env:
           COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
@@ -55,6 +57,7 @@ jobs:
           SINGLESTOREDB_DEBUG_QUERIES: "1"
 
       - name: Run MySQL protocol tests
+        if: always()
         run: |
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
@@ -63,10 +66,12 @@ jobs:
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Install SingleStore package and SQLAlchemy 1.4.x
+        if: always()
         run: |
           pip install 'sqlalchemy~=1.4.0'
 
       - name: Run MySQL protocol tests
+        if: always()
         run: |
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
