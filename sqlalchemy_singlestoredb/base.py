@@ -231,19 +231,34 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
 
     def visit_create_table(self, create: Any, **kw: Any) -> str:
+        """Generate CREATE TABLE DDL with SingleStore-specific extensions.
+
+        Handles SHARD KEY and SORT KEY constraints with all syntax variants.
+        """
         create_table_sql = super().visit_create_table(create, **kw)
+
         shard_key = create.element.info.get('singlestoredb_shard_key')
         if shard_key is not None:
-            shard_columns = ', '.join(shard_key.columns)
-            shard_key_sql = f'SHARD KEY ({shard_columns})'
+            # Generate SHARD KEY SQL directly to handle all variants
+            if shard_key.only:
+                if shard_key.columns:
+                    column_list = ', '.join([str(x) for x in shard_key.columns])
+                    shard_key_sql = f'SHARD KEY ONLY ({column_list})'
+                else:
+                    # SHARD KEY ONLY with no columns doesn't make sense, fallback to empty
+                    shard_key_sql = 'SHARD KEY ()'
+            else:
+                column_list = ', '.join([str(x) for x in shard_key.columns])
+                shard_key_sql = f'SHARD KEY ({column_list})'
+
             # Append the SHARD KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)'
 
         sort_key = create.element.info.get('singlestoredb_sort_key')
         if sort_key is not None:
-            sort_columns = ', '.join(sort_key.columns)
+            sort_columns = ', '.join([str(x) for x in sort_key.columns])
             sort_key_sql = f'SORT KEY ({sort_columns})'
-            # Append the SHARD KEY definition to the original SQL
+            # Append the SORT KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
 
         return create_table_sql

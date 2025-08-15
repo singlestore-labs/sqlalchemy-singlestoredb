@@ -6,8 +6,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from singlestoredb.alchemy import create_engine
 from sqlalchemy import Column
+from sqlalchemy import create_mock_engine
 from sqlalchemy import Integer
 from sqlalchemy import String
 from sqlalchemy.orm import declarative_base
@@ -25,7 +25,7 @@ def dump(sql: Any, *multiparams: Any, **params: Any) -> None:
     print(sql.compile(dialect=mock_engine.dialect))
 
 
-mock_engine = create_engine('singlestoredb://host:3306', strategy='mock', executor=dump)
+mock_engine = create_mock_engine('singlestoredb://', dump)
 
 
 # Example model using PersistedColumn with a computed expression

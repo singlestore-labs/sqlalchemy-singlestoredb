@@ -45,6 +45,7 @@ from .ddlelement import ShardKey
 from .ddlelement import SortKey
 from .dtypes import JSON
 from .dtypes import VECTOR
+from .table import Table
 
 array = base.array
 
@@ -82,6 +83,7 @@ __all__ = (
     'SMALLINT',
     'ShardKey',
     'SortKey',
+    'Table',
     'REAL',
     'TEXT',
     'TIME',
