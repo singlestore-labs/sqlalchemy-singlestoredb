@@ -45,7 +45,6 @@ jobs:
         if: always()
         run: |
           pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests.test_basics
-          curl ${{ env.SINGLESTOREDB_URL }}/ping
         env:
           COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
@@ -59,6 +58,7 @@ jobs:
       - name: Run MySQL protocol tests
         if: always()
         run: |
+          curl http://root:root@127.0.0.1:9080/ping
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-2-0.cov"
@@ -73,6 +73,7 @@ jobs:
       - name: Run MySQL protocol tests
         if: always()
         run: |
+          curl http://root:root@127.0.0.1:9080/ping
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-1-4.cov"
