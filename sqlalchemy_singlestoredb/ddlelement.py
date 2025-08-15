@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import Optional
 
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import DDLElement
@@ -154,3 +155,91 @@ def compile_sort_key(element: Any, compiler: Any, **kw: Any) -> str:
 
     """
     return 'SORT KEY (%s)' % ', '.join([str(x) for x in element.columns])
+
+
+class VectorKey(DDLElement):
+    """SingleStore VECTOR INDEX DDL element.
+
+    Represents a VECTOR INDEX for similarity search on vector data columns.
+
+    Parameters
+    ----------
+    name : str
+        Index name for the vector index
+    *columns : Any
+        Column names to include in the vector index. Usually a single vector column.
+    index_options : str, optional
+        JSON string containing vector index options such as metric_type.
+        Common values: '{"metric_type":"EUCLIDEAN_DISTANCE"}',
+        '{"metric_type":"DOT_PRODUCT"}', '{"metric_type":"COSINE_SIMILARITY"}'
+
+    Examples
+    --------
+    Basic vector index:
+
+    >>> VectorKey('vec_idx', 'embedding')
+
+    Vector index with options:
+
+    >>> VectorKey('vec_idx', 'embedding',
+    ...           index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}')
+
+    Multi-column vector index (if supported):
+
+    >>> VectorKey('vec_idx', 'embedding1', 'embedding2')
+
+    """
+
+    def __init__(
+        self, name: str, *columns: Any, index_options: Optional[str] = None,
+    ) -> None:
+        self.name = name
+        self.columns = columns
+        self.index_options = index_options
+
+    def __repr__(self) -> str:
+        args = [repr(self.name)] + [repr(x) for x in self.columns]
+        if self.index_options:
+            args.append(f'index_options={repr(self.index_options)}')
+        return f'VectorKey({", ".join(args)})'
+
+
+@compiles(VectorKey, 'singlestoredb.mysql')
+def compile_vector_key(element: Any, compiler: Any, **kw: Any) -> str:
+    """Compile VectorKey DDL element to SQL.
+
+    Generates the VECTOR INDEX clause for SingleStore table creation statements.
+
+    Parameters
+    ----------
+    element : VectorKey
+        The VectorKey DDL element to compile
+    compiler : DDLCompiler
+        SQLAlchemy DDL compiler instance
+    **kw : Any
+        Additional compiler keyword arguments
+
+    Returns
+    -------
+    str
+        The compiled SQL string for the VECTOR INDEX clause
+
+    Notes
+    -----
+    Supported syntax variants:
+    - VECTOR INDEX name (column) - basic vector index
+    - VECTOR INDEX name (column) INDEX_OPTIONS='{"metric_type":"EUCLIDEAN_DISTANCE"}'
+
+    Examples
+    --------
+    >>> compile_vector_key(VectorKey('vec_idx', 'embedding'), compiler)
+    'VECTOR INDEX vec_idx (embedding)'
+
+    """
+    column_list = ', '.join([str(x) for x in element.columns])
+    vector_index_sql = f'VECTOR INDEX {element.name} ({column_list})'
+
+    if element.index_options:
+        vector_index_sql += f" INDEX_OPTIONS='{element.index_options}'"
+
+    return vector_index_sql

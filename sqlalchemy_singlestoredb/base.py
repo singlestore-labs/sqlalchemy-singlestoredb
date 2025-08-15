@@ -233,7 +233,8 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     def visit_create_table(self, create: Any, **kw: Any) -> str:
         """Generate CREATE TABLE DDL with SingleStore-specific extensions.
 
-        Handles SHARD KEY and SORT KEY constraints with all syntax variants.
+        Handles SHARD KEY, SORT KEY, and VECTOR INDEX constraints with all
+        syntax variants.
         """
         create_table_sql = super().visit_create_table(create, **kw)
 
@@ -260,6 +261,21 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
             sort_key_sql = f'SORT KEY ({sort_columns})'
             # Append the SORT KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
+
+        vector_indexes = create.element.info.get('singlestoredb_vector_indexes')
+        if vector_indexes is not None:
+            for vector_index in vector_indexes:
+                # Generate VECTOR INDEX SQL using the same pattern as the DDL compiler
+                column_list = ', '.join([str(x) for x in vector_index.columns])
+                vector_index_sql = f'VECTOR INDEX {vector_index.name} ({column_list})'
+
+                if vector_index.index_options:
+                    vector_index_sql += f" INDEX_OPTIONS='{vector_index.index_options}'"
+
+                # Append the VECTOR INDEX definition to the original SQL
+                create_table_sql = (
+                    f'{create_table_sql.rstrip()[:-2]},\n\t{vector_index_sql}\n)'
+                )
 
         return create_table_sql
 
