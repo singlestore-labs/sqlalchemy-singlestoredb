@@ -139,9 +139,10 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
         # (`col` (ASC|DESC)?, `col` (ASC|DESC)?)
         # KEY_BLOCK_SIZE size | WITH PARSER name  /*!50100 WITH PARSER name */
         # Modified to handle SingleStore SHARD KEY and SORT KEY with comma
+        # Handle FULLTEXT with optional USING VERSION clause before KEY
         self._re_key = _re_compile(
             r'  (?:, *)?'  # Handle optional leading comma for SingleStore
-            r'(?:(?P<type>\S+) )?KEY'
+            r'(?:(?P<type>\S+)(?: +USING +VERSION +\d+)? )?KEY'
             r'(?: +%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s)?'
             r'(?: +USING +(?P<using_pre>\S+))?'
             r' +\((?P<columns>.*?)\)'
