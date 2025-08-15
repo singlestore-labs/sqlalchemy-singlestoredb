@@ -71,15 +71,14 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             SingleStoreDBTableDefinitionParser,
             self,
         )._parse_constraints(line)
-        re_shard = _re_compile(r'\s+,\s+SHARD\s+KEY\s+\(\)\s+')
-        m = re_shard.match(line)
-        if m:
-            type_ = 'shard_key'
-            spec = {
-                'type': None, 'name': 'SHARD', 'using_pre': None,
-                'columns': [], 'using_post': None, 'keyblock': None,
-                'parser': None, 'comment': None, 'version_sql': None,
-            }
+
+        # Check if this is a SHARD KEY or SORT KEY line that was recognized
+        if type_ == 'key' and spec.get('type') in ('SHARD', 'SORT'):
+            # These are SingleStore-specific KEY types, not regular indexes
+            # We'll mark them as recognized by returning a special type
+            # that won't trigger the warning in MySQL's get_indexes
+            type_ = f"{spec['type'].lower()}_key"
+
         return type_, spec
 
     def parse(self, show_create: str, charset: str) -> ReflectedState:
@@ -110,8 +109,10 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
                     state.fk_constraints.append(spec)
                 elif type_ == 'ck_constraint':
                     state.ck_constraints.append(spec)
-                elif type_ == 'shard_key':
-                    state.keys.append(spec)
+                elif type_ in ('shard_key', 'sort_key'):
+                    # Don't add SHARD KEY and SORT KEY to the keys list
+                    # as they're not regular indexes
+                    pass
                 else:
                     pass
         return state
@@ -137,8 +138,9 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
         # (PRIMARY|UNIQUE|FULLTEXT|SPATIAL) INDEX `name` (USING (BTREE|HASH))?
         # (`col` (ASC|DESC)?, `col` (ASC|DESC)?)
         # KEY_BLOCK_SIZE size | WITH PARSER name  /*!50100 WITH PARSER name */
+        # Modified to handle SingleStore SHARD KEY and SORT KEY with comma
         self._re_key = _re_compile(
-            r'  '
+            r'  (?:, *)?'  # Handle optional leading comma for SingleStore
             r'(?:(?P<type>\S+) )?KEY'
             r'(?: +%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s)?'
             r'(?: +USING +(?P<using_pre>\S+))?'
@@ -148,7 +150,7 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             r'(?: +WITH PARSER +(?P<parser>\S+))?'
             r'(?: +COMMENT +(?P<comment>(\x27\x27|\x27([^\x27])*?\x27)+))?'
             r'(?: +/\*(?P<version_sql>.+)\*/ *)?'
-            r',?$' % quotes,
+            r' *,?$' % quotes,  # Handle trailing comma and spaces
         )
 
         # `colname` <type> [type opts]
