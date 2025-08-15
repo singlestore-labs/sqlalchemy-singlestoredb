@@ -67,19 +67,74 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
     """Parses the results of a SHOW CREATE TABLE statement."""
 
     def _parse_constraints(self, line: str) -> Tuple[str, Dict[str, Any]]:
+        # First try to match VECTOR INDEX pattern
+        m = self._re_vector_index.match(line)
+        if m:
+            spec = m.groupdict()
+
+            # Parse columns
+            columns_str = spec.get('columns', '').strip()
+            if columns_str:
+                columns = [
+                    col.strip().strip('`') for col in columns_str.split(',')
+                    if col.strip()
+                ]
+            else:
+                columns = []
+
+            # Create spec dictionary with parsed information
+            parsed_spec = {
+                'type': 'VECTOR',
+                'name': spec.get('name'),
+                'columns': columns,
+                'index_options': spec.get('index_options'),
+                'only': False,  # VECTOR INDEX doesn't have ONLY modifier
+            }
+
+            return 'vector_key', parsed_spec
+
+        # Next try to match SHARD KEY and SORT KEY patterns
+        m = self._re_singlestore_key.match(line)
+        if m:
+            spec = m.groupdict()
+            key_type = spec['type'].lower()  # 'shard' or 'sort'
+
+            # Parse columns - handle both empty () and actual column lists
+            columns_str = spec.get('columns', '').strip()
+            if columns_str:
+                # Parse column names - simple split for now,
+                # may need enhancement for quoted identifiers
+                columns = [
+                    col.strip().strip('`') for col in columns_str.split(',')
+                    if col.strip()
+                ]
+            else:
+                columns = []
+
+            # Create spec dictionary with parsed information
+            parsed_spec = {
+                'type': spec['type'],  # 'SHARD' or 'SORT'
+                'name': None,
+                'columns': columns,
+                'only': spec.get('only') is not None,  # True if ONLY was specified
+            }
+
+            return f'{key_type}_key', parsed_spec
+
+        # Fall back to parent class parsing
         type_, spec = super(
             SingleStoreDBTableDefinitionParser,
             self,
         )._parse_constraints(line)
-        re_shard = _re_compile(r'\s+,\s+SHARD\s+KEY\s+\(\)\s+')
-        m = re_shard.match(line)
-        if m:
-            type_ = 'shard_key'
-            spec = {
-                'type': None, 'name': 'SHARD', 'using_pre': None,
-                'columns': [], 'using_post': None, 'keyblock': None,
-                'parser': None, 'comment': None, 'version_sql': None,
-            }
+
+        # Check if this is a SHARD KEY, SORT KEY, or VECTOR KEY line
+        # that was recognized by parent
+        if type_ == 'key' and spec.get('type') in ('SHARD', 'SORT', 'VECTOR'):
+            # These are SingleStore-specific KEY types, not regular indexes
+            # We'll mark them as recognized by returning a special type
+            # that won't trigger the warning in MySQL's get_indexes
+            type_ = f"{spec['type'].lower()}_key"
+
         return type_, spec
 
     def parse(self, show_create: str, charset: str) -> ReflectedState:
@@ -110,8 +165,10 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
                     state.fk_constraints.append(spec)
                 elif type_ == 'ck_constraint':
                     state.ck_constraints.append(spec)
-                elif type_ == 'shard_key':
-                    state.keys.append(spec)
+                elif type_ in ('shard_key', 'sort_key', 'vector_key'):
+                    # Don't add SHARD KEY, SORT KEY, and VECTOR KEY to the keys list
+                    # as they're not regular indexes
+                    pass
                 else:
                     pass
         return state
@@ -137,18 +194,45 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
         # (PRIMARY|UNIQUE|FULLTEXT|SPATIAL) INDEX `name` (USING (BTREE|HASH))?
         # (`col` (ASC|DESC)?, `col` (ASC|DESC)?)
         # KEY_BLOCK_SIZE size | WITH PARSER name  /*!50100 WITH PARSER name */
+        # Modified to handle SingleStore SHARD KEY and SORT KEY with comma
+        # Handle FULLTEXT with optional USING VERSION clause before KEY
+        # Handle VECTOR INDEX_OPTIONS
         self._re_key = _re_compile(
-            r'  '
-            r'(?:(?P<type>\S+) )?KEY'
+            r'  (?:, *)?'  # Handle optional leading comma for SingleStore
+            r'(?:(?P<type>\S+)(?: +USING +VERSION +\d+)? )?KEY'
             r'(?: +%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s)?'
             r'(?: +USING +(?P<using_pre>\S+))?'
             r' +\((?P<columns>.*?)\)'
+            r'(?: +INDEX_OPTIONS *= *(?P<index_options>".*?"))?'  # JSON
             r'(?: +USING +(?P<using_post>\S+|CLUSTERED +COLUMNSTORE))?'
             r'(?: +KEY_BLOCK_SIZE *[ =]? *(?P<keyblock>\S+))?'
             r'(?: +WITH PARSER +(?P<parser>\S+))?'
             r'(?: +COMMENT +(?P<comment>(\x27\x27|\x27([^\x27])*?\x27)+))?'
             r'(?: +/\*(?P<version_sql>.+)\*/ *)?'
-            r',?$' % quotes,
+            r' *,?$' % quotes,  # Handle trailing comma and spaces
+        )
+
+        # SingleStore specific SHARD KEY and SORT KEY patterns
+        # Handles: SHARD KEY (columns), SHARD KEY ONLY (columns),
+        # SHARD KEY (), SORT KEY (columns), etc.
+        self._re_singlestore_key = _re_compile(
+            r'  (?:, *)?'  # Handle optional leading comma
+            r'(?P<type>SHARD|SORT)'  # Key type
+            r' +KEY'  # KEY immediately after type
+            r'(?: +(?P<only>ONLY))?'  # Optional ONLY modifier for SHARD KEY
+            r' +\((?P<columns>.*?)\)'  # Column list (can be empty)
+            r' *,?$',  # Handle trailing comma and spaces
+        )
+
+        # SingleStore specific VECTOR INDEX pattern
+        # Handles: VECTOR INDEX name (columns) [INDEX_OPTIONS='...']
+        self._re_vector_index = _re_compile(
+            r'  (?:, *)?'  # Handle optional leading comma
+            r'VECTOR +INDEX'  # VECTOR INDEX keywords
+            r' +(?P<name>\w+)'  # Index name (required for VECTOR INDEX)
+            r' +\((?P<columns>.*?)\)'  # Column list
+            r'(?:\s+INDEX_OPTIONS=\'(?P<index_options>.*?)\')?'  # Optional INDEX_OPTIONS
+            r' *,?$',  # Handle trailing comma and spaces
         )
 
         # `colname` <type> [type opts]

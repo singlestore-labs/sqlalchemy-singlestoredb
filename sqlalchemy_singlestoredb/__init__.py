@@ -43,8 +43,10 @@ from . import base
 from .column import PersistedColumn
 from .ddlelement import ShardKey
 from .ddlelement import SortKey
+from .ddlelement import VectorKey
 from .dtypes import JSON
 from .dtypes import VECTOR
+from .table import Table
 
 array = base.array
 
@@ -82,6 +84,8 @@ __all__ = (
     'SMALLINT',
     'ShardKey',
     'SortKey',
+    'VectorKey',
+    'Table',
     'REAL',
     'TEXT',
     'TIME',

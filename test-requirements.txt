@@ -1,3 +1,5 @@
 coverage
+docker
 pytest
 pytest-cov
+pytest-xdist
