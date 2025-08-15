@@ -67,7 +67,33 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
     """Parses the results of a SHOW CREATE TABLE statement."""
 
     def _parse_constraints(self, line: str) -> Tuple[str, Dict[str, Any]]:
-        # First try to match SingleStore-specific key patterns
+        # First try to match VECTOR INDEX pattern
+        m = self._re_vector_index.match(line)
+        if m:
+            spec = m.groupdict()
+
+            # Parse columns
+            columns_str = spec.get('columns', '').strip()
+            if columns_str:
+                columns = [
+                    col.strip().strip('`') for col in columns_str.split(',')
+                    if col.strip()
+                ]
+            else:
+                columns = []
+
+            # Create spec dictionary with parsed information
+            parsed_spec = {
+                'type': 'VECTOR',
+                'name': spec.get('name'),
+                'columns': columns,
+                'index_options': spec.get('index_options'),
+                'only': False,  # VECTOR INDEX doesn't have ONLY modifier
+            }
+
+            return 'vector_key', parsed_spec
+
+        # Next try to match SHARD KEY and SORT KEY patterns
         m = self._re_singlestore_key.match(line)
         if m:
             spec = m.groupdict()
@@ -195,6 +221,17 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             r' +KEY'  # KEY immediately after type
             r'(?: +(?P<only>ONLY))?'  # Optional ONLY modifier for SHARD KEY
             r' +\((?P<columns>.*?)\)'  # Column list (can be empty)
+            r' *,?$',  # Handle trailing comma and spaces
+        )
+
+        # SingleStore specific VECTOR INDEX pattern
+        # Handles: VECTOR INDEX name (columns) [INDEX_OPTIONS='...']
+        self._re_vector_index = _re_compile(
+            r'  (?:, *)?'  # Handle optional leading comma
+            r'VECTOR +INDEX'  # VECTOR INDEX keywords
+            r' +(?P<name>\w+)'  # Index name (required for VECTOR INDEX)
+            r' +\((?P<columns>.*?)\)'  # Column list
+            r'(?:\s+INDEX_OPTIONS=\'(?P<index_options>.*?)\')?'  # Optional INDEX_OPTIONS
             r' *,?$',  # Handle trailing comma and spaces
         )
 
