@@ -72,8 +72,8 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             self,
         )._parse_constraints(line)
 
-        # Check if this is a SHARD KEY or SORT KEY line that was recognized
-        if type_ == 'key' and spec.get('type') in ('SHARD', 'SORT'):
+        # Check if this is a SHARD KEY, SORT KEY, or VECTOR KEY line that was recognized
+        if type_ == 'key' and spec.get('type') in ('SHARD', 'SORT', 'VECTOR'):
             # These are SingleStore-specific KEY types, not regular indexes
             # We'll mark them as recognized by returning a special type
             # that won't trigger the warning in MySQL's get_indexes
@@ -109,8 +109,8 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
                     state.fk_constraints.append(spec)
                 elif type_ == 'ck_constraint':
                     state.ck_constraints.append(spec)
-                elif type_ in ('shard_key', 'sort_key'):
-                    # Don't add SHARD KEY and SORT KEY to the keys list
+                elif type_ in ('shard_key', 'sort_key', 'vector_key'):
+                    # Don't add SHARD KEY, SORT KEY, and VECTOR KEY to the keys list
                     # as they're not regular indexes
                     pass
                 else:
@@ -140,12 +140,14 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
         # KEY_BLOCK_SIZE size | WITH PARSER name  /*!50100 WITH PARSER name */
         # Modified to handle SingleStore SHARD KEY and SORT KEY with comma
         # Handle FULLTEXT with optional USING VERSION clause before KEY
+        # Handle VECTOR INDEX_OPTIONS
         self._re_key = _re_compile(
             r'  (?:, *)?'  # Handle optional leading comma for SingleStore
             r'(?:(?P<type>\S+)(?: +USING +VERSION +\d+)? )?KEY'
             r'(?: +%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s)?'
             r'(?: +USING +(?P<using_pre>\S+))?'
             r' +\((?P<columns>.*?)\)'
+            r'(?: +INDEX_OPTIONS *= *(?P<index_options>".*?"))?'  # JSON
             r'(?: +USING +(?P<using_post>\S+|CLUSTERED +COLUMNSTORE))?'
             r'(?: +KEY_BLOCK_SIZE *[ =]? *(?P<keyblock>\S+))?'
             r'(?: +WITH PARSER +(?P<parser>\S+))?'
