@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from typing import Any
+from typing import List
 from typing import Optional
+from typing import Tuple
+from typing import Union
 
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import DDLElement
@@ -164,10 +167,12 @@ class VectorKey(DDLElement):
 
     Parameters
     ----------
-    name : str
-        Index name for the vector index
-    *columns : Any
-        Column names to include in the vector index. Usually a single vector column.
+    columns : str or list[str]
+        Column name (str) or list of column names (list[str]) to include in the
+        vector index. Usually a single vector column.
+    name : str, optional
+        Index name for the vector index. If not provided, SingleStore will
+        auto-generate a name.
     index_options : str, optional
         JSON string containing vector index options such as metric_type.
         Common values: '{"metric_type":"EUCLIDEAN_DISTANCE"}',
@@ -175,31 +180,60 @@ class VectorKey(DDLElement):
 
     Examples
     --------
-    Basic vector index:
+    Single vector column, auto-named:
 
-    >>> VectorKey('vec_idx', 'embedding')
+    >>> VectorKey('embedding')
+
+    Single vector column, named:
+
+    >>> VectorKey('embedding', name='vec_idx')
 
     Vector index with options:
 
-    >>> VectorKey('vec_idx', 'embedding',
+    >>> VectorKey('embedding', name='vec_idx',
     ...           index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}')
 
-    Multi-column vector index (if supported):
+    Multiple vector columns (if supported):
 
-    >>> VectorKey('vec_idx', 'embedding1', 'embedding2')
+    >>> VectorKey(['embedding1', 'embedding2'], name='vec_idx')
 
     """
 
+    name: Optional[str]
+    columns: Tuple[str, ...]
+    index_options: Optional[str]
+
     def __init__(
-        self, name: str, *columns: Any, index_options: Optional[str] = None,
+        self,
+        columns: Union[str, List[str]],
+        *,
+        name: Optional[str] = None,
+        index_options: Optional[str] = None,
     ) -> None:
+        if isinstance(columns, str):
+            self.columns = (columns,)
+        elif isinstance(columns, (list, tuple)):
+            if not columns:
+                raise ValueError(
+                    'At least one column must be specified for VECTOR index',
+                )
+            self.columns = tuple(str(col) for col in columns)
+        else:
+            raise TypeError('columns must be a string or list of strings')
+
         self.name = name
-        self.columns = columns
         self.index_options = index_options
 
     def __repr__(self) -> str:
-        args = [repr(self.name)] + [repr(x) for x in self.columns]
-        if self.index_options:
+        if len(self.columns) == 1:
+            columns_repr = repr(self.columns[0])
+        else:
+            columns_repr = repr(list(self.columns))
+
+        args = [columns_repr]
+        if self.name is not None:
+            args.append(f'name={repr(self.name)}')
+        if self.index_options is not None:
             args.append(f'index_options={repr(self.index_options)}')
         return f'VectorKey({", ".join(args)})'
 
@@ -227,17 +261,32 @@ def compile_vector_key(element: Any, compiler: Any, **kw: Any) -> str:
     Notes
     -----
     Supported syntax variants:
-    - VECTOR INDEX name (column) - basic vector index
+    - VECTOR INDEX (column) - auto-named vector index
+    - VECTOR INDEX name (column) - named vector index
     - VECTOR INDEX name (column) INDEX_OPTIONS='{"metric_type":"EUCLIDEAN_DISTANCE"}'
 
     Examples
     --------
-    >>> compile_vector_key(VectorKey('vec_idx', 'embedding'), compiler)
+    >>> compile_vector_key(VectorKey('embedding'), compiler)
+    'VECTOR INDEX (embedding)'
+
+    >>> compile_vector_key(VectorKey('embedding', name='vec_idx'), compiler)
     'VECTOR INDEX vec_idx (embedding)'
 
     """
     column_list = ', '.join([str(x) for x in element.columns])
-    vector_index_sql = f'VECTOR INDEX {element.name} ({column_list})'
+
+    # Start building the SQL
+    sql_parts = ['VECTOR INDEX']
+
+    # Add name if provided
+    if element.name is not None:
+        sql_parts.append(element.name)
+
+    # Add column list
+    sql_parts.append(f'({column_list})')
+
+    vector_index_sql = ' '.join(sql_parts)
 
     if element.index_options:
         vector_index_sql += f" INDEX_OPTIONS='{element.index_options}'"
@@ -306,3 +355,152 @@ def compile_multi_value_index(element: Any, compiler: Any, **kw: Any) -> str:
 
     """
     return f'MULTI VALUE INDEX {element.name} ({element.column})'
+
+
+class FullTextIndex(DDLElement):
+    """SingleStore FULLTEXT INDEX DDL element.
+
+    Represents a FULLTEXT INDEX for full-text search on text columns.
+
+    Parameters
+    ----------
+    columns : str or list[str]
+        Column name (str) or list of column names (list[str]) to include in the
+        fulltext index. Must be text columns (CHAR, VARCHAR, TEXT, LONGTEXT).
+    name : str, optional
+        Index name for the fulltext index. If not provided, SingleStore will
+        auto-generate a name.
+    version : int, optional
+        FULLTEXT version to use. Version 1 (default) if not specified.
+        Version 2 or higher requires explicit specification.
+
+    Examples
+    --------
+    Single column, auto-named:
+
+    >>> FullTextIndex('title')
+
+    Single column, named:
+
+    >>> FullTextIndex('title', name='ft_title')
+
+    Multiple columns, auto-named:
+
+    >>> FullTextIndex(['title', 'content'])
+
+    Multiple columns, named:
+
+    >>> FullTextIndex(['title', 'content'], name='ft_search')
+
+    With version specification:
+
+    >>> FullTextIndex(['title', 'content'], name='ft_v2', version=2)
+
+    Future version support:
+
+    >>> FullTextIndex('description', name='ft_v3', version=3)
+
+    """
+
+    name: Optional[str]
+    columns: Tuple[str, ...]
+    version: Optional[int]
+
+    def __init__(
+        self,
+        columns: Union[str, List[str]],
+        *,
+        name: Optional[str] = None,
+        version: Optional[int] = None,
+    ) -> None:
+        if isinstance(columns, str):
+            self.columns = (columns,)
+        elif isinstance(columns, (list, tuple)):
+            if not columns:
+                raise ValueError(
+                    'At least one column must be specified for FULLTEXT index',
+                )
+            self.columns = tuple(str(col) for col in columns)
+        else:
+            raise TypeError('columns must be a string or list of strings')
+
+        self.name = name
+        self.version = version
+
+    def __repr__(self) -> str:
+        if len(self.columns) == 1:
+            columns_repr = repr(self.columns[0])
+        else:
+            columns_repr = repr(list(self.columns))
+
+        args = [columns_repr]
+        if self.name is not None:
+            args.append(f'name={repr(self.name)}')
+        if self.version is not None:
+            args.append(f'version={self.version}')
+        return f'FullTextIndex({", ".join(args)})'
+
+
+@compiles(FullTextIndex, 'singlestoredb.mysql')
+def compile_fulltext_index(element: Any, compiler: Any, **kw: Any) -> str:
+    """Compile FullTextIndex DDL element to SQL.
+
+    Generates the FULLTEXT INDEX clause for SingleStore table creation statements.
+
+    Parameters
+    ----------
+    element : FullTextIndex
+        The FullTextIndex DDL element to compile
+    compiler : DDLCompiler
+        SQLAlchemy DDL compiler instance
+    **kw : Any
+        Additional compiler keyword arguments
+
+    Returns
+    -------
+    str
+        The compiled SQL string for the FULLTEXT INDEX clause
+
+    Notes
+    -----
+    Supported syntax variants:
+    - FULLTEXT (column1, column2) - version 1, auto-generated name
+    - FULLTEXT index_name (column1, column2) - version 1, named
+    - FULLTEXT USING VERSION 1 index_name (column1, column2) - explicit version 1
+    - FULLTEXT USING VERSION 2 index_name (column1, column2) - version 2+
+
+    Examples
+    --------
+    >>> compile_fulltext_index(FullTextIndex(['title', 'content']), compiler)
+    'FULLTEXT (title, content)'
+
+    >>> compile_fulltext_index(FullTextIndex(['title', 'content'], name='ft_idx'),
+    ...                        compiler)
+    'FULLTEXT ft_idx (title, content)'
+
+    >>> compile_fulltext_index(FullTextIndex('title', name='ft_idx', version=2), compiler)
+    'FULLTEXT USING VERSION 2 ft_idx (title)'
+
+    """
+    column_list = ', '.join([str(x) for x in element.columns])
+
+    # Start building the SQL
+    sql_parts = ['FULLTEXT']
+
+    # Add version clause if specified (version 1 can be implicit or explicit)
+    if element.version is not None and element.version != 1:
+        # Version 2+ requires explicit specification
+        sql_parts.append(f'USING VERSION {element.version}')
+    elif element.version == 1:
+        # Version 1 can optionally be explicit
+        sql_parts.append('USING VERSION 1')
+    # If version is None, default to version 1 (implicit)
+
+    # Add name if provided
+    if element.name is not None:
+        sql_parts.append(element.name)
+
+    # Add column list
+    sql_parts.append(f'({column_list})')
+
+    return ' '.join(sql_parts)

@@ -7,6 +7,7 @@ from typing import Type
 from sqlalchemy import MetaData
 from sqlalchemy import Table as SQLATable
 
+from .ddlelement import FullTextIndex
 from .ddlelement import MultiValueIndex
 from .ddlelement import ShardKey
 from .ddlelement import SortKey
@@ -17,7 +18,7 @@ class Table(SQLATable):
     """SingleStore Table that supports SingleStore-specific DDL elements.
 
     This extends SQLAlchemy's Table to provide natural integration with SingleStore
-    SHARD KEY, SORT KEY, and VECTOR INDEX syntax.
+    SHARD KEY, SORT KEY, VECTOR INDEX, and FULLTEXT INDEX syntax.
 
     Examples
     --------
@@ -45,9 +46,19 @@ class Table(SQLATable):
     ...     Column('doc_id', Integer, primary_key=True),
     ...     Column('embedding', VECTOR(128, 'F32')),
     ...     Column('title_embedding', VECTOR(256, 'F32')),
-    ...     VectorKey('vec_idx', 'embedding'),
-    ...     VectorKey('title_vec_idx', 'title_embedding',
+    ...     VectorKey('embedding', name='vec_idx'),
+    ...     VectorKey('title_embedding', name='title_vec_idx',
     ...               index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}')
+    ... )
+
+    With fulltext indexes:
+
+    >>> table = Table('articles', metadata,
+    ...     Column('id', Integer, primary_key=True),
+    ...     Column('title', String(200)),
+    ...     Column('content', Text),
+    ...     FullTextIndex(['title', 'content']),  # Multiple columns, auto-named
+    ...     FullTextIndex('title', name='ft_title', version=2)  # Single column, named v2
     ... )
 
     With multi-value indexes on JSON columns:
@@ -91,7 +102,8 @@ class Table(SQLATable):
         metadata : MetaData
             SQLAlchemy MetaData instance
         *args : Any
-            Columns and SingleStore-specific elements (ShardKey, SortKey, VectorKey)
+            Columns and SingleStore-specific elements (ShardKey, SortKey, VectorKey,
+            FullTextIndex)
         **kwargs : Any
             Other standard Table arguments
 
@@ -107,6 +119,7 @@ class Table(SQLATable):
         sort_key = None
         vector_keys = []
         multi_value_indexes = []
+        fulltext_indexes = []
 
         for arg in args:
             if isinstance(arg, ShardKey):
@@ -121,6 +134,8 @@ class Table(SQLATable):
                 vector_keys.append(arg)
             elif isinstance(arg, MultiValueIndex):
                 multi_value_indexes.append(arg)
+            elif isinstance(arg, FullTextIndex):
+                fulltext_indexes.append(arg)
             else:
                 regular_args.append(arg)
 
@@ -140,10 +155,13 @@ class Table(SQLATable):
         if multi_value_indexes:
             info['singlestoredb_multi_value_indexes'] = multi_value_indexes
 
+        if fulltext_indexes:
+            info['singlestoredb_fulltext_indexes'] = fulltext_indexes
+
         # Always update kwargs with info if we added SingleStore keys
         if (
             shard_key is not None or sort_key is not None or
-            vector_keys or multi_value_indexes or info
+            vector_keys or multi_value_indexes or fulltext_indexes or info
         ):
             kwargs['info'] = info
 
@@ -169,7 +187,8 @@ class Table(SQLATable):
         metadata : MetaData
             SQLAlchemy MetaData instance
         *args : Any
-            Columns and SingleStore-specific elements (ShardKey, SortKey, VectorKey)
+            Columns and SingleStore-specific elements (ShardKey, SortKey, VectorKey,
+            FullTextIndex)
         **kwargs : Any
             Other standard Table arguments
 
@@ -183,6 +202,7 @@ class Table(SQLATable):
         sort_key = None
         vector_keys = []
         multi_value_indexes = []
+        fulltext_indexes = []
 
         for arg in args:
             if isinstance(arg, ShardKey):
@@ -197,13 +217,15 @@ class Table(SQLATable):
                 vector_keys.append(arg)
             elif isinstance(arg, MultiValueIndex):
                 multi_value_indexes.append(arg)
+            elif isinstance(arg, FullTextIndex):
+                fulltext_indexes.append(arg)
             else:
                 regular_args.append(arg)
 
         # Handle info dictionary if we found SingleStore-specific parameters
         if (
             shard_key is not None or sort_key is not None or
-            vector_keys or multi_value_indexes
+            vector_keys or multi_value_indexes or fulltext_indexes
         ):
             # Handle info dictionary - create a copy to avoid mutating input
             info = kwargs.get('info', {}).copy()
@@ -220,6 +242,9 @@ class Table(SQLATable):
 
             if multi_value_indexes:
                 info['singlestoredb_multi_value_indexes'] = multi_value_indexes
+
+            if fulltext_indexes:
+                info['singlestoredb_fulltext_indexes'] = fulltext_indexes
 
             # Update kwargs with info
             kwargs['info'] = info
