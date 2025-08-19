@@ -7,6 +7,7 @@ and reflection functionality for SingleStore VECTOR INDEX support.
 """
 from __future__ import annotations
 
+import typing
 from typing import Any
 
 from sqlalchemy import Column
@@ -27,39 +28,39 @@ class TestVectorKeyConstruction:
 
     def test_basic_vector_key(self) -> None:
         """Test basic vector key with single column."""
-        vector_key = VectorKey('vec_idx', 'embedding')
+        vector_key = VectorKey('embedding', name='vec_idx')
         assert vector_key.name == 'vec_idx'
         assert vector_key.columns == ('embedding',)
         assert vector_key.index_options is None
-        assert repr(vector_key) == "VectorKey('vec_idx', 'embedding')"
+        assert repr(vector_key) == "VectorKey('embedding', name='vec_idx')"
 
     def test_vector_key_with_options(self) -> None:
         """Test vector key with index options."""
         vector_key = VectorKey(
-            'vec_idx', 'embedding',
+            'embedding', name='vec_idx',
             index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
         )
         assert vector_key.name == 'vec_idx'
         assert vector_key.columns == ('embedding',)
         assert vector_key.index_options == '{"metric_type":"EUCLIDEAN_DISTANCE"}'
         assert repr(vector_key) == (
-            "VectorKey('vec_idx', 'embedding', "
+            "VectorKey('embedding', name='vec_idx', "
             "index_options='{\"metric_type\":\"EUCLIDEAN_DISTANCE\"}')"
         )
 
     def test_multi_column_vector_key(self) -> None:
         """Test vector key with multiple columns (if supported)."""
-        vector_key = VectorKey('multi_vec_idx', 'embedding1', 'embedding2')
+        vector_key = VectorKey(['embedding1', 'embedding2'], name='multi_vec_idx')
         assert vector_key.name == 'multi_vec_idx'
         assert vector_key.columns == ('embedding1', 'embedding2')
         assert vector_key.index_options is None
-        expected_repr = "VectorKey('multi_vec_idx', 'embedding1', 'embedding2')"
+        expected_repr = "VectorKey(['embedding1', 'embedding2'], name='multi_vec_idx')"
         assert repr(vector_key) == expected_repr
 
     def test_vector_key_with_complex_options(self) -> None:
         """Test vector key with complex JSON index options."""
         vector_key = VectorKey(
-            'complex_idx', 'embedding',
+            'embedding', name='complex_idx',
             index_options='{"metric_type":"DOT_PRODUCT","index_type":"IVF_PQFS"}',
         )
         assert vector_key.name == 'complex_idx'
@@ -83,7 +84,7 @@ class TestVectorKeyCompiler:
         """Test compilation of basic vector key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
 
-        vector_key = VectorKey('vec_idx', 'embedding')
+        vector_key = VectorKey('embedding', name='vec_idx')
         result = compile_vector_key(vector_key, None)
         assert result == 'VECTOR INDEX vec_idx (embedding)'
 
@@ -92,7 +93,7 @@ class TestVectorKeyCompiler:
         from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
 
         vector_key = VectorKey(
-            'vec_idx', 'embedding',
+            'embedding', name='vec_idx',
             index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
         )
         result = compile_vector_key(vector_key, None)
@@ -106,7 +107,7 @@ class TestVectorKeyCompiler:
         """Test compilation of multi-column vector key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
 
-        vector_key = VectorKey('multi_vec_idx', 'embedding1', 'embedding2')
+        vector_key = VectorKey(['embedding1', 'embedding2'], name='multi_vec_idx')
         result = compile_vector_key(vector_key, None)
         assert result == 'VECTOR INDEX multi_vec_idx (embedding1, embedding2)'
 
@@ -115,7 +116,7 @@ class TestVectorKeyCompiler:
         from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
 
         vector_key = VectorKey(
-            'complex_idx', 'embedding',
+            'embedding', name='complex_idx',
             index_options='{"metric_type":"DOT_PRODUCT","index_type":"IVF_PQFS"}',
         )
         result = compile_vector_key(vector_key, None)
@@ -152,7 +153,7 @@ class TestVectorKeyTableIntegration:
             __table_args__ = {
                 'info': {
                     'singlestoredb_vector_indexes': [
-                        VectorKey('vec_idx', 'embedding'),
+                        VectorKey('embedding', name='vec_idx'),
                     ],
                 },
             }
@@ -178,7 +179,7 @@ class TestVectorKeyTableIntegration:
                 'info': {
                     'singlestoredb_vector_indexes': [
                         VectorKey(
-                            'vec_idx', 'embedding',
+                            'embedding', name='vec_idx',
                             index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
                         ),
                     ],
@@ -208,9 +209,9 @@ class TestVectorKeyTableIntegration:
             __table_args__ = {
                 'info': {
                     'singlestoredb_vector_indexes': [
-                        VectorKey('content_vec_idx', 'content_embedding'),
+                        VectorKey('content_embedding', name='content_vec_idx'),
                         VectorKey(
-                            'title_vec_idx', 'title_embedding',
+                            'title_embedding', name='title_vec_idx',
                             index_options='{"metric_type":"DOT_PRODUCT"}',
                         ),
                     ],
@@ -415,26 +416,30 @@ class TestVectorKeyReflectionParser:
             },
         ]
 
-        for case in test_cases:
-            type_, spec = parser._parse_constraints(str(case['line']))  # type: ignore
+        @typing.no_type_check
+        def do_checks():
+            for case in test_cases:
+                type_, spec = parser._parse_constraints(str(case['line']))
 
-            assert type_ == case['expected_type'], (  # type: ignore
-                f"Line: {case['line']}, Expected type: "  # type: ignore
-                f"{case['expected_type']}, Got: {type_}"
-            )
-            assert spec['name'] == case['expected_name'], (  # type: ignore
-                f"Line: {case['line']}, Expected name: "  # type: ignore
-                f"{case['expected_name']}, Got: {spec['name']}"
-            )
-            assert spec['columns'] == case['expected_columns'], (  # type: ignore
-                f"Line: {case['line']}, Expected columns: "  # type: ignore
-                f"{case['expected_columns']}, Got: {spec['columns']}"
-            )
-            assert spec.get('index_options') == \
-                case['expected_options'], (  # type: ignore
-                f"Line: {case['line']}, Expected options: "  # type: ignore
-                f"{case['expected_options']}, Got: {spec.get('index_options')}"
+                assert type_ == case['expected_type'], (
+                    f"Line: {case['line']}, Expected type: "
+                    f"{case['expected_type']}, Got: {type_}"
                 )
+                assert spec['name'] == case['expected_name'], (
+                    f"Line: {case['line']}, Expected name: "
+                    f"{case['expected_name']}, Got: {spec['name']}"
+                )
+                assert spec['columns'] == case['expected_columns'], (
+                    f"Line: {case['line']}, Expected columns: "
+                    f"{case['expected_columns']}, Got: {spec['columns']}"
+                )
+                assert spec.get('index_options') == \
+                    case['expected_options'], (
+                    f"Line: {case['line']}, Expected options: "
+                    f"{case['expected_options']}, Got: {spec.get('index_options')}"
+                    )
+
+        do_checks()
 
     def test_parser_quoted_column_names(self) -> None:
         """Test parser handles quoted column identifiers correctly."""
@@ -492,7 +497,7 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('data', String(50)),
-            VectorKey('vec_idx', 'embedding'),
+            VectorKey('embedding', name='vec_idx'),
         )
 
         # Verify info is set correctly
@@ -516,7 +521,7 @@ class TestVectorKeyTableConstructorIntegration:
             Column('embedding', VECTOR(256, 'F32')),
             Column('data', String(100)),
             VectorKey(
-                'vec_idx', 'embedding',
+                'embedding', name='vec_idx',
                 index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
             ),
         )
@@ -541,9 +546,9 @@ class TestVectorKeyTableConstructorIntegration:
             Column('doc_id', Integer, primary_key=True),
             Column('content_embedding', VECTOR(128, 'F32')),
             Column('title_embedding', VECTOR(256, 'F32')),
-            VectorKey('content_vec_idx', 'content_embedding'),
+            VectorKey('content_embedding', name='content_vec_idx'),
             VectorKey(
-                'title_vec_idx', 'title_embedding',
+                'title_embedding', name='title_vec_idx',
                 index_options='{"metric_type":"DOT_PRODUCT"}',
             ),
         )
@@ -582,7 +587,7 @@ class TestVectorKeyTableConstructorIntegration:
             ShardKey('user_id'),
             SortKey('created_at'),
             VectorKey(
-                'vec_idx', 'embedding',
+                'embedding', name='vec_idx',
                 index_options='{"metric_type":"DOT_PRODUCT"}',
             ),
         )
@@ -616,7 +621,7 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('data', String(50)),
-            VectorKey('vec_idx', 'embedding'),
+            VectorKey('embedding', name='vec_idx'),
             info={'custom_key': 'custom_value'},
         )
 
