@@ -41,6 +41,7 @@ from sqlalchemy.dialects.mysql.dml import insert
 
 from . import base
 from .column import PersistedColumn
+from .ddlelement import MultiValueIndex
 from .ddlelement import ShardKey
 from .ddlelement import SortKey
 from .ddlelement import VectorKey
@@ -85,6 +86,7 @@ __all__ = (
     'ShardKey',
     'SortKey',
     'VectorKey',
+    'MultiValueIndex',
     'Table',
     'REAL',
     'TEXT',

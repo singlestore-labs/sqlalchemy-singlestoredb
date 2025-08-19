@@ -277,6 +277,17 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
                     f'{create_table_sql.rstrip()[:-2]},\n\t{vector_index_sql}\n)'
                 )
 
+        multi_value_indexes = create.element.info.get('singlestoredb_multi_value_indexes')
+        if multi_value_indexes is not None:
+            for mv_index in multi_value_indexes:
+                # Generate MULTI VALUE INDEX SQL using the same pattern
+                mv_index_sql = f'MULTI VALUE INDEX {mv_index.name} ({mv_index.column})'
+
+                # Append the MULTI VALUE INDEX definition to the original SQL
+                create_table_sql = (
+                    f'{create_table_sql.rstrip()[:-2]},\n\t{mv_index_sql}\n)'
+                )
+
         return create_table_sql
 
     def get_column_specification(self, column: Any, **kw: Any) -> str:

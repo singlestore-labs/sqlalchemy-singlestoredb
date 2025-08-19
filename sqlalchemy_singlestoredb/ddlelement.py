@@ -243,3 +243,66 @@ def compile_vector_key(element: Any, compiler: Any, **kw: Any) -> str:
         vector_index_sql += f" INDEX_OPTIONS='{element.index_options}'"
 
     return vector_index_sql
+
+
+class MultiValueIndex(DDLElement):
+    """SingleStore MULTI VALUE INDEX DDL element.
+
+    Represents a MULTI VALUE INDEX for indexing JSON array values.
+
+    Parameters
+    ----------
+    name : str
+        Index name for the multi-value index
+    column : str
+        Column name to include in the multi-value index. Must be a JSON column.
+
+    Examples
+    --------
+    Basic multi-value index:
+
+    >>> MultiValueIndex('mv_tags', 'tags')
+
+    Notes
+    -----
+    Multi-value indexes are used to index JSON arrays in SingleStore.
+    They allow efficient queries on individual elements within JSON arrays.
+
+    The column must be of JSON type for multi-value indexing to work properly.
+    """
+
+    def __init__(self, name: str, column: str) -> None:
+        self.name = name
+        self.column = column
+
+    def __repr__(self) -> str:
+        return f'MultiValueIndex({repr(self.name)}, {repr(self.column)})'
+
+
+@compiles(MultiValueIndex, 'singlestoredb.mysql')
+def compile_multi_value_index(element: Any, compiler: Any, **kw: Any) -> str:
+    """Compile MultiValueIndex DDL element to SQL.
+
+    Generates the MULTI VALUE INDEX clause for SingleStore table creation statements.
+
+    Parameters
+    ----------
+    element : MultiValueIndex
+        The MultiValueIndex DDL element to compile
+    compiler : DDLCompiler
+        SQLAlchemy DDL compiler instance
+    **kw : Any
+        Additional compiler keyword arguments
+
+    Returns
+    -------
+    str
+        The compiled SQL string for the MULTI VALUE INDEX clause
+
+    Examples
+    --------
+    >>> compile_multi_value_index(MultiValueIndex('mv_tags', 'tags'), compiler)
+    'MULTI VALUE INDEX mv_tags (tags)'
+
+    """
+    return f'MULTI VALUE INDEX {element.name} ({element.column})'
