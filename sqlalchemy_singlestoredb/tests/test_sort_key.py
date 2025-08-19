@@ -50,6 +50,12 @@ class TestSortKeyConstruction:
         assert sort_key.columns == expected
         assert repr(sort_key) == "SortKey(['timestamp', 'priority', 'status'])"
 
+    def test_single_string_sort_key(self) -> None:
+        """Test sort key with single string input (convenience syntax)."""
+        sort_key = SortKey('created_at')
+        assert sort_key.columns == [('created_at', 'ASC')]
+        assert repr(sort_key) == "SortKey(['created_at'])"
+
 
 class TestSortKeyStaticMethods:
     """Test SortKey static helper methods."""
@@ -774,3 +780,23 @@ class TestSortKeyTableConstructorIntegration:
         table.create(self.mock_engine, checkfirst=False)
         assert 'CREATE TABLE test_normal' in self.compiled_ddl
         assert 'SORT KEY' not in self.compiled_ddl
+
+    def test_table_constructor_single_string_sort_key(self) -> None:
+        """Test Table constructor with single string sort key (convenience syntax)."""
+        table = Table(
+            'test_string', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('created_at', String(50)),
+            Column('data', String(50)),
+            SortKey('created_at'),  # Single string syntax
+        )
+
+        # Verify info is set correctly
+        assert 'singlestoredb_sort_key' in table.info
+        assert isinstance(table.info['singlestoredb_sort_key'], SortKey)
+        assert table.info['singlestoredb_sort_key'].columns == [('created_at', 'ASC')]
+
+        # Test DDL generation
+        table.create(self.mock_engine, checkfirst=False)
+        assert 'SORT KEY (created_at)' in self.compiled_ddl
+        assert 'CREATE TABLE test_string' in self.compiled_ddl

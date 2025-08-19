@@ -88,10 +88,10 @@ class ShardKey(DDLElement):
         else:
             raise TypeError('columns must be a string, a list of strings, or None')
 
-        if index_type is not None and index_type not in ('BTREE', 'HASH'):
+        if index_type is not None and index_type.upper() not in ('BTREE', 'HASH'):
             raise ValueError('index_type must be "BTREE" or "HASH"')
 
-        self.index_type = index_type
+        self.index_type = index_type.upper() if index_type else None
         self.metadata_only = metadata_only
 
     def __repr__(self) -> str:
@@ -161,10 +161,6 @@ def compile_shard_key(element: Any, compiler: Any, **kw: Any) -> str:
     'SHARD KEY (user_id) METADATA_ONLY'
 
     """
-    # Handle special case for empty shard key
-    if not element.columns:
-        return 'SHARD KEY ()'
-
     # Start building the SQL parts
     sql_parts = ['SHARD KEY']
 
@@ -172,9 +168,14 @@ def compile_shard_key(element: Any, compiler: Any, **kw: Any) -> str:
     if element.index_type is not None:
         sql_parts.append(f'USING {element.index_type}')
 
-    # Add column list (empty parentheses for keyless sharding)
-    column_list = ', '.join([str(x) for x in element.columns])
-    sql_parts.append(f'({column_list})')
+    # Handle special case for empty shard key
+    if not element.columns:
+        sql_parts.append('()')
+
+    else:
+        # Add column list (empty parentheses for keyless sharding)
+        column_list = ', '.join([str(x) for x in element.columns])
+        sql_parts.append(f'({column_list})')
 
     # Add METADATA_ONLY if specified
     if element.metadata_only:
@@ -191,16 +192,19 @@ class SortKey(DDLElement):
 
     Parameters
     ----------
-    columns : List[Union[str, Tuple[str, str]]]
-        List of column specifications. Each element can be:
-        - A string (column name, defaults to ASC)
-        - A tuple of (column_name, direction) where direction is 'ASC' or 'DESC'
+    columns : Union[str, List[Union[str, Tuple[str, str]]]]
+        Column specifications. Can be:
+        - A single string (column name, defaults to ASC)
+        - A list of column specifications where each element can be:
+          - A string (column name, defaults to ASC)
+          - A tuple of (column_name, direction) where direction is 'ASC' or 'DESC'
 
     Examples
     --------
-    Basic sort key (ascending by default):
+    Single column sort key (ascending by default):
 
-    >>> SortKey(['created_at'])
+    >>> SortKey('created_at')
+    >>> SortKey(['created_at'])  # Equivalent list syntax
 
     Multi-column sort key with mixed directions:
 
@@ -212,7 +216,11 @@ class SortKey(DDLElement):
 
     """
 
-    def __init__(self, columns: List[Union[str, Tuple[str, str]]]) -> None:
+    def __init__(self, columns: Union[str, List[Union[str, Tuple[str, str]]]]) -> None:
+        # Handle single string input by converting to list
+        if isinstance(columns, str):
+            columns = [columns]
+
         self.columns = []
         for col in columns:
             if isinstance(col, tuple):
@@ -226,7 +234,7 @@ class SortKey(DDLElement):
                     )
                 self.columns.append((name, direction))
             else:
-                self.columns.append((col, 'ASC'))  # Default to ASC
+                self.columns.append((col, 'ASC'))  # Default to ASC  # Default to ASC
 
     @staticmethod
     def asc(column: str) -> Tuple[str, str]:
