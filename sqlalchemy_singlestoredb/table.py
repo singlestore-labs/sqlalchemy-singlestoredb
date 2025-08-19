@@ -76,7 +76,7 @@ class Table(SQLATable):
 
     >>> Table('table1', metadata, Column('id', Integer), ShardKey('id'))  # Basic
     >>> Table('table2', metadata, Column('id', Integer),
-    ...       ShardKey('id', only=True))  # SHARD KEY ONLY
+    ...       ShardKey('id', metadata_only=True))  # SHARD KEY METADATA_ONLY
     >>> Table('table3', metadata, Column('id', Integer), ShardKey())  # Empty (keyless)
 
     """

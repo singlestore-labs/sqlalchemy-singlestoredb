@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
 from sqlalchemy import Column
 from sqlalchemy import create_mock_engine
 from sqlalchemy import Integer
@@ -26,27 +27,193 @@ class TestSortKeyConstruction:
 
     def test_basic_sort_key(self) -> None:
         """Test basic sort key with single column."""
-        sort_key = SortKey('created_at')
-        assert sort_key.columns == ('created_at',)
-        assert repr(sort_key) == "SortKey('created_at')"
+        sort_key = SortKey(['created_at'])
+        assert sort_key.columns == [('created_at', 'ASC')]
+        assert repr(sort_key) == "SortKey(['created_at'])"
 
     def test_multi_column_sort_key(self) -> None:
         """Test sort key with multiple columns."""
-        sort_key = SortKey('user_id', 'created_at')
-        assert sort_key.columns == ('user_id', 'created_at')
-        assert repr(sort_key) == "SortKey('user_id', 'created_at')"
+        sort_key = SortKey(['user_id', 'created_at'])
+        assert sort_key.columns == [('user_id', 'ASC'), ('created_at', 'ASC')]
+        assert repr(sort_key) == "SortKey(['user_id', 'created_at'])"
 
     def test_empty_sort_key(self) -> None:
         """Test empty sort key (should be allowed)."""
-        sort_key = SortKey()
-        assert sort_key.columns == ()
-        assert repr(sort_key) == 'SortKey()'
+        sort_key = SortKey([])
+        assert sort_key.columns == []
+        assert repr(sort_key) == 'SortKey([])'
 
     def test_sort_key_with_mixed_column_types(self) -> None:
         """Test sort key with different column reference types."""
-        sort_key = SortKey('timestamp', 'priority', 'status')
-        assert sort_key.columns == ('timestamp', 'priority', 'status')
-        assert repr(sort_key) == "SortKey('timestamp', 'priority', 'status')"
+        sort_key = SortKey(['timestamp', 'priority', 'status'])
+        expected = [('timestamp', 'ASC'), ('priority', 'ASC'), ('status', 'ASC')]
+        assert sort_key.columns == expected
+        assert repr(sort_key) == "SortKey(['timestamp', 'priority', 'status'])"
+
+
+class TestSortKeyStaticMethods:
+    """Test SortKey static helper methods."""
+
+    def test_asc_static_method(self) -> None:
+        """Test SortKey.asc() static method."""
+        result = SortKey.asc('created_at')
+        assert result == ('created_at', 'ASC')
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert result[0] == 'created_at'
+        assert result[1] == 'ASC'
+
+    def test_desc_static_method(self) -> None:
+        """Test SortKey.desc() static method."""
+        result = SortKey.desc('created_at')
+        assert result == ('created_at', 'DESC')
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert result[0] == 'created_at'
+        assert result[1] == 'DESC'
+
+    def test_static_methods_in_constructor(self) -> None:
+        """Test using static methods in SortKey constructor."""
+        sort_key = SortKey([
+            SortKey.asc('user_id'),
+            SortKey.desc('created_at'),
+            SortKey.asc('priority'),
+        ])
+        expected = [
+            ('user_id', 'ASC'),
+            ('created_at', 'DESC'),
+            ('priority', 'ASC'),
+        ]
+        assert sort_key.columns == expected
+
+
+class TestSortKeyListAPI:
+    """Test SortKey list-based API functionality."""
+
+    def test_list_api_single_column(self) -> None:
+        """Test list API with single column."""
+        sort_key = SortKey(['created_at'])
+        assert sort_key.columns == [('created_at', 'ASC')]
+
+    def test_list_api_multiple_columns(self) -> None:
+        """Test list API with multiple columns."""
+        sort_key = SortKey(['user_id', 'created_at', 'priority'])
+        expected = [
+            ('user_id', 'ASC'),
+            ('created_at', 'ASC'),
+            ('priority', 'ASC'),
+        ]
+        assert sort_key.columns == expected
+
+    def test_list_api_with_tuples(self) -> None:
+        """Test list API with tuple specifications."""
+        sort_key = SortKey([
+            ('user_id', 'ASC'),
+            ('created_at', 'DESC'),
+            ('priority', 'ASC'),
+        ])
+        expected = [
+            ('user_id', 'ASC'),
+            ('created_at', 'DESC'),
+            ('priority', 'ASC'),
+        ]
+        assert sort_key.columns == expected
+
+    def test_list_api_mixed_formats(self) -> None:
+        """Test list API with mixed string and tuple formats."""
+        sort_key = SortKey([
+            'user_id',
+            ('created_at', 'DESC'),
+            'priority',
+            ('status', 'ASC'),
+        ])
+        expected = [
+            ('user_id', 'ASC'),
+            ('created_at', 'DESC'),
+            ('priority', 'ASC'),
+            ('status', 'ASC'),
+        ]
+        assert sort_key.columns == expected
+
+    def test_empty_list(self) -> None:
+        """Test empty list in constructor."""
+        sort_key = SortKey([])
+        assert sort_key.columns == []
+
+    def test_case_insensitive_directions(self) -> None:
+        """Test that directions are case-insensitive."""
+        sort_key = SortKey([
+            ('col1', 'asc'),
+            ('col2', 'desc'),
+            ('col3', 'ASC'),
+            ('col4', 'DESC'),
+            ('col5', 'Asc'),
+            ('col6', 'Desc'),
+        ])
+        expected = [
+            ('col1', 'ASC'),
+            ('col2', 'DESC'),
+            ('col3', 'ASC'),
+            ('col4', 'DESC'),
+            ('col5', 'ASC'),
+            ('col6', 'DESC'),
+        ]
+        assert sort_key.columns == expected
+
+
+class TestSortKeyErrorHandling:
+    """Test SortKey error handling and validation."""
+
+    def test_invalid_direction_raises_error(self) -> None:
+        """Test that invalid direction raises ValueError."""
+        expected_msg = "Direction must be 'ASC' or 'DESC', got 'INVALID'"
+        with pytest.raises(ValueError, match=expected_msg):
+            SortKey([('created_at', 'INVALID')])
+
+    def test_invalid_direction_case_raises_error(self) -> None:
+        """Test that invalid direction with different case raises ValueError."""
+        expected_msg = "Direction must be 'ASC' or 'DESC', got 'ASCENDING'"
+        with pytest.raises(ValueError, match=expected_msg):
+            SortKey([('created_at', 'ASCENDING')])
+
+    def test_empty_direction_raises_error(self) -> None:
+        """Test that empty direction raises ValueError."""
+        with pytest.raises(ValueError, match="Direction must be 'ASC' or 'DESC', got ''"):
+            SortKey([('created_at', '')])
+
+    def test_none_direction_raises_error(self) -> None:
+        """Test that None direction raises appropriate error."""
+        with pytest.raises((ValueError, TypeError)):
+            SortKey([('created_at', None)])  # type: ignore
+
+
+class TestSortKeyRepr:
+    """Test SortKey string representation."""
+
+    def test_repr_single_asc_column(self) -> None:
+        """Test __repr__ for single ascending column."""
+        sort_key = SortKey(['created_at'])
+        assert repr(sort_key) == "SortKey(['created_at'])"
+
+    def test_repr_single_desc_column(self) -> None:
+        """Test __repr__ for single descending column."""
+        sort_key = SortKey([('created_at', 'DESC')])
+        assert repr(sort_key) == "SortKey([('created_at', 'DESC')])"
+
+    def test_repr_mixed_columns(self) -> None:
+        """Test __repr__ for mixed ascending and descending columns."""
+        sort_key = SortKey(['user_id', ('created_at', 'DESC')])
+        assert repr(sort_key) == "SortKey(['user_id', ('created_at', 'DESC')])"
+
+    def test_repr_empty_sort_key(self) -> None:
+        """Test __repr__ for empty sort key."""
+        sort_key = SortKey([])
+        assert repr(sort_key) == 'SortKey([])'
+
+    def test_repr_all_explicit(self) -> None:
+        """Test __repr__ with all explicit directions."""
+        sort_key = SortKey([('user_id', 'ASC'), ('created_at', 'DESC')])
+        assert repr(sort_key) == "SortKey(['user_id', ('created_at', 'DESC')])"
 
 
 class TestSortKeyCompiler:
@@ -64,7 +231,7 @@ class TestSortKeyCompiler:
         """Test compilation of basic sort key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
 
-        sort_key = SortKey('created_at')
+        sort_key = SortKey(['created_at'])
         result = compile_sort_key(sort_key, None)
         assert result == 'SORT KEY (created_at)'
 
@@ -72,7 +239,7 @@ class TestSortKeyCompiler:
         """Test compilation of multi-column sort key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
 
-        sort_key = SortKey('user_id', 'created_at')
+        sort_key = SortKey(['user_id', 'created_at'])
         result = compile_sort_key(sort_key, None)
         assert result == 'SORT KEY (user_id, created_at)'
 
@@ -80,7 +247,7 @@ class TestSortKeyCompiler:
         """Test compilation of empty sort key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
 
-        sort_key = SortKey()
+        sort_key = SortKey([])
         result = compile_sort_key(sort_key, None)
         assert result == 'SORT KEY ()'
 
@@ -88,9 +255,57 @@ class TestSortKeyCompiler:
         """Test compilation of sort key with three columns."""
         from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
 
-        sort_key = SortKey('timestamp', 'priority', 'status')
+        sort_key = SortKey(['timestamp', 'priority', 'status'])
         result = compile_sort_key(sort_key, None)
         assert result == 'SORT KEY (timestamp, priority, status)'
+
+    def test_compile_sort_key_with_list_api(self) -> None:
+        """Test compilation with new list-based API."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        sort_key = SortKey(['created_at'])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (created_at)'
+
+    def test_compile_sort_key_with_descending(self) -> None:
+        """Test compilation with descending sort key."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        sort_key = SortKey([('created_at', 'DESC')])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (created_at DESC)'
+
+    def test_compile_sort_key_with_mixed_directions(self) -> None:
+        """Test compilation with mixed ascending and descending columns."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        sort_key = SortKey(['user_id', ('created_at', 'DESC')])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (user_id, created_at DESC)'
+
+    def test_compile_sort_key_with_explicit_ascending(self) -> None:
+        """Test compilation with explicit ascending direction."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        sort_key = SortKey([('user_id', 'ASC'), ('created_at', 'DESC')])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (user_id, created_at DESC)'
+
+    def test_compile_sort_key_with_static_methods(self) -> None:
+        """Test compilation using static helper methods."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        sort_key = SortKey([SortKey.asc('user_id'), SortKey.desc('created_at')])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (user_id, created_at DESC)'
+
+    def test_compile_empty_sort_key_with_list(self) -> None:
+        """Test compilation of empty sort key with list API."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        sort_key = SortKey([])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY ()'
 
 
 class TestSortKeyTableIntegration:
@@ -117,7 +332,7 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey('created_at')},
+                'info': {'singlestoredb_sort_key': SortKey(['created_at'])},
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -137,7 +352,7 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey()},
+                'info': {'singlestoredb_sort_key': SortKey([])},
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -159,7 +374,7 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey('user_id', 'created_at')},
+                'info': {'singlestoredb_sort_key': SortKey(['user_id', 'created_at'])},
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -183,7 +398,9 @@ class TestSortKeyTableIntegration:
 
             __table_args__ = {
                 'info': {
-                    'singlestoredb_sort_key': SortKey('timestamp', 'priority', 'status'),
+                    'singlestoredb_sort_key': SortKey([
+                        'timestamp', 'priority', 'status',
+                    ]),
                 },
             }
 
@@ -218,7 +435,7 @@ class TestSortKeyBackwardCompatibility:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey('created_at')},
+                'info': {'singlestoredb_sort_key': SortKey(['created_at'])},
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -228,8 +445,8 @@ class TestSortKeyBackwardCompatibility:
         assert 'CREATE TABLE my_new_table' in self.compiled_ddl
 
         # Verify the SortKey object has expected properties
-        sort_key = SortKey('created_at')
-        assert sort_key.columns == ('created_at',)  # Existing behavior preserved
+        sort_key = SortKey(['created_at'])
+        assert sort_key.columns == [('created_at', 'ASC')]  # Existing behavior preserved
 
 
 class TestSortKeyReflection:
@@ -475,13 +692,13 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
-            SortKey('created_at'),
+            SortKey(['created_at']),
         )
 
         # Verify info is set correctly
         assert 'singlestoredb_sort_key' in table.info
         assert isinstance(table.info['singlestoredb_sort_key'], SortKey)
-        assert table.info['singlestoredb_sort_key'].columns == ('created_at',)
+        assert table.info['singlestoredb_sort_key'].columns == [('created_at', 'ASC')]
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -494,12 +711,12 @@ class TestSortKeyTableConstructorIntegration:
             'test_empty', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(100)),
-            SortKey(),
+            SortKey([]),
         )
 
         # Verify info is set correctly
         sort_key = table.info['singlestoredb_sort_key']
-        assert sort_key.columns == ()
+        assert sort_key.columns == []
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -514,12 +731,12 @@ class TestSortKeyTableConstructorIntegration:
             Column('created_at', String(50), primary_key=True),
             Column('priority', Integer),
             Column('amount', Integer),
-            SortKey('created_at', 'priority'),
+            SortKey(['created_at', 'priority']),
         )
 
         # Verify info is set correctly
         sort_key = table.info['singlestoredb_sort_key']
-        assert sort_key.columns == ('created_at', 'priority')
+        assert sort_key.columns == [('created_at', 'ASC'), ('priority', 'ASC')]
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -533,14 +750,14 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
-            SortKey('created_at'),
+            SortKey(['created_at']),
             info={'custom_key': 'custom_value'},
         )
 
         # Verify both custom info and sort key are preserved
         assert table.info['custom_key'] == 'custom_value'
         assert 'singlestoredb_sort_key' in table.info
-        assert table.info['singlestoredb_sort_key'].columns == ('created_at',)
+        assert table.info['singlestoredb_sort_key'].columns == [('created_at', 'ASC')]
 
     def test_table_constructor_no_sort_key(self) -> None:
         """Test that Table constructor works normally without sort key parameters."""

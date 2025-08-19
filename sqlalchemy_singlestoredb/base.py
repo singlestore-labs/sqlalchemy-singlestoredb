@@ -240,38 +240,23 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
 
         shard_key = create.element.info.get('singlestoredb_shard_key')
         if shard_key is not None:
-            # Generate SHARD KEY SQL directly to handle all variants
-            if shard_key.only:
-                if shard_key.columns:
-                    column_list = ', '.join([str(x) for x in shard_key.columns])
-                    shard_key_sql = f'SHARD KEY ONLY ({column_list})'
-                else:
-                    # SHARD KEY ONLY with no columns doesn't make sense, fallback to empty
-                    shard_key_sql = 'SHARD KEY ()'
-            else:
-                column_list = ', '.join([str(x) for x in shard_key.columns])
-                shard_key_sql = f'SHARD KEY ({column_list})'
-
+            from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+            shard_key_sql = compile_shard_key(shard_key, self)
             # Append the SHARD KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)'
 
         sort_key = create.element.info.get('singlestoredb_sort_key')
         if sort_key is not None:
-            sort_columns = ', '.join([str(x) for x in sort_key.columns])
-            sort_key_sql = f'SORT KEY ({sort_columns})'
+            from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+            sort_key_sql = compile_sort_key(sort_key, self)
             # Append the SORT KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
 
         vector_indexes = create.element.info.get('singlestoredb_vector_indexes')
         if vector_indexes is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
             for vector_index in vector_indexes:
-                # Generate VECTOR INDEX SQL using the same pattern as the DDL compiler
-                column_list = ', '.join([str(x) for x in vector_index.columns])
-                vector_index_sql = f'VECTOR INDEX {vector_index.name} ({column_list})'
-
-                if vector_index.index_options:
-                    vector_index_sql += f" INDEX_OPTIONS='{vector_index.index_options}'"
-
+                vector_index_sql = compile_vector_key(vector_index, self)
                 # Append the VECTOR INDEX definition to the original SQL
                 create_table_sql = (
                     f'{create_table_sql.rstrip()[:-2]},\n\t{vector_index_sql}\n)'
@@ -279,10 +264,9 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
 
         multi_value_indexes = create.element.info.get('singlestoredb_multi_value_indexes')
         if multi_value_indexes is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_multi_value_index
             for mv_index in multi_value_indexes:
-                # Generate MULTI VALUE INDEX SQL using the same pattern
-                mv_index_sql = f'MULTI VALUE INDEX {mv_index.name} ({mv_index.column})'
-
+                mv_index_sql = compile_multi_value_index(mv_index, self)
                 # Append the MULTI VALUE INDEX definition to the original SQL
                 create_table_sql = (
                     f'{create_table_sql.rstrip()[:-2]},\n\t{mv_index_sql}\n)'
