@@ -552,3 +552,66 @@ class TestAdvancedIndexes:
 
             assert 'embedding_128' in reflected_table.columns
             assert 'embedding_256' in reflected_table.columns
+
+    def test_multivalue_index_compilation_with_special_column_names(self) -> None:
+        """Test MultiValueIndex DDL compilation with special column names."""
+        from sqlalchemy_singlestoredb.ddlelement import (
+            MultiValueIndex, compile_multi_value_index,
+        )
+
+        # Test column with hyphen
+        mv_idx = MultiValueIndex('tags-array')
+        result = compile_multi_value_index(mv_idx, None)
+        assert result == 'MULTI VALUE INDEX (`tags-array`)'
+
+        # Test column with space
+        mv_idx = MultiValueIndex('tags array')
+        result = compile_multi_value_index(mv_idx, None)
+        assert result == 'MULTI VALUE INDEX (`tags array`)'
+
+        # Test column with backticks
+        mv_idx = MultiValueIndex('column`with`backticks')
+        result = compile_multi_value_index(mv_idx, None)
+        assert result == 'MULTI VALUE INDEX (`column``with``backticks`)'
+
+        # Test with index options and special characters
+        mv_idx = MultiValueIndex(
+            'tags-array', index_options='{"option":"value"}',
+        )
+        result = compile_multi_value_index(mv_idx, None)
+        expected = 'MULTI VALUE INDEX (`tags-array`) INDEX_OPTIONS=\'{"option":"value"}\''
+        assert result == expected
+
+    def test_fulltext_index_compilation_with_special_column_names(self) -> None:
+        """Test FullTextIndex DDL compilation with special column names."""
+        from sqlalchemy_singlestoredb.ddlelement import (
+            FullTextIndex, compile_fulltext_index,
+        )
+
+        # Test single column with hyphen
+        ft_idx = FullTextIndex('title-column')
+        result = compile_fulltext_index(ft_idx, None)
+        assert result == 'FULLTEXT (`title-column`)'
+
+        # Test single column with space
+        ft_idx = FullTextIndex('title column', name='ft_idx')
+        result = compile_fulltext_index(ft_idx, None)
+        assert result == 'FULLTEXT ft_idx (`title column`)'
+
+        # Test multiple columns with special characters
+        ft_idx = FullTextIndex(
+            ['title column', 'content-field'], name='search_idx',
+        )
+        result = compile_fulltext_index(ft_idx, None)
+        expected = 'FULLTEXT search_idx (`title column`, `content-field`)'
+        assert result == expected
+
+        # Test column with backticks
+        ft_idx = FullTextIndex('column`with`backticks')
+        result = compile_fulltext_index(ft_idx, None)
+        assert result == 'FULLTEXT (`column``with``backticks`)'
+
+        # Test with version and special characters
+        ft_idx = FullTextIndex('content-field', name='ft_v2', version=2)
+        result = compile_fulltext_index(ft_idx, None)
+        assert result == 'FULLTEXT USING VERSION 2 ft_v2 (`content-field`)'

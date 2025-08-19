@@ -123,6 +123,40 @@ class TestShardKeyCompiler:
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY () METADATA_ONLY'
 
+    def test_compile_shard_key_with_special_column_names(self) -> None:
+        """Test compilation of shard key with special column names."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        # Test single column with hyphen
+        shard_key = ShardKey('user-id')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`user-id`)'
+
+        # Test single column with space
+        shard_key = ShardKey('user id')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`user id`)'
+
+        # Test multiple columns with special characters
+        shard_key = ShardKey(['user-id', 'tenant id', 'normal_column'])
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`user-id`, `tenant id`, normal_column)'
+
+        # Test column with backticks
+        shard_key = ShardKey('column`with`backticks')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`column``with``backticks`)'
+
+        # Test column starting with number
+        shard_key = ShardKey('123column')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`123column`)'
+
+        # Test with metadata_only and special characters
+        shard_key = ShardKey('user-id', metadata_only=True)
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`user-id`) METADATA_ONLY'
+
 
 class TestShardKeyTableIntegration:
     """Test ShardKey integration with table creation."""

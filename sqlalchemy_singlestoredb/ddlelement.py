@@ -10,6 +10,57 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import DDLElement
 
 
+def _escape_column_name(column_name: str) -> str:
+    """Escape column names with backticks if they contain special characters.
+
+    Parameters
+    ----------
+    column_name : str
+        The column name to escape
+
+    Returns
+    -------
+    str
+        The escaped column name with backticks if needed
+
+    Notes
+    -----
+    Special characters that require escaping include spaces, hyphens, reserved
+    words, and other non-alphanumeric characters. Any existing backticks in the
+    column name are doubled to escape them.
+
+    Examples
+    --------
+    >>> _escape_column_name('normal_column')
+    'normal_column'
+
+    >>> _escape_column_name('column with spaces')
+    '`column with spaces`'
+
+    >>> _escape_column_name('column-with-hyphens')
+    '`column-with-hyphens`'
+
+    >>> _escape_column_name('column`with`backticks')
+    '`column``with``backticks`'
+    """
+    column_str = str(column_name)
+
+    # Check if column name needs escaping
+    # Need escaping if it contains non-alphanumeric characters (except underscore)
+    # or starts with a digit
+    needs_escaping = (
+        not column_str.replace('_', '').replace('$', '').isalnum() or
+        column_str[0].isdigit() if column_str else False
+    )
+
+    if needs_escaping:
+        # Double any existing backticks to escape them
+        escaped = column_str.replace('`', '``')
+        return f'`{escaped}`'
+    else:
+        return column_str
+
+
 class ShardKey(DDLElement):
     """SingleStore SHARD KEY DDL element.
 
@@ -173,8 +224,8 @@ def compile_shard_key(element: Any, compiler: Any, **kw: Any) -> str:
         sql_parts.append('()')
 
     else:
-        # Add column list (empty parentheses for keyless sharding)
-        column_list = ', '.join([str(x) for x in element.columns])
+        # Add column list with proper escaping
+        column_list = ', '.join([_escape_column_name(x) for x in element.columns])
         sql_parts.append(f'({column_list})')
 
     # Add METADATA_ONLY if specified
@@ -328,12 +379,13 @@ def compile_sort_key(element: Any, compiler: Any, **kw: Any) -> str:
 
     parts = []
     for col_name, direction in element.columns:
+        escaped_col = _escape_column_name(col_name)
         if direction == 'ASC':
             # ASC is default in SingleStore, omit for cleaner SQL
-            parts.append(str(col_name))
+            parts.append(escaped_col)
         else:
             # DESC must be explicit
-            parts.append(f'{col_name} DESC')
+            parts.append(f'{escaped_col} DESC')
 
     return f'SORT KEY ({", ".join(parts)})'
 
@@ -452,7 +504,7 @@ def compile_vector_key(element: Any, compiler: Any, **kw: Any) -> str:
     'VECTOR INDEX vec_idx (embedding)'
 
     """
-    column_list = ', '.join([str(x) for x in element.columns])
+    column_list = ', '.join([_escape_column_name(x) for x in element.columns])
 
     # Start building the SQL
     sql_parts = ['VECTOR INDEX']
@@ -539,7 +591,8 @@ def compile_multi_value_index(element: Any, compiler: Any, **kw: Any) -> str:
     'MULTI VALUE INDEX (tags)'
 
     """
-    sql = f'MULTI VALUE INDEX ({element.column})'
+    escaped_column = _escape_column_name(element.column)
+    sql = f'MULTI VALUE INDEX ({escaped_column})'
 
     if element.index_options:
         sql += f" INDEX_OPTIONS='{element.index_options}'"
@@ -672,7 +725,7 @@ def compile_fulltext_index(element: Any, compiler: Any, **kw: Any) -> str:
     'FULLTEXT USING VERSION 2 ft_idx (title)'
 
     """
-    column_list = ', '.join([str(x) for x in element.columns])
+    column_list = ', '.join([_escape_column_name(x) for x in element.columns])
 
     # Start building the SQL
     sql_parts = ['FULLTEXT']
