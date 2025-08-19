@@ -233,8 +233,8 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     def visit_create_table(self, create: Any, **kw: Any) -> str:
         """Generate CREATE TABLE DDL with SingleStore-specific extensions.
 
-        Handles SHARD KEY, SORT KEY, and VECTOR INDEX constraints with all
-        syntax variants.
+        Handles SHARD KEY, SORT KEY, VECTOR INDEX, MULTI VALUE INDEX, and
+        FULLTEXT INDEX constraints with all syntax variants.
         """
         create_table_sql = super().visit_create_table(create, **kw)
 
@@ -270,6 +270,16 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
                 # Append the MULTI VALUE INDEX definition to the original SQL
                 create_table_sql = (
                     f'{create_table_sql.rstrip()[:-2]},\n\t{mv_index_sql}\n)'
+                )
+
+        fulltext_indexes = create.element.info.get('singlestoredb_fulltext_indexes')
+        if fulltext_indexes is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_fulltext_index
+            for ft_index in fulltext_indexes:
+                ft_index_sql = compile_fulltext_index(ft_index, self)
+                # Append the FULLTEXT INDEX definition to the original SQL
+                create_table_sql = (
+                    f'{create_table_sql.rstrip()[:-2]},\n\t{ft_index_sql}\n)'
                 )
 
         return create_table_sql
