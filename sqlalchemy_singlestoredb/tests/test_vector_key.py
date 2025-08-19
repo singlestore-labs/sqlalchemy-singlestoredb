@@ -431,10 +431,10 @@ class TestVectorKeyReflectionParser:
                 f"{case['expected_columns']}, Got: {spec['columns']}"
             )
             assert spec.get('index_options') == \
-                   case['expected_options'], (  # type: ignore
+                case['expected_options'], (  # type: ignore
                 f"Line: {case['line']}, Expected options: "  # type: ignore
                 f"{case['expected_options']}, Got: {spec.get('index_options')}"
-                   )
+                )
 
     def test_parser_quoted_column_names(self) -> None:
         """Test parser handles quoted column identifiers correctly."""
@@ -492,7 +492,7 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('data', String(50)),
-            singlestoredb_vector_indexes=[VectorKey('vec_idx', 'embedding')],
+            VectorKey('vec_idx', 'embedding'),
         )
 
         # Verify info is set correctly
@@ -515,12 +515,10 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(256, 'F32')),
             Column('data', String(100)),
-            singlestoredb_vector_indexes=[
-                VectorKey(
-                    'vec_idx', 'embedding',
-                    index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
-                ),
-            ],
+            VectorKey(
+                'vec_idx', 'embedding',
+                index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
+            ),
         )
 
         # Verify info is set correctly
@@ -543,13 +541,11 @@ class TestVectorKeyTableConstructorIntegration:
             Column('doc_id', Integer, primary_key=True),
             Column('content_embedding', VECTOR(128, 'F32')),
             Column('title_embedding', VECTOR(256, 'F32')),
-            singlestoredb_vector_indexes=[
-                VectorKey('content_vec_idx', 'content_embedding'),
-                VectorKey(
-                    'title_vec_idx', 'title_embedding',
-                    index_options='{"metric_type":"DOT_PRODUCT"}',
-                ),
-            ],
+            VectorKey('content_vec_idx', 'content_embedding'),
+            VectorKey(
+                'title_vec_idx', 'title_embedding',
+                index_options='{"metric_type":"DOT_PRODUCT"}',
+            ),
         )
 
         # Verify info is set correctly
@@ -583,14 +579,12 @@ class TestVectorKeyTableConstructorIntegration:
             Column('doc_id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('created_at', String(50)),
-            singlestoredb_shard_key=ShardKey('user_id'),
-            singlestoredb_sort_key=SortKey('created_at'),
-            singlestoredb_vector_indexes=[
-                VectorKey(
-                    'vec_idx', 'embedding',
-                    index_options='{"metric_type":"DOT_PRODUCT"}',
-                ),
-            ],
+            ShardKey('user_id'),
+            SortKey('created_at'),
+            VectorKey(
+                'vec_idx', 'embedding',
+                index_options='{"metric_type":"DOT_PRODUCT"}',
+            ),
         )
 
         # Verify all info is set correctly
@@ -622,8 +616,8 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('data', String(50)),
+            VectorKey('vec_idx', 'embedding'),
             info={'custom_key': 'custom_value'},
-            singlestoredb_vector_indexes=[VectorKey('vec_idx', 'embedding')],
         )
 
         # Verify both custom info and vector indexes are preserved

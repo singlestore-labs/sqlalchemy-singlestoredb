@@ -475,7 +475,7 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
-            singlestoredb_sort_key=SortKey('created_at'),
+            SortKey('created_at'),
         )
 
         # Verify info is set correctly
@@ -494,7 +494,7 @@ class TestSortKeyTableConstructorIntegration:
             'test_empty', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(100)),
-            singlestoredb_sort_key=SortKey(),
+            SortKey(),
         )
 
         # Verify info is set correctly
@@ -514,7 +514,7 @@ class TestSortKeyTableConstructorIntegration:
             Column('created_at', String(50), primary_key=True),
             Column('priority', Integer),
             Column('amount', Integer),
-            singlestoredb_sort_key=SortKey('created_at', 'priority'),
+            SortKey('created_at', 'priority'),
         )
 
         # Verify info is set correctly
@@ -533,8 +533,8 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
+            SortKey('created_at'),
             info={'custom_key': 'custom_value'},
-            singlestoredb_sort_key=SortKey('created_at'),
         )
 
         # Verify both custom info and sort key are preserved

@@ -542,7 +542,7 @@ class TestTableConstructorIntegration:
             'test_basic', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(50)),
-            singlestoredb_shard_key=ShardKey('id'),
+            ShardKey('id'),
         )
 
         # Verify info is set correctly
@@ -562,7 +562,7 @@ class TestTableConstructorIntegration:
             'test_only', self.metadata,
             Column('user_id', Integer, primary_key=True),
             Column('name', String(50)),
-            singlestoredb_shard_key=ShardKey('user_id', only=True),
+            ShardKey('user_id', only=True),
         )
 
         # Verify info is set correctly
@@ -581,7 +581,7 @@ class TestTableConstructorIntegration:
             'test_empty', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(100)),
-            singlestoredb_shard_key=ShardKey(),
+            ShardKey(),
         )
 
         # Verify info is set correctly
@@ -601,7 +601,7 @@ class TestTableConstructorIntegration:
             Column('user_id', Integer, primary_key=True),
             Column('category_id', Integer, primary_key=True),
             Column('amount', Integer),
-            singlestoredb_shard_key=ShardKey('user_id', 'category_id'),
+            ShardKey('user_id', 'category_id'),
         )
 
         # Verify info is set correctly
@@ -621,8 +621,8 @@ class TestTableConstructorIntegration:
             Column('user_id', Integer, primary_key=True),
             Column('order_id', Integer, primary_key=True),
             Column('created_at', String(50)),
-            singlestoredb_shard_key=ShardKey('user_id'),
-            singlestoredb_sort_key=SortKey('created_at'),
+            ShardKey('user_id'),
+            SortKey('created_at'),
         )
 
         # Verify info is set correctly
@@ -647,8 +647,8 @@ class TestTableConstructorIntegration:
             'test_preserve', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(50)),
+            ShardKey('id'),
             info={'custom_key': 'custom_value'},
-            singlestoredb_shard_key=ShardKey('id'),
         )
 
         # Verify both custom info and shard key are preserved
@@ -671,3 +671,33 @@ class TestTableConstructorIntegration:
         table.create(self.mock_engine, checkfirst=False)
         assert 'CREATE TABLE test_normal' in self.compiled_ddl
         assert 'SHARD KEY' not in self.compiled_ddl  # No shard key should be added
+
+    def test_table_constructor_multiple_shard_keys_error(self) -> None:
+        """Test that Table constructor raises error when multiple ShardKeys provided."""
+        with pytest.raises(
+            ValueError,
+            match='Only one ShardKey can be specified per table',
+        ):
+            Table(
+                'test_error', self.metadata,
+                Column('id', Integer, primary_key=True),
+                Column('user_id', Integer),
+                Column('data', String(50)),
+                ShardKey('id'),
+                ShardKey('user_id'),  # This should cause an error
+            )
+
+    def test_table_constructor_multiple_sort_keys_error(self) -> None:
+        """Test that Table constructor raises error when multiple SortKeys provided."""
+        with pytest.raises(
+            ValueError,
+            match='Only one SortKey can be specified per table',
+        ):
+            Table(
+                'test_error', self.metadata,
+                Column('id', Integer, primary_key=True),
+                Column('created_at', String(50)),
+                Column('updated_at', String(50)),
+                SortKey('created_at'),
+                SortKey('updated_at'),  # This should cause an error
+            )
