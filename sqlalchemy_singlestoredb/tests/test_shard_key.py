@@ -121,7 +121,7 @@ class TestShardKeyCompiler:
 
         shard_key = ShardKey(metadata_only=True)
         result = compile_shard_key(shard_key, None)
-        assert result == 'SHARD KEY ()'
+        assert result == 'SHARD KEY () METADATA_ONLY'
 
 
 class TestShardKeyTableIntegration:
