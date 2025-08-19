@@ -585,7 +585,7 @@ class TestVectorKeyTableConstructorIntegration:
             Column('embedding', VECTOR(128, 'F32')),
             Column('created_at', String(50)),
             ShardKey('user_id'),
-            SortKey('created_at'),
+            SortKey(['created_at']),
             VectorKey(
                 'embedding', name='vec_idx',
                 index_options='{"metric_type":"DOT_PRODUCT"}',
@@ -602,7 +602,7 @@ class TestVectorKeyTableConstructorIntegration:
         vector_indexes = table.info['singlestoredb_vector_indexes']
 
         assert shard_key.columns == ('user_id',)
-        assert sort_key.columns == ('created_at',)
+        assert sort_key.columns == [('created_at', 'ASC')]
         assert len(vector_indexes) == 1
         assert vector_indexes[0].name == 'vec_idx'
 

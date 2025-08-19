@@ -55,7 +55,7 @@ def main() -> None:
         'users', metadata,
         Column('id', Integer, primary_key=True),
         Column('name', String(100)),
-        singlestoredb_shard_key=ShardKey('id'),
+        ShardKey('id'),
     )
     table1.create(mock_engine, checkfirst=False)
 
@@ -65,7 +65,7 @@ def main() -> None:
         'large_data', metadata,
         Column('user_id', Integer, primary_key=True),
         Column('content', String(1000)),
-        singlestoredb_shard_key=ShardKey('user_id', only=True),
+        ShardKey('user_id', metadata_only=True),
     )
     table2.create(mock_engine, checkfirst=False)
 
@@ -75,7 +75,7 @@ def main() -> None:
         'random_data', metadata,
         Column('id', Integer, primary_key=True),
         Column('value', String(50)),
-        singlestoredb_shard_key=ShardKey(),
+        ShardKey(),
     )
     table3.create(mock_engine, checkfirst=False)
 
@@ -86,7 +86,7 @@ def main() -> None:
         Column('user_id', Integer, primary_key=True),
         Column('region_id', Integer, primary_key=True),
         Column('amount', Integer),
-        singlestoredb_shard_key=ShardKey('user_id', 'region_id'),
+        ShardKey(['user_id', 'region_id']),
     )
     table4.create(mock_engine, checkfirst=False)
 
@@ -98,8 +98,8 @@ def main() -> None:
         Column('event_id', Integer, primary_key=True),
         Column('timestamp', String(50)),
         Column('event_type', String(50)),
-        singlestoredb_shard_key=ShardKey('user_id'),
-        singlestoredb_sort_key=SortKey('timestamp'),
+        ShardKey('user_id'),
+        SortKey(['timestamp']),
     )
     table5.create(mock_engine, checkfirst=False)
 
@@ -109,8 +109,8 @@ def main() -> None:
         'metadata_table', metadata,
         Column('id', Integer, primary_key=True),
         Column('data', String(100)),
+        ShardKey('id', metadata_only=True),
         info={'custom_metadata': 'example_value'},
-        singlestoredb_shard_key=ShardKey('id', only=True),
     )
     table6.create(mock_engine, checkfirst=False)
     print(f"   Custom info preserved: {table6.info.get('custom_metadata')}")

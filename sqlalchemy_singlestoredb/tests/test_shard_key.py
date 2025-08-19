@@ -24,43 +24,44 @@ class TestShardKeyConstruction:
         """Test basic shard key with single column."""
         shard_key = ShardKey('user_id')
         assert shard_key.columns == ('user_id',)
-        assert shard_key.only is False
+        assert shard_key.metadata_only is False
         assert repr(shard_key) == "ShardKey('user_id')"
 
     def test_multi_column_shard_key(self) -> None:
         """Test shard key with multiple columns."""
-        shard_key = ShardKey('user_id', 'category_id')
+        shard_key = ShardKey(['user_id', 'category_id'])
         assert shard_key.columns == ('user_id', 'category_id')
-        assert shard_key.only is False
-        assert repr(shard_key) == "ShardKey('user_id', 'category_id')"
+        assert shard_key.metadata_only is False
+        assert repr(shard_key) == "ShardKey(['user_id', 'category_id'])"
 
     def test_empty_shard_key(self) -> None:
         """Test empty shard key for keyless sharding."""
         shard_key = ShardKey()
         assert shard_key.columns == ()
-        assert shard_key.only is False
+        assert shard_key.metadata_only is False
         assert repr(shard_key) == 'ShardKey()'
 
-    def test_shard_key_only_single_column(self) -> None:
+    def test_shard_key_metadata_only_single_column(self) -> None:
         """Test SHARD KEY ONLY with single column."""
-        shard_key = ShardKey('user_id', only=True)
+        shard_key = ShardKey('user_id', metadata_only=True)
         assert shard_key.columns == ('user_id',)
-        assert shard_key.only is True
-        assert repr(shard_key) == "ShardKey('user_id', only=True)"
+        assert shard_key.metadata_only is True
+        assert repr(shard_key) == "ShardKey('user_id', metadata_only=True)"
 
-    def test_shard_key_only_multi_column(self) -> None:
+    def test_shard_key_metadata_only_multi_column(self) -> None:
         """Test SHARD KEY ONLY with multiple columns."""
-        shard_key = ShardKey('user_id', 'category_id', only=True)
+        shard_key = ShardKey(['user_id', 'category_id'], metadata_only=True)
         assert shard_key.columns == ('user_id', 'category_id')
-        assert shard_key.only is True
-        assert repr(shard_key) == "ShardKey('user_id', 'category_id', only=True)"
+        assert shard_key.metadata_only is True
+        expected_repr = "ShardKey(['user_id', 'category_id'], metadata_only=True)"
+        assert repr(shard_key) == expected_repr
 
-    def test_shard_key_only_empty(self) -> None:
+    def test_shard_key_metadata_only_empty(self) -> None:
         """Test SHARD KEY ONLY with no columns (should fallback to empty)."""
-        shard_key = ShardKey(only=True)
+        shard_key = ShardKey(metadata_only=True)
         assert shard_key.columns == ()
-        assert shard_key.only is True
-        assert repr(shard_key) == 'ShardKey(only=True)'
+        assert shard_key.metadata_only is True
+        assert repr(shard_key) == 'ShardKey(None, metadata_only=True)'
 
 
 class TestShardKeyCompiler:
@@ -86,7 +87,7 @@ class TestShardKeyCompiler:
         """Test compilation of multi-column shard key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
 
-        shard_key = ShardKey('user_id', 'category_id')
+        shard_key = ShardKey(['user_id', 'category_id'])
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY (user_id, category_id)'
 
@@ -98,27 +99,27 @@ class TestShardKeyCompiler:
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY ()'
 
-    def test_compile_shard_key_only(self) -> None:
+    def test_compile_shard_key_metadata_only(self) -> None:
         """Test compilation of SHARD KEY ONLY."""
         from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
 
-        shard_key = ShardKey('user_id', only=True)
+        shard_key = ShardKey('user_id', metadata_only=True)
         result = compile_shard_key(shard_key, None)
-        assert result == 'SHARD KEY ONLY (user_id)'
+        assert result == 'SHARD KEY (user_id) METADATA_ONLY'
 
-    def test_compile_shard_key_only_multi_column(self) -> None:
+    def test_compile_shard_key_metadata_only_multi_column(self) -> None:
         """Test compilation of SHARD KEY ONLY with multiple columns."""
         from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
 
-        shard_key = ShardKey('user_id', 'category_id', only=True)
+        shard_key = ShardKey(['user_id', 'category_id'], metadata_only=True)
         result = compile_shard_key(shard_key, None)
-        assert result == 'SHARD KEY ONLY (user_id, category_id)'
+        assert result == 'SHARD KEY (user_id, category_id) METADATA_ONLY'
 
-    def test_compile_shard_key_only_empty(self) -> None:
+    def test_compile_shard_key_metadata_only_empty(self) -> None:
         """Test compilation of SHARD KEY ONLY with no columns (fallback)."""
         from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
 
-        shard_key = ShardKey(only=True)
+        shard_key = ShardKey(metadata_only=True)
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY ()'
 
@@ -176,7 +177,7 @@ class TestShardKeyTableIntegration:
         assert 'SHARD KEY ()' in self.compiled_ddl
         assert 'CREATE TABLE test_table_empty' in self.compiled_ddl
 
-    def test_table_with_shard_key_only(self) -> None:
+    def test_table_with_shard_key_metadata_only(self) -> None:
         """Test table creation with SHARD KEY ONLY."""
         Base = declarative_base()
 
@@ -188,13 +189,15 @@ class TestShardKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey('user_id', only=True)},
+                'info': {
+                    'singlestoredb_shard_key': ShardKey('user_id', metadata_only=True),
+                },
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
 
-        # Check that SHARD KEY ONLY appears in the DDL
-        assert 'SHARD KEY ONLY (user_id)' in self.compiled_ddl
+        # Check that SHARD KEY METADATA_ONLY appears in the DDL
+        assert 'SHARD KEY (user_id) METADATA_ONLY' in self.compiled_ddl
         assert 'CREATE TABLE test_table_only' in self.compiled_ddl
 
     def test_table_with_multi_column_shard_key(self) -> None:
@@ -210,7 +213,7 @@ class TestShardKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey('user_id', 'category_id')},
+                'info': {'singlestoredb_shard_key': ShardKey(['user_id', 'category_id'])},
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -254,7 +257,7 @@ class TestShardKeyBackwardCompatibility:
 
         # Verify the ShardKey object has expected properties
         shard_key = ShardKey('id')
-        assert shard_key.only is False  # New property defaults to False
+        assert shard_key.metadata_only is False  # New property defaults to False
         assert shard_key.columns == ('id',)  # Existing behavior preserved
 
 
@@ -346,7 +349,9 @@ class TestShardKeyReflection:
             assert 'data' in reflected_table.columns
 
     @pytest.mark.skipif(True, reason='SHARD KEY ONLY needs database support verification')
-    def test_reflect_shard_key_only(self, test_engine: Any, clean_tables: Any) -> None:
+    def test_reflect_shard_key_metadata_only(
+        self, test_engine: Any, clean_tables: Any,
+    ) -> None:
         """Test reflection of SHARD KEY ONLY (prevents index creation)."""
         table_name = 'test_shard_reflection_only'
 
@@ -358,7 +363,7 @@ class TestShardKeyReflection:
                     CREATE TABLE {table_name} (
                         user_id INT PRIMARY KEY,
                         data VARCHAR(50),
-                        SHARD KEY ONLY (user_id)
+                        SHARD KEY (user_id) METADATA_ONLY
                     )
                 """),
                 )
@@ -549,30 +554,30 @@ class TestTableConstructorIntegration:
         assert 'singlestoredb_shard_key' in table.info
         assert isinstance(table.info['singlestoredb_shard_key'], ShardKey)
         assert table.info['singlestoredb_shard_key'].columns == ('id',)
-        assert table.info['singlestoredb_shard_key'].only is False
+        assert table.info['singlestoredb_shard_key'].metadata_only is False
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
         assert 'SHARD KEY (id)' in self.compiled_ddl
         assert 'CREATE TABLE test_basic' in self.compiled_ddl
 
-    def test_table_constructor_shard_key_only(self) -> None:
+    def test_table_constructor_shard_key_metadata_only(self) -> None:
         """Test Table constructor with SHARD KEY ONLY parameter."""
         table = Table(
             'test_only', self.metadata,
             Column('user_id', Integer, primary_key=True),
             Column('name', String(50)),
-            ShardKey('user_id', only=True),
+            ShardKey('user_id', metadata_only=True),
         )
 
         # Verify info is set correctly
         shard_key = table.info['singlestoredb_shard_key']
         assert shard_key.columns == ('user_id',)
-        assert shard_key.only is True
+        assert shard_key.metadata_only is True
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
-        assert 'SHARD KEY ONLY (user_id)' in self.compiled_ddl
+        assert 'SHARD KEY (user_id) METADATA_ONLY' in self.compiled_ddl
         assert 'CREATE TABLE test_only' in self.compiled_ddl
 
     def test_table_constructor_empty_shard_key(self) -> None:
@@ -587,7 +592,7 @@ class TestTableConstructorIntegration:
         # Verify info is set correctly
         shard_key = table.info['singlestoredb_shard_key']
         assert shard_key.columns == ()
-        assert shard_key.only is False
+        assert shard_key.metadata_only is False
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -601,13 +606,13 @@ class TestTableConstructorIntegration:
             Column('user_id', Integer, primary_key=True),
             Column('category_id', Integer, primary_key=True),
             Column('amount', Integer),
-            ShardKey('user_id', 'category_id'),
+            ShardKey(['user_id', 'category_id']),
         )
 
         # Verify info is set correctly
         shard_key = table.info['singlestoredb_shard_key']
         assert shard_key.columns == ('user_id', 'category_id')
-        assert shard_key.only is False
+        assert shard_key.metadata_only is False
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -622,7 +627,7 @@ class TestTableConstructorIntegration:
             Column('order_id', Integer, primary_key=True),
             Column('created_at', String(50)),
             ShardKey('user_id'),
-            SortKey('created_at'),
+            SortKey(['created_at']),
         )
 
         # Verify info is set correctly
@@ -633,7 +638,7 @@ class TestTableConstructorIntegration:
         sort_key = table.info['singlestoredb_sort_key']
 
         assert shard_key.columns == ('user_id',)
-        assert sort_key.columns == ('created_at',)
+        assert sort_key.columns == [('created_at', 'ASC')]
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -698,6 +703,6 @@ class TestTableConstructorIntegration:
                 Column('id', Integer, primary_key=True),
                 Column('created_at', String(50)),
                 Column('updated_at', String(50)),
-                SortKey('created_at'),
-                SortKey('updated_at'),  # This should cause an error
+                SortKey(['created_at']),
+                SortKey(['updated_at']),  # This should cause an error
             )
