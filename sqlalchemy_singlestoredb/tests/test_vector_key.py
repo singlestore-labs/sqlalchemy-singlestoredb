@@ -126,6 +126,42 @@ class TestVectorKeyCompiler:
         )
         assert result == expected
 
+    def test_compile_vector_key_with_special_column_names(self) -> None:
+        """Test compilation of vector key with special column names."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
+
+        # Test single column with hyphen
+        vector_key = VectorKey('embedding-column', name='vec_idx')
+        result = compile_vector_key(vector_key, None)
+        assert result == 'VECTOR INDEX vec_idx (`embedding-column`)'
+
+        # Test single column with space
+        vector_key = VectorKey('embedding column')
+        result = compile_vector_key(vector_key, None)
+        assert result == 'VECTOR INDEX (`embedding column`)'
+
+        # Test multiple columns with special characters
+        vector_key = VectorKey(['embedding-1', 'embedding 2'], name='multi_idx')
+        result = compile_vector_key(vector_key, None)
+        assert result == 'VECTOR INDEX multi_idx (`embedding-1`, `embedding 2`)'
+
+        # Test column with backticks
+        vector_key = VectorKey('column`with`backticks')
+        result = compile_vector_key(vector_key, None)
+        assert result == 'VECTOR INDEX (`column``with``backticks`)'
+
+        # Test with index options and special characters
+        vector_key = VectorKey(
+            'embedding-column', name='special_idx',
+            index_options='{"metric_type":"COSINE_SIMILARITY"}',
+        )
+        result = compile_vector_key(vector_key, None)
+        expected = (
+            'VECTOR INDEX special_idx (`embedding-column`) '
+            'INDEX_OPTIONS=\'{"metric_type":"COSINE_SIMILARITY"}\''
+        )
+        assert result == expected
+
 
 class TestVectorKeyTableIntegration:
     """Test VectorKey integration with table creation."""

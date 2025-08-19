@@ -313,6 +313,40 @@ class TestSortKeyCompiler:
         result = compile_sort_key(sort_key, None)
         assert result == 'SORT KEY ()'
 
+    def test_compile_sort_key_with_special_column_names(self) -> None:
+        """Test compilation of sort key with special column names."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+
+        # Test single column with hyphen
+        sort_key = SortKey(['user-id'])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (`user-id`)'
+
+        # Test single column with space
+        sort_key = SortKey(['created at'])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (`created at`)'
+
+        # Test multiple columns with special characters
+        sort_key = SortKey(['user-id', 'created at', 'normal_column'])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (`user-id`, `created at`, normal_column)'
+
+        # Test with descending and special characters
+        sort_key = SortKey([('user-id', 'ASC'), ('created at', 'DESC')])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (`user-id`, `created at` DESC)'
+
+        # Test column with backticks
+        sort_key = SortKey(['column`with`backticks'])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (`column``with``backticks`)'
+
+        # Test using static methods with special characters
+        sort_key = SortKey([SortKey.asc('user-id'), SortKey.desc('created at')])
+        result = compile_sort_key(sort_key, None)
+        assert result == 'SORT KEY (`user-id`, `created at` DESC)'
+
 
 class TestSortKeyTableIntegration:
     """Test SortKey integration with table creation."""
