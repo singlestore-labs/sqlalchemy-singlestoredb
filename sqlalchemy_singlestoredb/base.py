@@ -231,11 +231,10 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
 
     def post_create_table(self, table: Any) -> str:
-        """Build table-level CREATE options, filter SingleStore options."""
-        # Get all table kwargs and filter out SingleStore-specific options
+        """Build table-level CREATE options, including SingleStore-specific options."""
         table_opts = []
 
-        # Get opts the same way MySQL does, but filter out our options
+        # Get opts the same way MySQL does, but filter out our DDL element options
         opts = dict(
             (k[len(self.dialect.name) + 1:].upper(), v)
             for k, v in table.kwargs.items()
@@ -252,10 +251,51 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
         if table.comment is not None:
             opts['COMMENT'] = table.comment
 
-        # Process remaining MySQL-compatible options
+        # Handle SingleStore-specific table options with proper formatting
+        singlestore_opts = {
+            'AUTOSTATS_ENABLED': ['TRUE', 'FALSE'],
+            'AUTOSTATS_CARDINALITY_MODE': ['INCREMENTAL', 'PERIODIC', 'OFF'],
+            'AUTOSTATS_HISTOGRAM_MODE': ['CREATE', 'UPDATE', 'OFF'],
+            'AUTOSTATS_SAMPLING': ['ON', 'OFF'],
+            'COMPRESSION': ['SPARSE'],
+        }
+
+        # Boolean conversion mappings for SingleStore options
+        # For options that accept OFF, False maps to OFF
+        # For AUTOSTATS_ENABLED, False maps to FALSE (specific to that option)
+        # For AUTOSTATS_SAMPLING, True maps to ON (specific to that option)
+        boolean_mappings = {
+            'AUTOSTATS_ENABLED': {True: 'TRUE', False: 'FALSE'},
+            'AUTOSTATS_CARDINALITY_MODE': {False: 'OFF'},  # Only False->OFF
+            'AUTOSTATS_HISTOGRAM_MODE': {False: 'OFF'},    # Only False->OFF
+            'AUTOSTATS_SAMPLING': {True: 'ON', False: 'OFF'},
+        }
+
+        # Process remaining options
         for opt, arg in opts.items():
-            if hasattr(arg, '__str__'):
-                table_opts.append(f'{opt}={arg}')
+            # Handle boolean values for specific SingleStore options
+            if opt in boolean_mappings and isinstance(arg, bool):
+                if arg in boolean_mappings[opt]:
+                    arg_str = boolean_mappings[opt][arg]
+                else:
+                    # Boolean value not supported for this option, convert to string
+                    arg_str = str(arg)
+            else:
+                arg_str = str(arg)
+
+            # Handle SingleStore-specific options with validation
+            if opt in singlestore_opts:
+                if arg_str.upper() in singlestore_opts[opt]:
+                    table_opts.append(f'{opt} = {arg_str.upper()}')
+                else:
+                    valid_values = ', '.join(singlestore_opts[opt])
+                    raise ValueError(
+                        f'Invalid value "{arg_str}" for {opt}. '
+                        f'Valid values are: {valid_values}',
+                    )
+            else:
+                # Standard table options
+                table_opts.append(f'{opt}={arg_str}')
 
         if table_opts:
             return ' ' + ' '.join(table_opts)
@@ -273,21 +313,22 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
         # Get dialect options for SingleStore
         dialect_opts = create.element.dialect_options.get('singlestoredb', {})
 
+        # Collect all DDL elements to append
+        ddl_elements = []
+
         # Handle shard key (single value only)
         shard_key = dialect_opts.get('shard_key')
         if shard_key is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
             shard_key_sql = compile_shard_key(shard_key, self)
-            # Append the SHARD KEY definition to the original SQL
-            create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)'
+            ddl_elements.append(shard_key_sql)
 
         # Handle sort key (single value only)
         sort_key = dialect_opts.get('sort_key')
         if sort_key is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
             sort_key_sql = compile_sort_key(sort_key, self)
-            # Append the SORT KEY definition to the original SQL
-            create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
+            ddl_elements.append(sort_key_sql)
 
         # Handle vector keys (single value or list)
         vector_key = dialect_opts.get('vector_key')
@@ -297,10 +338,7 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
             vector_keys = vector_key if isinstance(vector_key, list) else [vector_key]
             for vector_index in vector_keys:
                 vector_index_sql = compile_vector_key(vector_index, self)
-                # Append the VECTOR INDEX definition to the original SQL
-                create_table_sql = (
-                    f'{create_table_sql.rstrip()[:-2]},\n\t{vector_index_sql}\n)'
-                )
+                ddl_elements.append(vector_index_sql)
 
         # Handle multi-value indexes (single value or list)
         multi_value_index = dialect_opts.get('multi_value_index')
@@ -312,20 +350,43 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
             ) else [multi_value_index]
             for mv_index in multi_value_indexes:
                 mv_index_sql = compile_multi_value_index(mv_index, self)
-                # Append the MULTI VALUE INDEX definition to the original SQL
-                create_table_sql = (
-                    f'{create_table_sql.rstrip()[:-2]},\n\t{mv_index_sql}\n)'
-                )
+                ddl_elements.append(mv_index_sql)
 
         # Handle fulltext index (single value only - SingleStore limitation)
         full_text_index = dialect_opts.get('full_text_index')
         if full_text_index is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_fulltext_index
             ft_index_sql = compile_fulltext_index(full_text_index, self)
-            # Append the FULLTEXT INDEX definition to the original SQL
-            create_table_sql = (
-                f'{create_table_sql.rstrip()[:-2]},\n\t{ft_index_sql}\n)'
-            )
+            ddl_elements.append(ft_index_sql)
+
+        # If we have DDL elements to add, modify the SQL
+        if ddl_elements:
+            # We need to handle the case where table options might be present
+            sql_stripped = create_table_sql.rstrip()
+
+            # Look for table options (they come after the closing parenthesis)
+            # Pattern: ") TABLE_OPTION1=value1 TABLE_OPTION2=value2"
+            closing_paren_pos = sql_stripped.rfind(')')
+
+            if closing_paren_pos != -1:
+                # Split into table definition and table options parts
+                table_def_part = sql_stripped[:closing_paren_pos]  # Before ')'
+                table_options_part = sql_stripped[closing_paren_pos + 1:]  # After ')'
+
+                # Add DDL elements inside the table definition
+                # Remove trailing newline from table definition and add comma
+                table_def_clean = table_def_part.rstrip()
+                formatted_ddl_elements = ',\n\t'.join(ddl_elements)
+
+                # Reconstruct with proper formatting
+                create_table_sql = (
+                    f'{table_def_clean},\n\t{formatted_ddl_elements}\n)'
+                    f'{table_options_part}'
+                )
+            else:
+                # This shouldn't happen with normal CREATE TABLE, but handle it
+                ddl_part = ',\n\t' + ',\n\t'.join(ddl_elements)
+                create_table_sql = f'{sql_stripped}{ddl_part}'
 
         return create_table_sql
 
