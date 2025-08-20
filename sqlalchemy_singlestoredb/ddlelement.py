@@ -68,11 +68,9 @@ class ShardKey(DDLElement):
 
     Parameters
     ----------
-    columns : str, list[str], or None
-        Column specification. Supports these formats:
-        - Single column: ShardKey('user_id')
-        - List of columns: ShardKey(['user_id', 'tenant_id'])
-        - Empty for keyless sharding: ShardKey() or ShardKey([])
+    *columns : str
+        Variable number of column names for the shard key.
+        For empty shard key (keyless sharding), pass no arguments.
     index_type : str, optional, keyword-only
         Index type for the shard key. Options: 'BTREE' or 'HASH'.
     metadata_only : bool, default False, keyword-only
@@ -87,12 +85,11 @@ class ShardKey(DDLElement):
 
     Multi-column shard key:
 
-    >>> ShardKey(['user_id', 'category_id'])
+    >>> ShardKey('user_id', 'category_id')
 
     Empty shard key for keyless sharding:
 
     >>> ShardKey()
-    >>> ShardKey([])
 
     With index type (keyword-only):
 
@@ -104,7 +101,7 @@ class ShardKey(DDLElement):
 
     Combined options (keyword-only):
 
-    >>> ShardKey(['user_id', 'tenant_id'], index_type='BTREE', metadata_only=True)
+    >>> ShardKey('user_id', 'tenant_id', index_type='BTREE', metadata_only=True)
 
     """
 
@@ -114,30 +111,16 @@ class ShardKey(DDLElement):
 
     def __init__(
         self,
-        columns: Optional[Union[str, List[str]]] = None,
-        *,
+        *columns: str,
         index_type: Optional[str] = None,
         metadata_only: bool = False,
     ) -> None:
-        # Handle different column specification formats
-        if columns is None:
-            # ShardKey() - empty for keyless sharding
-            self.columns = ()
-        elif isinstance(columns, str):
-            # ShardKey('user_id') - single column
-            self.columns = (columns,)
-        elif isinstance(columns, (list, tuple)):
-            # ShardKey(['user_id', 'tenant_id']) - list of columns
-            if not columns:
-                self.columns = ()
-            else:
-                # Validate all items are strings
-                for col in columns:
-                    if not isinstance(col, str):
-                        raise TypeError('All column names must be strings')
-                self.columns = tuple(columns)
-        else:
-            raise TypeError('columns must be a string, a list of strings, or None')
+        # Validate all columns are strings
+        for col in columns:
+            if not isinstance(col, str):
+                raise TypeError('All column names must be strings')
+
+        self.columns = columns
 
         if index_type is not None and index_type.upper() not in ('BTREE', 'HASH'):
             raise ValueError('index_type must be "BTREE" or "HASH"')
@@ -146,26 +129,13 @@ class ShardKey(DDLElement):
         self.metadata_only = metadata_only
 
     def __repr__(self) -> str:
-        args = []
-
-        # Handle columns parameter - only add if not empty or if there are keyword args
-        if len(self.columns) == 1:
-            args.append(repr(self.columns[0]))
-        elif len(self.columns) > 1:
-            args.append(repr(list(self.columns)))
-        elif self.index_type is not None or self.metadata_only:
-            # Empty columns but with keyword args, need to be explicit
-            args.append('None')
+        args = [repr(col) for col in self.columns]
 
         # Handle keyword-only parameters
         if self.index_type is not None:
             args.append(f'index_type={repr(self.index_type)}')
         if self.metadata_only:
             args.append('metadata_only=True')
-
-        # Special case for empty ShardKey() with no other args
-        if not args:
-            return 'ShardKey()'
 
         return f'ShardKey({", ".join(args)})'
 
@@ -205,7 +175,7 @@ def compile_shard_key(element: Any, compiler: Any, **kw: Any) -> str:
     >>> compile_shard_key(ShardKey('user_id'), compiler)
     'SHARD KEY (user_id)'
 
-    >>> compile_shard_key(ShardKey(['user_id', 'tenant_id'], index_type='HASH'), compiler)
+    >>> compile_shard_key(ShardKey('user_id', 'tenant_id', index_type='HASH'), compiler)
     'SHARD KEY USING HASH (user_id, tenant_id)'
 
     >>> compile_shard_key(ShardKey('user_id', metadata_only=True), compiler)
@@ -243,35 +213,28 @@ class SortKey(DDLElement):
 
     Parameters
     ----------
-    columns : Union[str, List[Union[str, Tuple[str, str]]]]
-        Column specifications. Can be:
-        - A single string (column name, defaults to ASC)
-        - A list of column specifications where each element can be:
-          - A string (column name, defaults to ASC)
-          - A tuple of (column_name, direction) where direction is 'ASC' or 'DESC'
+    *columns : Union[str, Tuple[str, str]]
+        Variable number of column specifications. Each can be:
+        - A string (column name, defaults to ASC)
+        - A tuple of (column_name, direction) where direction is 'ASC' or 'DESC'
 
     Examples
     --------
     Single column sort key (ascending by default):
 
     >>> SortKey('created_at')
-    >>> SortKey(['created_at'])  # Equivalent list syntax
 
     Multi-column sort key with mixed directions:
 
-    >>> SortKey(['user_id', ('created_at', 'DESC')])
+    >>> SortKey('user_id', ('created_at', 'DESC'))
 
     Using static helper methods:
 
-    >>> SortKey([SortKey.asc('user_id'), SortKey.desc('created_at')])
+    >>> SortKey(SortKey.asc('user_id'), SortKey.desc('created_at'))
 
     """
 
-    def __init__(self, columns: Union[str, List[Union[str, Tuple[str, str]]]]) -> None:
-        # Handle single string input by converting to list
-        if isinstance(columns, str):
-            columns = [columns]
-
+    def __init__(self, *columns: Union[str, Tuple[str, str]]) -> None:
         self.columns = []
         for col in columns:
             if isinstance(col, tuple):
@@ -284,8 +247,11 @@ class SortKey(DDLElement):
                         f"Direction must be 'ASC' or 'DESC', got '{direction}'",
                     )
                 self.columns.append((name, direction))
+            elif isinstance(col, str):
+                self.columns.append((col, 'ASC'))  # Default to ASC
             else:
-                self.columns.append((col, 'ASC'))  # Default to ASC  # Default to ASC
+                # Default to ASC
+                raise TypeError(f'Column must be str or tuple, got {type(col).__name__}')
 
     @staticmethod
     def asc(column: str) -> Tuple[str, str]:
@@ -303,8 +269,8 @@ class SortKey(DDLElement):
 
         Examples
         --------
-        >>> SortKey([SortKey.asc('created_at')])
-        >>> SortKey([SortKey.asc('user_id'), SortKey.desc('created_at')])
+        >>> SortKey(SortKey.asc('created_at'))
+        >>> SortKey(SortKey.asc('user_id'), SortKey.desc('created_at'))
 
         """
         return (column, 'ASC')
@@ -325,8 +291,8 @@ class SortKey(DDLElement):
 
         Examples
         --------
-        >>> SortKey([SortKey.desc('created_at')])
-        >>> SortKey([SortKey.asc('user_id'), SortKey.desc('created_at')])
+        >>> SortKey(SortKey.desc('created_at'))
+        >>> SortKey(SortKey.asc('user_id'), SortKey.desc('created_at'))
 
         """
         return (column, 'DESC')
@@ -338,7 +304,7 @@ class SortKey(DDLElement):
                 parts.append(repr(col_name))
             else:
                 parts.append(f'({col_name!r}, {direction!r})')
-        return f'SortKey([{", ".join(parts)}])'
+        return f'SortKey({", ".join(parts)})'
 
 
 @compiles(SortKey, 'singlestoredb.mysql')
@@ -364,13 +330,13 @@ def compile_sort_key(element: Any, compiler: Any, **kw: Any) -> str:
 
     Examples
     --------
-    >>> compile_sort_key(SortKey(['created_at']), compiler)
+    >>> compile_sort_key(SortKey('created_at'), compiler)
     'SORT KEY (created_at)'
 
-    >>> compile_sort_key(SortKey([SortKey.desc('created_at')]), compiler)
+    >>> compile_sort_key(SortKey(SortKey.desc('created_at')), compiler)
     'SORT KEY (created_at DESC)'
 
-    >>> compile_sort_key(SortKey(['user_id', SortKey.desc('created_at')]), compiler)
+    >>> compile_sort_key(SortKey('user_id', SortKey.desc('created_at')), compiler)
     'SORT KEY (user_id, created_at DESC)'
 
     """
@@ -397,13 +363,13 @@ class VectorKey(DDLElement):
 
     Parameters
     ----------
-    columns : str or list[str]
-        Column name (str) or list of column names (list[str]) to include in the
-        vector index. Usually a single vector column.
-    name : str, optional
+    *columns : str
+        Variable number of column names to include in the vector index.
+        Usually a single vector column.
+    name : str, optional, keyword-only
         Index name for the vector index. If not provided, SingleStore will
         auto-generate a name.
-    index_options : str, optional
+    index_options : str, optional, keyword-only
         JSON string containing vector index options such as metric_type.
         Common values: '{"metric_type":"EUCLIDEAN_DISTANCE"}',
         '{"metric_type":"DOT_PRODUCT"}', '{"metric_type":"COSINE_SIMILARITY"}'
@@ -425,7 +391,7 @@ class VectorKey(DDLElement):
 
     Multiple vector columns (if supported):
 
-    >>> VectorKey(['embedding1', 'embedding2'], name='vec_idx')
+    >>> VectorKey('embedding1', 'embedding2', name='vec_idx')
 
     """
 
@@ -435,32 +401,27 @@ class VectorKey(DDLElement):
 
     def __init__(
         self,
-        columns: Union[str, List[str]],
-        *,
+        *columns: str,
         name: Optional[str] = None,
         index_options: Optional[str] = None,
     ) -> None:
-        if isinstance(columns, str):
-            self.columns = (columns,)
-        elif isinstance(columns, (list, tuple)):
-            if not columns:
-                raise ValueError(
-                    'At least one column must be specified for VECTOR index',
-                )
-            self.columns = tuple(str(col) for col in columns)
-        else:
-            raise TypeError('columns must be a string or list of strings')
+        if not columns:
+            raise ValueError(
+                'At least one column must be specified for VECTOR index',
+            )
 
+        # Validate all columns are strings
+        for col in columns:
+            if not isinstance(col, str):
+                raise TypeError('All column names must be strings')
+
+        self.columns = columns
         self.name = name
         self.index_options = index_options
 
     def __repr__(self) -> str:
-        if len(self.columns) == 1:
-            columns_repr = repr(self.columns[0])
-        else:
-            columns_repr = repr(list(self.columns))
+        args = [repr(col) for col in self.columns]
 
-        args = [columns_repr]
         if self.name is not None:
             args.append(f'name={repr(self.name)}')
         if self.index_options is not None:
@@ -531,9 +492,10 @@ class MultiValueIndex(DDLElement):
 
     Parameters
     ----------
-    column : str
-        Column name to include in the multi-value index. Must be a JSON column.
-    index_options : str, optional
+    *columns : str
+        Variable number of column names to include in the multi-value index.
+        Must be JSON columns.
+    index_options : str, optional, keyword-only
         JSON string containing multi-value index options.
 
     Examples
@@ -541,6 +503,10 @@ class MultiValueIndex(DDLElement):
     Basic multi-value index:
 
     >>> MultiValueIndex('tags')
+
+    Multiple columns multi-value index:
+
+    >>> MultiValueIndex('tags', 'categories')
 
     Multi-value index with options:
 
@@ -551,15 +517,26 @@ class MultiValueIndex(DDLElement):
     Multi-value indexes are used to index JSON arrays in SingleStore.
     They allow efficient queries on individual elements within JSON arrays.
 
-    The column must be of JSON type for multi-value indexing to work properly.
+    The columns must be of JSON type for multi-value indexing to work properly.
     """
 
-    def __init__(self, column: str, *, index_options: Optional[str] = None) -> None:
-        self.column = column
+    def __init__(self, *columns: str, index_options: Optional[str] = None) -> None:
+        if not columns:
+            raise ValueError(
+                'At least one column must be specified for MULTI VALUE index',
+            )
+
+        # Validate all columns are strings
+        for col in columns:
+            if not isinstance(col, str):
+                raise TypeError('All column names must be strings')
+
+        self.columns = columns
         self.index_options = index_options
 
     def __repr__(self) -> str:
-        args = [repr(self.column)]
+        args = [repr(col) for col in self.columns]
+
         if self.index_options is not None:
             args.append(f'index_options={repr(self.index_options)}')
         return f'MultiValueIndex({", ".join(args)})'
@@ -591,8 +568,9 @@ def compile_multi_value_index(element: Any, compiler: Any, **kw: Any) -> str:
     'MULTI VALUE INDEX (tags)'
 
     """
-    escaped_column = _escape_column_name(element.column)
-    sql = f'MULTI VALUE INDEX ({escaped_column})'
+    escaped_columns = [_escape_column_name(col) for col in element.columns]
+    column_list = ', '.join(escaped_columns)
+    sql = f'MULTI VALUE INDEX ({column_list})'
 
     if element.index_options:
         sql += f" INDEX_OPTIONS='{element.index_options}'"
@@ -607,13 +585,15 @@ class FullTextIndex(DDLElement):
 
     Parameters
     ----------
-    columns : str or list[str]
-        Column name (str) or list of column names (list[str]) to include in the
-        fulltext index. Must be text columns (CHAR, VARCHAR, TEXT, LONGTEXT).
-    name : str, optional
+    *columns : Union[str, Tuple[str, str]]
+        Variable number of column specifications. Each can be:
+        - A string (column name, defaults to ASC)
+        - A tuple of (column_name, direction) where direction is 'ASC' or 'DESC'
+        Must be text columns (CHAR, VARCHAR, TEXT, LONGTEXT).
+    name : str, optional, keyword-only
         Index name for the fulltext index. If not provided, SingleStore will
         auto-generate a name.
-    version : int, optional
+    version : int, optional, keyword-only
         FULLTEXT version to use. Version 1 (default) if not specified.
         Version 2 or higher requires explicit specification.
 
@@ -629,54 +609,115 @@ class FullTextIndex(DDLElement):
 
     Multiple columns, auto-named:
 
-    >>> FullTextIndex(['title', 'content'])
+    >>> FullTextIndex('title', 'content')
 
     Multiple columns, named:
 
-    >>> FullTextIndex(['title', 'content'], name='ft_search')
+    >>> FullTextIndex('title', 'content', name='ft_search')
+
+    With sort directions:
+
+    >>> FullTextIndex('title', ('content', 'DESC'), name='ft_search')
 
     With version specification:
 
-    >>> FullTextIndex(['title', 'content'], name='ft_v2', version=2)
+    >>> FullTextIndex('title', 'content', name='ft_v2', version=2)
 
-    Future version support:
+    Using static helper methods:
 
-    >>> FullTextIndex('description', name='ft_v3', version=3)
+    >>> FullTextIndex(FullTextIndex.asc('title'), FullTextIndex.desc('content'))
 
     """
 
     name: Optional[str]
-    columns: Tuple[str, ...]
+    columns: List[Tuple[str, str]]
     version: Optional[int]
 
     def __init__(
         self,
-        columns: Union[str, List[str]],
-        *,
+        *columns: Union[str, Tuple[str, str]],
         name: Optional[str] = None,
         version: Optional[int] = None,
     ) -> None:
-        if isinstance(columns, str):
-            self.columns = (columns,)
-        elif isinstance(columns, (list, tuple)):
-            if not columns:
-                raise ValueError(
-                    'At least one column must be specified for FULLTEXT index',
-                )
-            self.columns = tuple(str(col) for col in columns)
-        else:
-            raise TypeError('columns must be a string or list of strings')
+        if not columns:
+            raise ValueError(
+                'At least one column must be specified for FULLTEXT index',
+            )
+
+        self.columns = []
+        for col in columns:
+            if isinstance(col, tuple):
+                column_name, direction = col
+                if direction is None:
+                    raise TypeError('Direction cannot be None')
+                direction = direction.upper()
+                if direction not in ('ASC', 'DESC'):
+                    raise ValueError(
+                        f"Direction must be 'ASC' or 'DESC', got '{direction}'",
+                    )
+                self.columns.append((column_name, direction))
+            elif isinstance(col, str):
+                self.columns.append((col, 'ASC'))  # Default to ASC
+            else:
+                raise TypeError(f'Column must be str or tuple, got {type(col).__name__}')
 
         self.name = name
         self.version = version
 
-    def __repr__(self) -> str:
-        if len(self.columns) == 1:
-            columns_repr = repr(self.columns[0])
-        else:
-            columns_repr = repr(list(self.columns))
+    @staticmethod
+    def asc(column: str) -> Tuple[str, str]:
+        """Create an ascending fulltext index column specification.
 
-        args = [columns_repr]
+        Parameters
+        ----------
+        column : str
+            Column name to sort in ascending order
+
+        Returns
+        -------
+        Tuple[str, str]
+            Tuple of (column_name, 'ASC') for use in FullTextIndex constructor
+
+        Examples
+        --------
+        >>> FullTextIndex(FullTextIndex.asc('title'))
+        >>> FullTextIndex(FullTextIndex.asc('title'), FullTextIndex.desc('content'))
+
+        """
+        return (column, 'ASC')
+
+    @staticmethod
+    def desc(column: str) -> Tuple[str, str]:
+        """Create a descending fulltext index column specification.
+
+        Parameters
+        ----------
+        column : str
+            Column name to sort in descending order
+
+        Returns
+        -------
+        Tuple[str, str]
+            Tuple of (column_name, 'DESC') for use in FullTextIndex constructor
+
+        Examples
+        --------
+        >>> FullTextIndex(FullTextIndex.desc('content'))
+        >>> FullTextIndex(FullTextIndex.asc('title'), FullTextIndex.desc('content'))
+
+        """
+        return (column, 'DESC')
+
+    def __repr__(self) -> str:
+        parts = []
+        for col_name, direction in self.columns:
+            if direction == 'ASC':
+                parts.append(repr(col_name))
+            else:
+                parts.append(f'({col_name!r}, {direction!r})')
+
+        args = [f"{', '.join(parts)}"] if len(parts) > 1 else parts
+
         if self.name is not None:
             args.append(f'name={repr(self.name)}')
         if self.version is not None:
@@ -711,21 +752,34 @@ def compile_fulltext_index(element: Any, compiler: Any, **kw: Any) -> str:
     - FULLTEXT index_name (column1, column2) - version 1, named
     - FULLTEXT USING VERSION 1 index_name (column1, column2) - explicit version 1
     - FULLTEXT USING VERSION 2 index_name (column1, column2) - version 2+
+    - FULLTEXT (column1 ASC, column2 DESC) - with sort directions
 
     Examples
     --------
-    >>> compile_fulltext_index(FullTextIndex(['title', 'content']), compiler)
+    >>> compile_fulltext_index(FullTextIndex('title', 'content'), compiler)
     'FULLTEXT (title, content)'
 
-    >>> compile_fulltext_index(FullTextIndex(['title', 'content'], name='ft_idx'),
+    >>> compile_fulltext_index(FullTextIndex('title', 'content', name='ft_idx'),
     ...                        compiler)
     'FULLTEXT ft_idx (title, content)'
 
     >>> compile_fulltext_index(FullTextIndex('title', name='ft_idx', version=2), compiler)
     'FULLTEXT USING VERSION 2 ft_idx (title)'
 
+    >>> compile_fulltext_index(FullTextIndex('title', ('content', 'DESC')), compiler)
+    'FULLTEXT (title, content DESC)'
+
     """
-    column_list = ', '.join([_escape_column_name(x) for x in element.columns])
+    # Build column list with optional directions
+    column_specs = []
+    for col_name, direction in element.columns:
+        escaped_col = _escape_column_name(col_name)
+        if direction == 'ASC':
+            column_specs.append(escaped_col)  # ASC is default, no need to specify
+        else:
+            column_specs.append(f'{escaped_col} {direction}')
+
+    column_list = ', '.join(column_specs)
 
     # Start building the SQL
     sql_parts = ['FULLTEXT']

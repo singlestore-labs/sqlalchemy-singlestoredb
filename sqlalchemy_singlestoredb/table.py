@@ -57,7 +57,7 @@ class Table(SQLATable):
     ...     Column('id', Integer, primary_key=True),
     ...     Column('title', String(200)),
     ...     Column('content', Text),
-    ...     FullTextIndex(['title', 'content']),  # Multiple columns, auto-named
+    ...     FullTextIndex('title', 'content'),  # Multiple columns, auto-named
     ...     FullTextIndex('title', name='ft_title', version=2)  # Single column, named v2
     ... )
 

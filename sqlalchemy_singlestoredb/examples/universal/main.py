@@ -40,7 +40,7 @@ class MyTable(Base):  # type: ignore
         {
             'info': {
                 'singlestoredb_shard_key': ShardKey('id'),
-                'singlestoredb_sort_key': SortKey(['id', 'data']),
+                'singlestoredb_sort_key': SortKey('id', 'data'),
             },
         }
     )

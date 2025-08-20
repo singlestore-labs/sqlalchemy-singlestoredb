@@ -86,7 +86,7 @@ def main() -> None:
         Column('user_id', Integer, primary_key=True),
         Column('region_id', Integer, primary_key=True),
         Column('amount', Integer),
-        ShardKey(['user_id', 'region_id']),
+        ShardKey('user_id', 'region_id'),
     )
     table4.create(mock_engine, checkfirst=False)
 
@@ -99,7 +99,7 @@ def main() -> None:
         Column('timestamp', String(50)),
         Column('event_type', String(50)),
         ShardKey('user_id'),
-        SortKey(['timestamp']),
+        SortKey('timestamp'),
     )
     table5.create(mock_engine, checkfirst=False)
 
