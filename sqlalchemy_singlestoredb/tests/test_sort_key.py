@@ -15,11 +15,11 @@ from sqlalchemy import create_mock_engine
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
+from sqlalchemy import Table
 from sqlalchemy import text
 from sqlalchemy.orm import declarative_base
 
 from sqlalchemy_singlestoredb import SortKey
-from sqlalchemy_singlestoredb import Table
 
 
 class TestSortKeyConstruction:
@@ -358,6 +358,7 @@ class TestSortKeyTableIntegration:
 
         self.mock_engine = create_mock_engine('singlestoredb://', dump)
         self.compiled_ddl = ''
+        # Create metadata without binding (SQLAlchemy 2.0 compatibility)
         self.metadata = MetaData()
 
     def test_table_with_basic_sort_key(self) -> None:
@@ -372,7 +373,7 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey('created_at')},
+                'singlestoredb_sort_key': SortKey('created_at'),
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -392,7 +393,7 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey()},
+                'singlestoredb_sort_key': SortKey(),
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -414,7 +415,7 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey('user_id', 'created_at')},
+                'singlestoredb_sort_key': SortKey('user_id', 'created_at'),
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -437,11 +438,9 @@ class TestSortKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {
-                    'singlestoredb_sort_key': SortKey(
-                        'timestamp', 'priority', 'status',
-                    ),
-                },
+                'singlestoredb_sort_key': SortKey(
+                    'timestamp', 'priority', 'status',
+                ),
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -449,44 +448,6 @@ class TestSortKeyTableIntegration:
         # Check that three-column SORT KEY appears in the DDL
         assert 'SORT KEY (timestamp, priority, status)' in self.compiled_ddl
         assert 'CREATE TABLE test_table_three' in self.compiled_ddl
-
-
-class TestSortKeyBackwardCompatibility:
-    """Test backward compatibility with existing SortKey usage."""
-
-    def setup_method(self) -> None:
-        """Set up mock engine for testing."""
-        def dump(sql: Any, *multiparams: Any, **params: Any) -> None:
-            self.compiled_ddl = str(sql.compile(dialect=self.mock_engine.dialect))
-
-        self.mock_engine = create_mock_engine('singlestoredb://', dump)
-        self.compiled_ddl = ''
-
-    def test_existing_usage_still_works(self) -> None:
-        """Test that existing SortKey('column') usage still works."""
-        # This mimics the existing usage pattern from the examples
-        Base = declarative_base()
-
-        class MyTable(Base):  # type: ignore
-            __tablename__ = 'my_new_table'
-
-            id = Column(Integer, primary_key=True)
-            created_at = Column(String(50))
-            data = Column(String(50))
-
-            __table_args__ = {
-                'info': {'singlestoredb_sort_key': SortKey('created_at')},
-            }
-
-        Base.metadata.create_all(self.mock_engine, checkfirst=False)
-
-        # Verify the old usage pattern still generates correct DDL
-        assert 'SORT KEY (created_at)' in self.compiled_ddl
-        assert 'CREATE TABLE my_new_table' in self.compiled_ddl
-
-        # Verify the SortKey object has expected properties
-        sort_key = SortKey('created_at')
-        assert sort_key.columns == [('created_at', 'ASC')]  # Existing behavior preserved
 
 
 class TestSortKeyReflection:
@@ -723,6 +684,7 @@ class TestSortKeyTableConstructorIntegration:
 
         self.mock_engine = create_mock_engine('singlestoredb://', dump)
         self.compiled_ddl = ''
+        # Create metadata without binding (SQLAlchemy 2.0 compatibility)
         self.metadata = MetaData()
 
     def test_table_constructor_basic_sort_key(self) -> None:
@@ -732,13 +694,15 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
-            SortKey('created_at'),
+            singlestoredb_sort_key=SortKey('created_at'),
         )
 
-        # Verify info is set correctly
-        assert 'singlestoredb_sort_key' in table.info
-        assert isinstance(table.info['singlestoredb_sort_key'], SortKey)
-        assert table.info['singlestoredb_sort_key'].columns == [('created_at', 'ASC')]
+        # Verify dialect options are set correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert 'sort_key' in table.dialect_options['singlestoredb']
+        sort_key = table.dialect_options['singlestoredb']['sort_key']
+        assert isinstance(sort_key, SortKey)
+        assert sort_key.columns == [('created_at', 'ASC')]
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -751,11 +715,11 @@ class TestSortKeyTableConstructorIntegration:
             'test_empty', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(100)),
-            SortKey(),
+            singlestoredb_sort_key=SortKey(),
         )
 
-        # Verify info is set correctly
-        sort_key = table.info['singlestoredb_sort_key']
+        # Verify dialect options are set correctly
+        sort_key = table.dialect_options['singlestoredb']['sort_key']
         assert sort_key.columns == []
 
         # Test DDL generation
@@ -771,11 +735,11 @@ class TestSortKeyTableConstructorIntegration:
             Column('created_at', String(50), primary_key=True),
             Column('priority', Integer),
             Column('amount', Integer),
-            SortKey('created_at', 'priority'),
+            singlestoredb_sort_key=SortKey('created_at', 'priority'),
         )
 
-        # Verify info is set correctly
-        sort_key = table.info['singlestoredb_sort_key']
+        # Verify dialect options are set correctly
+        sort_key = table.dialect_options['singlestoredb']['sort_key']
         assert sort_key.columns == [('created_at', 'ASC'), ('priority', 'ASC')]
 
         # Test DDL generation
@@ -790,14 +754,16 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
-            SortKey('created_at'),
+            singlestoredb_sort_key=SortKey('created_at'),
             info={'custom_key': 'custom_value'},
         )
 
-        # Verify both custom info and sort key are preserved
+        # Verify both custom info and dialect options are preserved
         assert table.info['custom_key'] == 'custom_value'
-        assert 'singlestoredb_sort_key' in table.info
-        assert table.info['singlestoredb_sort_key'].columns == [('created_at', 'ASC')]
+        assert 'singlestoredb' in table.dialect_options
+        assert table.dialect_options['singlestoredb']['sort_key'].columns == [
+            ('created_at', 'ASC'),
+        ]
 
     def test_table_constructor_no_sort_key(self) -> None:
         """Test that Table constructor works normally without sort key parameters."""
@@ -807,8 +773,11 @@ class TestSortKeyTableConstructorIntegration:
             Column('data', String(50)),
         )
 
-        # Should not have sort key info
-        assert 'singlestoredb_sort_key' not in table.info
+        # Should not have sort key dialect options
+        assert (
+            'singlestoredb' not in table.dialect_options or
+            'sort_key' not in table.dialect_options.get('singlestoredb', {})
+        )
 
         # Test DDL generation (should work normally)
         table.create(self.mock_engine, checkfirst=False)
@@ -822,13 +791,15 @@ class TestSortKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('created_at', String(50)),
             Column('data', String(50)),
-            SortKey('created_at'),  # Single string syntax
+            singlestoredb_sort_key=SortKey('created_at'),  # Single string syntax
         )
 
-        # Verify info is set correctly
-        assert 'singlestoredb_sort_key' in table.info
-        assert isinstance(table.info['singlestoredb_sort_key'], SortKey)
-        assert table.info['singlestoredb_sort_key'].columns == [('created_at', 'ASC')]
+        # Verify dialect options are set correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert 'sort_key' in table.dialect_options['singlestoredb']
+        sort_key = table.dialect_options['singlestoredb']['sort_key']
+        assert isinstance(sort_key, SortKey)
+        assert sort_key.columns == [('created_at', 'ASC')]
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)

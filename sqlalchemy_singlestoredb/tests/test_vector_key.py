@@ -15,10 +15,10 @@ from sqlalchemy import create_mock_engine
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
+from sqlalchemy import Table
 from sqlalchemy import text
 from sqlalchemy.orm import declarative_base
 
-from sqlalchemy_singlestoredb import Table
 from sqlalchemy_singlestoredb import VECTOR
 from sqlalchemy_singlestoredb import VectorKey
 
@@ -173,6 +173,7 @@ class TestVectorKeyTableIntegration:
 
         self.mock_engine = create_mock_engine('singlestoredb://', dump)
         self.compiled_ddl = ''
+        # Create metadata without binding (SQLAlchemy 2.0 compatibility)
         self.metadata = MetaData()
 
     def test_table_with_basic_vector_index(self) -> None:
@@ -187,11 +188,7 @@ class TestVectorKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {
-                    'singlestoredb_vector_indexes': [
-                        VectorKey('embedding', name='vec_idx'),
-                    ],
-                },
+                'singlestoredb_vector_key': VectorKey('embedding', name='vec_idx'),
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -212,14 +209,10 @@ class TestVectorKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {
-                    'singlestoredb_vector_indexes': [
-                        VectorKey(
-                            'embedding', name='vec_idx',
-                            index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
-                        ),
-                    ],
-                },
+                'singlestoredb_vector_key': VectorKey(
+                    'embedding', name='vec_idx',
+                    index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
+                ),
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -243,15 +236,13 @@ class TestVectorKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {
-                    'singlestoredb_vector_indexes': [
-                        VectorKey('content_embedding', name='content_vec_idx'),
-                        VectorKey(
-                            'title_embedding', name='title_vec_idx',
-                            index_options='{"metric_type":"DOT_PRODUCT"}',
-                        ),
-                    ],
-                },
+                'singlestoredb_vector_key': [
+                    VectorKey('content_embedding', name='content_vec_idx'),
+                    VectorKey(
+                        'title_embedding', name='title_vec_idx',
+                        index_options='{"metric_type":"DOT_PRODUCT"}',
+                    ),
+                ],
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -524,6 +515,7 @@ class TestVectorKeyTableConstructorIntegration:
 
         self.mock_engine = create_mock_engine('singlestoredb://', dump)
         self.compiled_ddl = ''
+        # Create metadata without binding (SQLAlchemy 2.0 compatibility)
         self.metadata = MetaData()
 
     def test_table_constructor_basic_vector_index(self) -> None:
@@ -533,16 +525,16 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('data', String(50)),
-            VectorKey('embedding', name='vec_idx'),
+            singlestoredb_vector_key=VectorKey('embedding', name='vec_idx'),
         )
 
-        # Verify info is set correctly
-        assert 'singlestoredb_vector_indexes' in table.info
-        vector_indexes = table.info['singlestoredb_vector_indexes']
-        assert len(vector_indexes) == 1
-        assert isinstance(vector_indexes[0], VectorKey)
-        assert vector_indexes[0].name == 'vec_idx'
-        assert vector_indexes[0].columns == ('embedding',)
+        # Verify dialect options are set correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert 'vector_key' in table.dialect_options['singlestoredb']
+        vector_key = table.dialect_options['singlestoredb']['vector_key']
+        assert isinstance(vector_key, VectorKey)
+        assert vector_key.name == 'vec_idx'
+        assert vector_key.columns == ('embedding',)
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -556,18 +548,17 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(256, 'F32')),
             Column('data', String(100)),
-            VectorKey(
+            singlestoredb_vector_key=VectorKey(
                 'embedding', name='vec_idx',
                 index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}',
             ),
         )
 
-        # Verify info is set correctly
-        vector_indexes = table.info['singlestoredb_vector_indexes']
-        vector_index = vector_indexes[0]
-        assert vector_index.name == 'vec_idx'
-        assert vector_index.columns == ('embedding',)
-        assert vector_index.index_options == '{"metric_type":"EUCLIDEAN_DISTANCE"}'
+        # Verify dialect options are set correctly
+        vector_key = table.dialect_options['singlestoredb']['vector_key']
+        assert vector_key.name == 'vec_idx'
+        assert vector_key.columns == ('embedding',)
+        assert vector_key.index_options == '{"metric_type":"EUCLIDEAN_DISTANCE"}'
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -582,23 +573,25 @@ class TestVectorKeyTableConstructorIntegration:
             Column('doc_id', Integer, primary_key=True),
             Column('content_embedding', VECTOR(128, 'F32')),
             Column('title_embedding', VECTOR(256, 'F32')),
-            VectorKey('content_embedding', name='content_vec_idx'),
-            VectorKey(
-                'title_embedding', name='title_vec_idx',
-                index_options='{"metric_type":"DOT_PRODUCT"}',
-            ),
+            singlestoredb_vector_key=[
+                VectorKey('content_embedding', name='content_vec_idx'),
+                VectorKey(
+                    'title_embedding', name='title_vec_idx',
+                    index_options='{"metric_type":"DOT_PRODUCT"}',
+                ),
+            ],
         )
 
-        # Verify info is set correctly
-        vector_indexes = table.info['singlestoredb_vector_indexes']
-        assert len(vector_indexes) == 2
+        # Verify dialect options are set correctly
+        vector_keys = table.dialect_options['singlestoredb']['vector_key']
+        assert len(vector_keys) == 2
 
-        content_idx = vector_indexes[0]
+        content_idx = vector_keys[0]
         assert content_idx.name == 'content_vec_idx'
         assert content_idx.columns == ('content_embedding',)
         assert content_idx.index_options is None
 
-        title_idx = vector_indexes[1]
+        title_idx = vector_keys[1]
         assert title_idx.name == 'title_vec_idx'
         assert title_idx.columns == ('title_embedding',)
         assert title_idx.index_options == '{"metric_type":"DOT_PRODUCT"}'
@@ -620,27 +613,27 @@ class TestVectorKeyTableConstructorIntegration:
             Column('doc_id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('created_at', String(50)),
-            ShardKey('user_id'),
-            SortKey('created_at'),
-            VectorKey(
+            singlestoredb_shard_key=ShardKey('user_id'),
+            singlestoredb_sort_key=SortKey('created_at'),
+            singlestoredb_vector_key=VectorKey(
                 'embedding', name='vec_idx',
                 index_options='{"metric_type":"DOT_PRODUCT"}',
             ),
         )
 
-        # Verify all info is set correctly
-        assert 'singlestoredb_shard_key' in table.info
-        assert 'singlestoredb_sort_key' in table.info
-        assert 'singlestoredb_vector_indexes' in table.info
+        # Verify all dialect options are set correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert 'shard_key' in table.dialect_options['singlestoredb']
+        assert 'sort_key' in table.dialect_options['singlestoredb']
+        assert 'vector_key' in table.dialect_options['singlestoredb']
 
-        shard_key = table.info['singlestoredb_shard_key']
-        sort_key = table.info['singlestoredb_sort_key']
-        vector_indexes = table.info['singlestoredb_vector_indexes']
+        shard_key = table.dialect_options['singlestoredb']['shard_key']
+        sort_key = table.dialect_options['singlestoredb']['sort_key']
+        vector_key = table.dialect_options['singlestoredb']['vector_key']
 
         assert shard_key.columns == [('user_id', 'ASC')]
         assert sort_key.columns == [('created_at', 'ASC')]
-        assert len(vector_indexes) == 1
-        assert vector_indexes[0].name == 'vec_idx'
+        assert vector_key.name == 'vec_idx'
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -657,16 +650,15 @@ class TestVectorKeyTableConstructorIntegration:
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(128, 'F32')),
             Column('data', String(50)),
-            VectorKey('embedding', name='vec_idx'),
+            singlestoredb_vector_key=VectorKey('embedding', name='vec_idx'),
             info={'custom_key': 'custom_value'},
         )
 
-        # Verify both custom info and vector indexes are preserved
+        # Verify both custom info and dialect options are preserved
         assert table.info['custom_key'] == 'custom_value'
-        assert 'singlestoredb_vector_indexes' in table.info
-        vector_indexes = table.info['singlestoredb_vector_indexes']
-        assert len(vector_indexes) == 1
-        assert vector_indexes[0].name == 'vec_idx'
+        assert 'singlestoredb' in table.dialect_options
+        vector_key = table.dialect_options['singlestoredb']['vector_key']
+        assert vector_key.name == 'vec_idx'
 
     def test_table_constructor_no_vector_indexes(self) -> None:
         """Test that Table constructor works normally without vector index parameters."""
@@ -676,8 +668,11 @@ class TestVectorKeyTableConstructorIntegration:
             Column('data', String(50)),
         )
 
-        # Should not have vector indexes info
-        assert 'singlestoredb_vector_indexes' not in table.info
+        # Should not have vector index dialect options
+        assert (
+            'singlestoredb' not in table.dialect_options or
+            'vector_key' not in table.dialect_options.get('singlestoredb', {})
+        )
 
         # Test DDL generation (should work normally)
         table.create(self.mock_engine, checkfirst=False)
