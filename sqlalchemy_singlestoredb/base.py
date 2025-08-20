@@ -230,6 +230,38 @@ class SingleStoreDBCompiler(MySQLCompiler):
 class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
 
+    def post_create_table(self, table: Any) -> str:
+        """Build table-level CREATE options, filter SingleStore options."""
+        # Get all table kwargs and filter out SingleStore-specific options
+        table_opts = []
+
+        # Get opts the same way MySQL does, but filter out our options
+        opts = dict(
+            (k[len(self.dialect.name) + 1:].upper(), v)
+            for k, v in table.kwargs.items()
+            if k.startswith('%s_' % self.dialect.name)
+            and k not in {
+                'singlestoredb_shard_key',
+                'singlestoredb_sort_key',
+                'singlestoredb_vector_key',
+                'singlestoredb_full_text_index',
+                'singlestoredb_multi_value_index',
+            }
+        )
+
+        if table.comment is not None:
+            opts['COMMENT'] = table.comment
+
+        # Process remaining MySQL-compatible options
+        for opt, arg in opts.items():
+            if hasattr(arg, '__str__'):
+                table_opts.append(f'{opt}={arg}')
+
+        if table_opts:
+            return ' ' + ' '.join(table_opts)
+        else:
+            return ''
+
     def visit_create_table(self, create: Any, **kw: Any) -> str:
         """Generate CREATE TABLE DDL with SingleStore-specific extensions.
 
@@ -238,33 +270,46 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
         """
         create_table_sql = super().visit_create_table(create, **kw)
 
-        shard_key = create.element.info.get('singlestoredb_shard_key')
+        # Get dialect options for SingleStore
+        dialect_opts = create.element.dialect_options.get('singlestoredb', {})
+
+        # Handle shard key (single value only)
+        shard_key = dialect_opts.get('shard_key')
         if shard_key is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
             shard_key_sql = compile_shard_key(shard_key, self)
             # Append the SHARD KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)'
 
-        sort_key = create.element.info.get('singlestoredb_sort_key')
+        # Handle sort key (single value only)
+        sort_key = dialect_opts.get('sort_key')
         if sort_key is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
             sort_key_sql = compile_sort_key(sort_key, self)
             # Append the SORT KEY definition to the original SQL
             create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
 
-        vector_indexes = create.element.info.get('singlestoredb_vector_indexes')
-        if vector_indexes is not None:
+        # Handle vector keys (single value or list)
+        vector_key = dialect_opts.get('vector_key')
+        if vector_key is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
-            for vector_index in vector_indexes:
+            # Ensure it's a list for uniform processing
+            vector_keys = vector_key if isinstance(vector_key, list) else [vector_key]
+            for vector_index in vector_keys:
                 vector_index_sql = compile_vector_key(vector_index, self)
                 # Append the VECTOR INDEX definition to the original SQL
                 create_table_sql = (
                     f'{create_table_sql.rstrip()[:-2]},\n\t{vector_index_sql}\n)'
                 )
 
-        multi_value_indexes = create.element.info.get('singlestoredb_multi_value_indexes')
-        if multi_value_indexes is not None:
+        # Handle multi-value indexes (single value or list)
+        multi_value_index = dialect_opts.get('multi_value_index')
+        if multi_value_index is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_multi_value_index
+            # Ensure it's a list for uniform processing
+            multi_value_indexes = multi_value_index if isinstance(
+                multi_value_index, list,
+            ) else [multi_value_index]
             for mv_index in multi_value_indexes:
                 mv_index_sql = compile_multi_value_index(mv_index, self)
                 # Append the MULTI VALUE INDEX definition to the original SQL
@@ -272,15 +317,15 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
                     f'{create_table_sql.rstrip()[:-2]},\n\t{mv_index_sql}\n)'
                 )
 
-        fulltext_indexes = create.element.info.get('singlestoredb_fulltext_indexes')
-        if fulltext_indexes is not None:
+        # Handle fulltext index (single value only - SingleStore limitation)
+        full_text_index = dialect_opts.get('full_text_index')
+        if full_text_index is not None:
             from sqlalchemy_singlestoredb.ddlelement import compile_fulltext_index
-            for ft_index in fulltext_indexes:
-                ft_index_sql = compile_fulltext_index(ft_index, self)
-                # Append the FULLTEXT INDEX definition to the original SQL
-                create_table_sql = (
-                    f'{create_table_sql.rstrip()[:-2]},\n\t{ft_index_sql}\n)'
-                )
+            ft_index_sql = compile_fulltext_index(full_text_index, self)
+            # Append the FULLTEXT INDEX definition to the original SQL
+            create_table_sql = (
+                f'{create_table_sql.rstrip()[:-2]},\n\t{ft_index_sql}\n)'
+            )
 
         return create_table_sql
 

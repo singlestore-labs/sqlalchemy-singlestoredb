@@ -11,10 +11,10 @@ from sqlalchemy import create_mock_engine
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
+from sqlalchemy import Table
 
 from sqlalchemy_singlestoredb import ShardKey
 from sqlalchemy_singlestoredb import SortKey
-from sqlalchemy_singlestoredb import Table
 
 
 def dump(sql: Any, *multiparams: Any, **params: Any) -> None:
@@ -24,7 +24,8 @@ def dump(sql: Any, *multiparams: Any, **params: Any) -> None:
 
 
 mock_engine = create_mock_engine('singlestoredb://', dump)
-metadata = MetaData()
+# Bind metadata to enable dialect options
+metadata = MetaData(bind=mock_engine)
 
 
 def main() -> None:
@@ -34,28 +35,13 @@ def main() -> None:
     print('=' * 70)
     print()
 
-    print('Old approach (still works):')
-    print('-' * 30)
-
-    # Traditional approach using __table_args__ and info
-    table_old = Table(
-        'old_style_table', metadata,
-        Column('id', Integer, primary_key=True),
-        Column('data', String(50)),
-        info={'singlestoredb_shard_key': ShardKey('id')},
-    )
-    table_old.create(mock_engine, checkfirst=False)
-
-    print('New approach (cleaner syntax):')
-    print('-' * 35)
-
-    # Example 1: Basic shard key using constructor parameter
+    # Example 1: Basic shard key using dialect options parameter
     print('1. Basic SHARD KEY:')
     table1 = Table(
         'users', metadata,
         Column('id', Integer, primary_key=True),
         Column('name', String(100)),
-        ShardKey('id'),
+        singlestoredb_shardkey=ShardKey('id'),
     )
     table1.create(mock_engine, checkfirst=False)
 
@@ -65,7 +51,7 @@ def main() -> None:
         'large_data', metadata,
         Column('user_id', Integer, primary_key=True),
         Column('content', String(1000)),
-        ShardKey('user_id', metadata_only=True),
+        singlestoredb_shardkey=ShardKey('user_id', metadata_only=True),
     )
     table2.create(mock_engine, checkfirst=False)
 
@@ -75,7 +61,7 @@ def main() -> None:
         'random_data', metadata,
         Column('id', Integer, primary_key=True),
         Column('value', String(50)),
-        ShardKey(),
+        singlestoredb_shardkey=ShardKey(),
     )
     table3.create(mock_engine, checkfirst=False)
 
@@ -86,7 +72,7 @@ def main() -> None:
         Column('user_id', Integer, primary_key=True),
         Column('region_id', Integer, primary_key=True),
         Column('amount', Integer),
-        ShardKey('user_id', 'region_id'),
+        singlestoredb_shardkey=ShardKey('user_id', 'region_id'),
     )
     table4.create(mock_engine, checkfirst=False)
 
@@ -98,8 +84,8 @@ def main() -> None:
         Column('event_id', Integer, primary_key=True),
         Column('timestamp', String(50)),
         Column('event_type', String(50)),
-        ShardKey('user_id'),
-        SortKey('timestamp'),
+        singlestoredb_shardkey=ShardKey('user_id'),
+        singlestoredb_sortkey=SortKey('timestamp'),
     )
     table5.create(mock_engine, checkfirst=False)
 
@@ -109,19 +95,11 @@ def main() -> None:
         'metadata_table', metadata,
         Column('id', Integer, primary_key=True),
         Column('data', String(100)),
-        ShardKey('id', metadata_only=True),
+        singlestoredb_shardkey=ShardKey('id', metadata_only=True),
         info={'custom_metadata': 'example_value'},
     )
     table6.create(mock_engine, checkfirst=False)
     print(f"   Custom info preserved: {table6.info.get('custom_metadata')}")
-    print()
-
-    print('Comparison Summary:')
-    print('-' * 20)
-    print('✅ Both approaches produce identical DDL')
-    print('✅ New approach is more readable and explicit')
-    print('✅ New approach integrates naturally with SQLAlchemy Table API')
-    print('✅ Old approach still supported for backward compatibility')
     print()
 
     print('=' * 70)

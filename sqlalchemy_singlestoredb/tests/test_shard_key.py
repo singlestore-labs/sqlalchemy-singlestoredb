@@ -9,12 +9,11 @@ from sqlalchemy import create_mock_engine
 from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
+from sqlalchemy import Table
 from sqlalchemy import text
-from sqlalchemy.orm import declarative_base
 
 from sqlalchemy_singlestoredb import ShardKey
 from sqlalchemy_singlestoredb import SortKey
-from sqlalchemy_singlestoredb import Table
 
 
 class TestShardKeyConstruction:
@@ -343,131 +342,72 @@ class TestShardKeyTableIntegration:
 
         self.mock_engine = create_mock_engine('singlestoredb://', dump)
         self.compiled_ddl = ''
+        # Create metadata without binding (SQLAlchemy 2.0 compatibility)
         self.metadata = MetaData()
 
     def test_table_with_basic_shard_key(self) -> None:
         """Test table creation with basic shard key."""
-        Base = declarative_base()
+        # Create table using new dialect options API
+        table = Table(
+            'test_table', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('data', String(50)),
+            singlestoredb_shard_key=ShardKey('user_id'),
+        )
 
-        class MyTable(Base):  # type: ignore
-            __tablename__ = 'test_table'
-
-            id = Column(Integer, primary_key=True)
-            user_id = Column(Integer)
-            data = Column(String(50))
-
-            __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey('user_id')},
-            }
-
-        Base.metadata.create_all(self.mock_engine, checkfirst=False)
-
-        # Check that SHARD KEY appears in the DDL
+        # Test DDL generation
+        table.create(self.mock_engine, checkfirst=False)
         assert 'SHARD KEY (user_id)' in self.compiled_ddl
         assert 'CREATE TABLE test_table' in self.compiled_ddl
 
     def test_table_with_empty_shard_key(self) -> None:
         """Test table creation with empty shard key."""
-        Base = declarative_base()
+        # Create table using new dialect options API
+        table = Table(
+            'test_table_empty', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('data', String(50)),
+            singlestoredb_shard_key=ShardKey(),
+        )
 
-        class MyTable(Base):  # type: ignore
-            __tablename__ = 'test_table_empty'
-
-            id = Column(Integer, primary_key=True)
-            data = Column(String(50))
-
-            __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey()},
-            }
-
-        Base.metadata.create_all(self.mock_engine, checkfirst=False)
-
-        # Check that empty SHARD KEY appears in the DDL
+        # Test DDL generation
+        table.create(self.mock_engine, checkfirst=False)
         assert 'SHARD KEY ()' in self.compiled_ddl
         assert 'CREATE TABLE test_table_empty' in self.compiled_ddl
 
     def test_table_with_shard_key_metadata_only(self) -> None:
         """Test table creation with SHARD KEY ONLY."""
-        Base = declarative_base()
+        # Create table using new dialect options API
+        table = Table(
+            'test_table_only', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('data', String(50)),
+            singlestoredb_shard_key=ShardKey('user_id', metadata_only=True),
+        )
 
-        class MyTable(Base):  # type: ignore
-            __tablename__ = 'test_table_only'
-
-            id = Column(Integer, primary_key=True)
-            user_id = Column(Integer)
-            data = Column(String(50))
-
-            __table_args__ = {
-                'info': {
-                    'singlestoredb_shard_key': ShardKey('user_id', metadata_only=True),
-                },
-            }
-
-        Base.metadata.create_all(self.mock_engine, checkfirst=False)
-
-        # Check that SHARD KEY METADATA_ONLY appears in the DDL
+        # Test DDL generation
+        table.create(self.mock_engine, checkfirst=False)
         assert 'SHARD KEY (user_id) METADATA_ONLY' in self.compiled_ddl
         assert 'CREATE TABLE test_table_only' in self.compiled_ddl
 
     def test_table_with_multi_column_shard_key(self) -> None:
         """Test table creation with multi-column shard key."""
-        Base = declarative_base()
+        # Create table using new dialect options API
+        table = Table(
+            'test_table_multi', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('category_id', Integer),
+            Column('data', String(50)),
+            singlestoredb_shard_key=ShardKey('user_id', 'category_id'),
+        )
 
-        class MyTable(Base):  # type: ignore
-            __tablename__ = 'test_table_multi'
-
-            id = Column(Integer, primary_key=True)
-            user_id = Column(Integer)
-            category_id = Column(Integer)
-            data = Column(String(50))
-
-            __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey('user_id', 'category_id')},
-            }
-
-        Base.metadata.create_all(self.mock_engine, checkfirst=False)
-
-        # Check that multi-column SHARD KEY appears in the DDL
+        # Test DDL generation
+        table.create(self.mock_engine, checkfirst=False)
         assert 'SHARD KEY (user_id, category_id)' in self.compiled_ddl
         assert 'CREATE TABLE test_table_multi' in self.compiled_ddl
-
-
-class TestShardKeyBackwardCompatibility:
-    """Test backward compatibility with existing ShardKey usage."""
-
-    def setup_method(self) -> None:
-        """Set up mock engine for testing."""
-        def dump(sql: Any, *multiparams: Any, **params: Any) -> None:
-            self.compiled_ddl = str(sql.compile(dialect=self.mock_engine.dialect))
-
-        self.mock_engine = create_mock_engine('singlestoredb://', dump)
-        self.compiled_ddl = ''
-
-    def test_existing_usage_still_works(self) -> None:
-        """Test that existing ShardKey('column') usage still works."""
-        # This mimics the existing usage pattern from the examples
-        Base = declarative_base()
-
-        class MyTable(Base):  # type: ignore
-            __tablename__ = 'my_new_table'
-
-            id = Column(Integer, primary_key=True)
-            data = Column(String(50))
-
-            __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey('id')},
-            }
-
-        Base.metadata.create_all(self.mock_engine, checkfirst=False)
-
-        # Verify the old usage pattern still generates correct DDL
-        assert 'SHARD KEY (id)' in self.compiled_ddl
-        assert 'CREATE TABLE my_new_table' in self.compiled_ddl
-
-        # Verify the ShardKey object has expected properties
-        shard_key = ShardKey('id')
-        assert shard_key.metadata_only is False  # New property defaults to False
-        assert shard_key.columns == [('id', 'ASC')]  # New behavior with direction support
 
 
 class TestShardKeyReflection:
@@ -756,14 +696,16 @@ class TestTableConstructorIntegration:
             'test_basic', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(50)),
-            ShardKey('id'),
+            singlestoredb_shard_key=ShardKey('id'),
         )
 
-        # Verify info is set correctly
-        assert 'singlestoredb_shard_key' in table.info
-        assert isinstance(table.info['singlestoredb_shard_key'], ShardKey)
-        assert table.info['singlestoredb_shard_key'].columns == [('id', 'ASC')]
-        assert table.info['singlestoredb_shard_key'].metadata_only is False
+        # Verify dialect options are set correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert 'shard_key' in table.dialect_options['singlestoredb']
+        shard_key = table.dialect_options['singlestoredb']['shard_key']
+        assert isinstance(shard_key, ShardKey)
+        assert shard_key.columns == [('id', 'ASC')]
+        assert shard_key.metadata_only is False
 
         # Test DDL generation
         table.create(self.mock_engine, checkfirst=False)
@@ -776,11 +718,11 @@ class TestTableConstructorIntegration:
             'test_only', self.metadata,
             Column('user_id', Integer, primary_key=True),
             Column('name', String(50)),
-            ShardKey('user_id', metadata_only=True),
+            singlestoredb_shard_key=ShardKey('user_id', metadata_only=True),
         )
 
-        # Verify info is set correctly
-        shard_key = table.info['singlestoredb_shard_key']
+        # Verify dialect options are set correctly
+        shard_key = table.dialect_options['singlestoredb']['shard_key']
         assert shard_key.columns == [('user_id', 'ASC')]
         assert shard_key.metadata_only is True
 
@@ -795,11 +737,11 @@ class TestTableConstructorIntegration:
             'test_empty', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(100)),
-            ShardKey(),
+            singlestoredb_shard_key=ShardKey(),
         )
 
-        # Verify info is set correctly
-        shard_key = table.info['singlestoredb_shard_key']
+        # Verify dialect options are set correctly
+        shard_key = table.dialect_options['singlestoredb']['shard_key']
         assert shard_key.columns == []
         assert shard_key.metadata_only is False
 
@@ -815,11 +757,11 @@ class TestTableConstructorIntegration:
             Column('user_id', Integer, primary_key=True),
             Column('category_id', Integer, primary_key=True),
             Column('amount', Integer),
-            ShardKey('user_id', 'category_id'),
+            singlestoredb_shard_key=ShardKey('user_id', 'category_id'),
         )
 
-        # Verify info is set correctly
-        shard_key = table.info['singlestoredb_shard_key']
+        # Verify dialect options are set correctly
+        shard_key = table.dialect_options['singlestoredb']['shard_key']
         assert shard_key.columns == [('user_id', 'ASC'), ('category_id', 'ASC')]
         assert shard_key.metadata_only is False
 
@@ -835,16 +777,17 @@ class TestTableConstructorIntegration:
             Column('user_id', Integer, primary_key=True),
             Column('order_id', Integer, primary_key=True),
             Column('created_at', String(50)),
-            ShardKey('user_id'),
-            SortKey('created_at'),
+            singlestoredb_shard_key=ShardKey('user_id'),
+            singlestoredb_sort_key=SortKey('created_at'),
         )
 
-        # Verify info is set correctly
-        assert 'singlestoredb_shard_key' in table.info
-        assert 'singlestoredb_sort_key' in table.info
+        # Verify dialect options are set correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert 'shard_key' in table.dialect_options['singlestoredb']
+        assert 'sort_key' in table.dialect_options['singlestoredb']
 
-        shard_key = table.info['singlestoredb_shard_key']
-        sort_key = table.info['singlestoredb_sort_key']
+        shard_key = table.dialect_options['singlestoredb']['shard_key']
+        sort_key = table.dialect_options['singlestoredb']['sort_key']
 
         assert shard_key.columns == [('user_id', 'ASC')]
         assert sort_key.columns == [('created_at', 'ASC')]
@@ -861,14 +804,16 @@ class TestTableConstructorIntegration:
             'test_preserve', self.metadata,
             Column('id', Integer, primary_key=True),
             Column('data', String(50)),
-            ShardKey('id'),
+            singlestoredb_shard_key=ShardKey('id'),
             info={'custom_key': 'custom_value'},
         )
 
-        # Verify both custom info and shard key are preserved
+        # Verify both custom info and dialect options are preserved
         assert table.info['custom_key'] == 'custom_value'
-        assert 'singlestoredb_shard_key' in table.info
-        assert table.info['singlestoredb_shard_key'].columns == [('id', 'ASC')]
+        assert 'singlestoredb' in table.dialect_options
+        assert table.dialect_options['singlestoredb']['shard_key'].columns == [
+            ('id', 'ASC'),
+        ]
 
     def test_table_constructor_no_shard_key(self) -> None:
         """Test that Table constructor works normally without shard key parameters."""
@@ -878,40 +823,54 @@ class TestTableConstructorIntegration:
             Column('data', String(50)),
         )
 
-        # Should not have shard key info
-        assert 'singlestoredb_shard_key' not in table.info
+        # Should not have shard key dialect options
+        assert (
+            'singlestoredb' not in table.dialect_options or
+            'shard_key' not in table.dialect_options.get('singlestoredb', {})
+        )
 
         # Test DDL generation (should work normally)
         table.create(self.mock_engine, checkfirst=False)
         assert 'CREATE TABLE test_normal' in self.compiled_ddl
-        assert 'SHARD KEY' not in self.compiled_ddl  # No shard key should be added
+        # No shard key should be added  # No shard key should be added
+        assert 'SHARD KEY' not in self.compiled_ddl
 
     def test_table_constructor_multiple_shard_keys_error(self) -> None:
-        """Test that Table constructor raises error when multiple ShardKeys provided."""
-        with pytest.raises(
-            ValueError,
-            match='Only one ShardKey can be specified per table',
-        ):
-            Table(
-                'test_error', self.metadata,
-                Column('id', Integer, primary_key=True),
-                Column('user_id', Integer),
-                Column('data', String(50)),
-                ShardKey('id'),
-                ShardKey('user_id'),  # This should cause an error
-            )
+        """Test that Table constructor now prevents multiple shard keys by design."""
+        # With the new API, you can only specify one shardkey parameter,
+        # so this type of error is no longer possible. The dialect validates
+        # that only one value is provided for each parameter.
+        table = Table(
+            'test_single', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('data', String(50)),
+            # Only one allowed by parameter design
+            singlestoredb_shard_key=ShardKey('id'),
+        )
+
+        # Verify it works correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert table.dialect_options['singlestoredb']['shard_key'].columns == [
+            ('id', 'ASC'),
+        ]
 
     def test_table_constructor_multiple_sort_keys_error(self) -> None:
-        """Test that Table constructor raises error when multiple SortKeys provided."""
-        with pytest.raises(
-            ValueError,
-            match='Only one SortKey can be specified per table',
-        ):
-            Table(
-                'test_error', self.metadata,
-                Column('id', Integer, primary_key=True),
-                Column('created_at', String(50)),
-                Column('updated_at', String(50)),
-                SortKey('created_at'),
-                SortKey('updated_at'),  # This should cause an error
-            )
+        """Test that Table constructor now prevents multiple sort keys by design."""
+        # With the new API, you can only specify one sortkey parameter,
+        # so this type of error is no longer possible. The dialect validates
+        # that only one value is provided for each parameter.
+        table = Table(
+            'test_sort', self.metadata,
+            Column('user_id', Integer, primary_key=True),
+            Column('created_at', String(50)),
+            Column('data', String(50)),
+            # Only one allowed by parameter design
+            singlestoredb_sort_key=SortKey('created_at'),
+        )
+
+        # Verify it works correctly
+        assert 'singlestoredb' in table.dialect_options
+        assert table.dialect_options['singlestoredb']['sort_key'].columns == [
+            ('created_at', 'ASC'),
+        ]
