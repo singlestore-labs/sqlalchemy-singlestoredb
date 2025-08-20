@@ -23,35 +23,35 @@ class TestShardKeyConstruction:
     def test_basic_shard_key(self) -> None:
         """Test basic shard key with single column."""
         shard_key = ShardKey('user_id')
-        assert shard_key.columns == ('user_id',)
+        assert shard_key.columns == [('user_id', 'ASC')]
         assert shard_key.metadata_only is False
         assert repr(shard_key) == "ShardKey('user_id')"
 
     def test_multi_column_shard_key(self) -> None:
         """Test shard key with multiple columns."""
         shard_key = ShardKey('user_id', 'category_id')
-        assert shard_key.columns == ('user_id', 'category_id')
+        assert shard_key.columns == [('user_id', 'ASC'), ('category_id', 'ASC')]
         assert shard_key.metadata_only is False
         assert repr(shard_key) == "ShardKey('user_id', 'category_id')"
 
     def test_empty_shard_key(self) -> None:
         """Test empty shard key for keyless sharding."""
         shard_key = ShardKey()
-        assert shard_key.columns == ()
+        assert shard_key.columns == []
         assert shard_key.metadata_only is False
         assert repr(shard_key) == 'ShardKey()'
 
     def test_shard_key_metadata_only_single_column(self) -> None:
         """Test SHARD KEY ONLY with single column."""
         shard_key = ShardKey('user_id', metadata_only=True)
-        assert shard_key.columns == ('user_id',)
+        assert shard_key.columns == [('user_id', 'ASC')]
         assert shard_key.metadata_only is True
         assert repr(shard_key) == "ShardKey('user_id', metadata_only=True)"
 
     def test_shard_key_metadata_only_multi_column(self) -> None:
         """Test SHARD KEY ONLY with multiple columns."""
         shard_key = ShardKey('user_id', 'category_id', metadata_only=True)
-        assert shard_key.columns == ('user_id', 'category_id')
+        assert shard_key.columns == [('user_id', 'ASC'), ('category_id', 'ASC')]
         assert shard_key.metadata_only is True
         expected_repr = "ShardKey('user_id', 'category_id', metadata_only=True)"
         assert repr(shard_key) == expected_repr
@@ -59,9 +59,138 @@ class TestShardKeyConstruction:
     def test_shard_key_metadata_only_empty(self) -> None:
         """Test SHARD KEY ONLY with no columns (should fallback to empty)."""
         shard_key = ShardKey(metadata_only=True)
-        assert shard_key.columns == ()
+        assert shard_key.columns == []
         assert shard_key.metadata_only is True
         assert repr(shard_key) == 'ShardKey(metadata_only=True)'
+
+
+class TestShardKeyStaticMethods:
+    """Test ShardKey static helper methods for ASC/DESC."""
+
+    def test_asc_static_method(self) -> None:
+        """Test ShardKey.asc() static method."""
+        result = ShardKey.asc('user_id')
+        assert result == ('user_id', 'ASC')
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert result[0] == 'user_id'
+        assert result[1] == 'ASC'
+
+    def test_desc_static_method(self) -> None:
+        """Test ShardKey.desc() static method."""
+        result = ShardKey.desc('user_id')
+        assert result == ('user_id', 'DESC')
+        assert isinstance(result, tuple)
+        assert len(result) == 2
+        assert result[0] == 'user_id'
+        assert result[1] == 'DESC'
+
+    def test_static_methods_in_constructor(self) -> None:
+        """Test using static methods in ShardKey constructor."""
+        shard_key = ShardKey(
+            ShardKey.asc('user_id'),
+            ShardKey.desc('category_id'),
+            ShardKey.asc('tenant_id'),
+        )
+        expected = [
+            ('user_id', 'ASC'),
+            ('category_id', 'DESC'),
+            ('tenant_id', 'ASC'),
+        ]
+        assert shard_key.columns == expected
+
+
+class TestShardKeyDirectionAPI:
+    """Test ShardKey direction-based API functionality."""
+
+    def test_shard_key_with_asc_direction(self) -> None:
+        """Test shard key with explicit ASC direction."""
+        shard_key = ShardKey(('user_id', 'ASC'))
+        assert shard_key.columns == [('user_id', 'ASC')]
+        assert repr(shard_key) == "ShardKey('user_id')"
+
+    def test_shard_key_with_desc_direction(self) -> None:
+        """Test shard key with explicit DESC direction."""
+        shard_key = ShardKey(('user_id', 'DESC'))
+        assert shard_key.columns == [('user_id', 'DESC')]
+        assert repr(shard_key) == "ShardKey(('user_id', 'DESC'))"
+
+    def test_shard_key_mixed_directions(self) -> None:
+        """Test shard key with mixed ASC and DESC directions."""
+        shard_key = ShardKey('user_id', ('category_id', 'DESC'))
+        expected = [('user_id', 'ASC'), ('category_id', 'DESC')]
+        assert shard_key.columns == expected
+        assert repr(shard_key) == "ShardKey('user_id', ('category_id', 'DESC'))"
+
+    def test_case_insensitive_directions(self) -> None:
+        """Test that directions are case-insensitive."""
+        shard_key = ShardKey(
+            ('col1', 'asc'),
+            ('col2', 'desc'),
+            ('col3', 'ASC'),
+            ('col4', 'DESC'),
+            ('col5', 'Asc'),
+            ('col6', 'Desc'),
+        )
+        expected = [
+            ('col1', 'ASC'),
+            ('col2', 'DESC'),
+            ('col3', 'ASC'),
+            ('col4', 'DESC'),
+            ('col5', 'ASC'),
+            ('col6', 'DESC'),
+        ]
+        assert shard_key.columns == expected
+
+
+class TestShardKeyErrorHandling:
+    """Test ShardKey error handling and validation for directions."""
+
+    def test_invalid_direction_raises_error(self) -> None:
+        """Test that invalid direction raises ValueError."""
+        expected_msg = "Direction must be 'ASC' or 'DESC', got 'INVALID'"
+        with pytest.raises(ValueError, match=expected_msg):
+            ShardKey(('user_id', 'INVALID'))
+
+    def test_invalid_direction_case_raises_error(self) -> None:
+        """Test that invalid direction with different case raises ValueError."""
+        expected_msg = "Direction must be 'ASC' or 'DESC', got 'ASCENDING'"
+        with pytest.raises(ValueError, match=expected_msg):
+            ShardKey(('user_id', 'ASCENDING'))
+
+    def test_empty_direction_raises_error(self) -> None:
+        """Test that empty direction raises ValueError."""
+        with pytest.raises(ValueError, match="Direction must be 'ASC' or 'DESC', got ''"):
+            ShardKey(('user_id', ''))
+
+    def test_none_direction_raises_error(self) -> None:
+        """Test that None direction raises appropriate error."""
+        with pytest.raises(TypeError, match='Direction cannot be None'):
+            ShardKey(('user_id', None))  # type: ignore
+
+
+class TestShardKeyRepr:
+    """Test ShardKey string representation with directions."""
+
+    def test_repr_single_asc_column(self) -> None:
+        """Test __repr__ for single ascending column."""
+        shard_key = ShardKey('user_id')
+        assert repr(shard_key) == "ShardKey('user_id')"
+
+    def test_repr_single_desc_column(self) -> None:
+        """Test __repr__ for single descending column."""
+        shard_key = ShardKey(('user_id', 'DESC'))
+        assert repr(shard_key) == "ShardKey(('user_id', 'DESC'))"
+
+    def test_repr_mixed_columns(self) -> None:
+        """Test __repr__ for mixed ascending and descending columns."""
+        shard_key = ShardKey('user_id', ('category_id', 'DESC'))
+        assert repr(shard_key) == "ShardKey('user_id', ('category_id', 'DESC'))"
+
+    def test_repr_all_explicit(self) -> None:
+        """Test __repr__ with all explicit directions."""
+        shard_key = ShardKey(('user_id', 'ASC'), ('category_id', 'DESC'))
+        assert repr(shard_key) == "ShardKey('user_id', ('category_id', 'DESC'))"
 
 
 class TestShardKeyCompiler:
@@ -148,6 +277,60 @@ class TestShardKeyCompiler:
         shard_key = ShardKey('user-id', metadata_only=True)
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY (`user-id`) METADATA_ONLY'
+
+    def test_compile_shard_key_with_desc_direction(self) -> None:
+        """Test compilation with descending shard key."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey(('user_id', 'DESC'))
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (user_id DESC)'
+
+    def test_compile_shard_key_with_mixed_directions(self) -> None:
+        """Test compilation with mixed ascending and descending columns."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey('user_id', ('category_id', 'DESC'))
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (user_id, category_id DESC)'
+
+    def test_compile_shard_key_with_explicit_ascending(self) -> None:
+        """Test compilation with explicit ascending direction."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey(('user_id', 'ASC'), ('category_id', 'DESC'))
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (user_id, category_id DESC)'
+
+    def test_compile_shard_key_with_static_methods(self) -> None:
+        """Test compilation using static helper methods."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey(ShardKey.asc('user_id'), ShardKey.desc('category_id'))
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (user_id, category_id DESC)'
+
+    def test_compile_shard_key_desc_with_metadata_only(self) -> None:
+        """Test compilation with DESC direction and METADATA_ONLY."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey(('user_id', 'DESC'), metadata_only=True)
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (user_id DESC) METADATA_ONLY'
+
+    def test_compile_shard_key_desc_with_special_names(self) -> None:
+        """Test compilation with DESC direction and special column names."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        # Test DESC with special characters
+        shard_key = ShardKey(('user-id', 'DESC'))
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`user-id` DESC)'
+
+        # Test mixed with special characters
+        shard_key = ShardKey(('user-id', 'ASC'), ('created at', 'DESC'))
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY (`user-id`, `created at` DESC)'
 
 
 class TestShardKeyTableIntegration:
@@ -284,7 +467,7 @@ class TestShardKeyBackwardCompatibility:
         # Verify the ShardKey object has expected properties
         shard_key = ShardKey('id')
         assert shard_key.metadata_only is False  # New property defaults to False
-        assert shard_key.columns == ('id',)  # Existing behavior preserved
+        assert shard_key.columns == [('id', 'ASC')]  # New behavior with direction support
 
 
 class TestShardKeyReflection:
@@ -579,7 +762,7 @@ class TestTableConstructorIntegration:
         # Verify info is set correctly
         assert 'singlestoredb_shard_key' in table.info
         assert isinstance(table.info['singlestoredb_shard_key'], ShardKey)
-        assert table.info['singlestoredb_shard_key'].columns == ('id',)
+        assert table.info['singlestoredb_shard_key'].columns == [('id', 'ASC')]
         assert table.info['singlestoredb_shard_key'].metadata_only is False
 
         # Test DDL generation
@@ -598,7 +781,7 @@ class TestTableConstructorIntegration:
 
         # Verify info is set correctly
         shard_key = table.info['singlestoredb_shard_key']
-        assert shard_key.columns == ('user_id',)
+        assert shard_key.columns == [('user_id', 'ASC')]
         assert shard_key.metadata_only is True
 
         # Test DDL generation
@@ -617,7 +800,7 @@ class TestTableConstructorIntegration:
 
         # Verify info is set correctly
         shard_key = table.info['singlestoredb_shard_key']
-        assert shard_key.columns == ()
+        assert shard_key.columns == []
         assert shard_key.metadata_only is False
 
         # Test DDL generation
@@ -637,7 +820,7 @@ class TestTableConstructorIntegration:
 
         # Verify info is set correctly
         shard_key = table.info['singlestoredb_shard_key']
-        assert shard_key.columns == ('user_id', 'category_id')
+        assert shard_key.columns == [('user_id', 'ASC'), ('category_id', 'ASC')]
         assert shard_key.metadata_only is False
 
         # Test DDL generation
@@ -663,7 +846,7 @@ class TestTableConstructorIntegration:
         shard_key = table.info['singlestoredb_shard_key']
         sort_key = table.info['singlestoredb_sort_key']
 
-        assert shard_key.columns == ('user_id',)
+        assert shard_key.columns == [('user_id', 'ASC')]
         assert sort_key.columns == [('created_at', 'ASC')]
 
         # Test DDL generation
@@ -685,7 +868,7 @@ class TestTableConstructorIntegration:
         # Verify both custom info and shard key are preserved
         assert table.info['custom_key'] == 'custom_value'
         assert 'singlestoredb_shard_key' in table.info
-        assert table.info['singlestoredb_shard_key'].columns == ('id',)
+        assert table.info['singlestoredb_shard_key'].columns == [('id', 'ASC')]
 
     def test_table_constructor_no_shard_key(self) -> None:
         """Test that Table constructor works normally without shard key parameters."""

@@ -68,8 +68,11 @@ class ShardKey(DDLElement):
 
     Parameters
     ----------
-    *columns : str
-        Variable number of column names for the shard key.
+    *columns : Union[str, Tuple[str, str]]
+        Variable number of column specifications for the shard key.
+        Each column can be either:
+        - A string column name (defaults to ASC)
+        - A tuple of (column_name, direction) where direction is 'ASC' or 'DESC'
         For empty shard key (keyless sharding), pass no arguments.
     index_type : str, optional, keyword-only
         Index type for the shard key. Options: 'BTREE' or 'HASH'.
@@ -91,6 +94,18 @@ class ShardKey(DDLElement):
 
     >>> ShardKey()
 
+    With explicit ASC/DESC directions:
+
+    >>> ShardKey('user_id', ('category_id', 'DESC'))
+
+    Using static helper methods:
+
+    >>> ShardKey(ShardKey.asc('user_id'), ShardKey.desc('category_id'))
+
+    Mixed directions for performance optimization:
+
+    >>> ShardKey('tenant_id', ShardKey.desc('created_at'))
+
     With index type (keyword-only):
 
     >>> ShardKey('user_id', index_type='HASH')
@@ -99,28 +114,41 @@ class ShardKey(DDLElement):
 
     >>> ShardKey('user_id', metadata_only=True)
 
-    Combined options (keyword-only):
+    Combined options with directions (keyword-only):
 
-    >>> ShardKey('user_id', 'tenant_id', index_type='BTREE', metadata_only=True)
+    >>> ShardKey(ShardKey.asc('user_id'), ShardKey.desc('tenant_id'),
+    ...           index_type='BTREE', metadata_only=True)
 
     """
 
-    columns: Tuple[str, ...]
+    columns: List[Tuple[str, str]]
     index_type: Optional[str]
     metadata_only: bool
 
     def __init__(
         self,
-        *columns: str,
+        *columns: Union[str, Tuple[str, str]],
         index_type: Optional[str] = None,
         metadata_only: bool = False,
     ) -> None:
-        # Validate all columns are strings
-        for col in columns:
-            if not isinstance(col, str):
-                raise TypeError('All column names must be strings')
+        self.columns: List[Tuple[str, str]] = []
 
-        self.columns = columns
+        # Process each column specification
+        for col in columns:
+            if isinstance(col, tuple):
+                name, direction = col
+                if direction is None:
+                    raise TypeError('Direction cannot be None')
+                direction = direction.upper()
+                if direction not in ('ASC', 'DESC'):
+                    raise ValueError(
+                        f"Direction must be 'ASC' or 'DESC', got '{direction}'",
+                    )
+                self.columns.append((name, direction))
+            elif isinstance(col, str):
+                self.columns.append((col, 'ASC'))  # Default to ASC
+            else:
+                raise TypeError(f'Column must be str or tuple, got {type(col).__name__}')
 
         if index_type is not None and index_type.upper() not in ('BTREE', 'HASH'):
             raise ValueError('index_type must be "BTREE" or "HASH"')
@@ -128,8 +156,59 @@ class ShardKey(DDLElement):
         self.index_type = index_type.upper() if index_type else None
         self.metadata_only = metadata_only
 
+    @staticmethod
+    def asc(column: str) -> Tuple[str, str]:
+        """Create an ascending shard key column specification.
+
+        Parameters
+        ----------
+        column : str
+            Column name to shard in ascending order
+
+        Returns
+        -------
+        Tuple[str, str]
+            Tuple of (column_name, 'ASC') for use in ShardKey constructor
+
+        Examples
+        --------
+        >>> ShardKey(ShardKey.asc('user_id'))
+        >>> ShardKey(ShardKey.asc('user_id'), ShardKey.desc('category_id'))
+
+        """
+        return (column, 'ASC')
+
+    @staticmethod
+    def desc(column: str) -> Tuple[str, str]:
+        """Create a descending shard key column specification.
+
+        Parameters
+        ----------
+        column : str
+            Column name to shard in descending order
+
+        Returns
+        -------
+        Tuple[str, str]
+            Tuple of (column_name, 'DESC') for use in ShardKey constructor
+
+        Examples
+        --------
+        >>> ShardKey(ShardKey.desc('user_id'))
+        >>> ShardKey(ShardKey.asc('user_id'), ShardKey.desc('category_id'))
+
+        """
+        return (column, 'DESC')
+
     def __repr__(self) -> str:
-        args = [repr(col) for col in self.columns]
+        args = []
+
+        # Format columns similar to SortKey
+        for col_name, direction in self.columns:
+            if direction == 'ASC':
+                args.append(repr(col_name))
+            else:
+                args.append(f'({repr(col_name)}, {repr(direction)})')
 
         # Handle keyword-only parameters
         if self.index_type is not None:
@@ -175,6 +254,9 @@ def compile_shard_key(element: Any, compiler: Any, **kw: Any) -> str:
     >>> compile_shard_key(ShardKey('user_id'), compiler)
     'SHARD KEY (user_id)'
 
+    >>> compile_shard_key(ShardKey('user_id', ShardKey.desc('tenant_id')), compiler)
+    'SHARD KEY (user_id, tenant_id DESC)'
+
     >>> compile_shard_key(ShardKey('user_id', 'tenant_id', index_type='HASH'), compiler)
     'SHARD KEY USING HASH (user_id, tenant_id)'
 
@@ -194,8 +276,16 @@ def compile_shard_key(element: Any, compiler: Any, **kw: Any) -> str:
         sql_parts.append('()')
 
     else:
-        # Add column list with proper escaping
-        column_list = ', '.join([_escape_column_name(x) for x in element.columns])
+        # Add column list with proper escaping and direction support
+        column_specs = []
+        for col_name, direction in element.columns:
+            escaped_col = _escape_column_name(col_name)
+            if direction == 'ASC':
+                column_specs.append(escaped_col)  # ASC is default, no need to specify
+            else:
+                column_specs.append(f'{escaped_col} {direction}')
+
+        column_list = ', '.join(column_specs)
         sql_parts.append(f'({column_list})')
 
     # Add METADATA_ONLY if specified
