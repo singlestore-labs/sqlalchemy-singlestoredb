@@ -246,6 +246,7 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
                 'singlestoredb_full_text_index',
                 'singlestoredb_multi_value_index',
                 'singlestoredb_column_group',
+                'singlestoredb_table_type',
             }
         )
 
@@ -306,13 +307,55 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     def visit_create_table(self, create: Any, **kw: Any) -> str:
         """Generate CREATE TABLE DDL with SingleStore-specific extensions.
 
-        Handles SHARD KEY, SORT KEY, VECTOR INDEX, MULTI VALUE INDEX,
-        FULLTEXT INDEX, and COLUMN GROUP constraints with all syntax variants.
+        Handles table type prefixes (ROWSTORE, COLUMNSTORE, REFERENCE, TEMPORARY, etc.)
+        and DDL elements (SHARD KEY, SORT KEY, VECTOR INDEX, MULTI VALUE INDEX,
+        FULLTEXT INDEX, and COLUMN GROUP constraints) with all syntax variants.
         """
+        # Get dialect options for SingleStore table type
+        dialect_opts = create.element.dialect_options.get('singlestoredb', {})
+        table_type = dialect_opts.get('table_type')
+
+        # Handle table type prefixes before calling super()
+        if table_type is not None:
+            from sqlalchemy_singlestoredb.ddlelement import (
+                TableType,
+                RowStore,
+            )
+
+            if not isinstance(table_type, TableType):
+                raise TypeError(
+                    f'singlestoredb_table_type must be a RowStore or '
+                    f'ColumnStore instance, got {type(table_type).__name__}',
+                )
+
+            # Build the appropriate prefixes based on table type and modifiers
+            prefixes = []
+
+            if isinstance(table_type, RowStore):
+                # RowStore always gets ROWSTORE prefix
+                prefixes.append('ROWSTORE')
+            # ColumnStore doesn't get a prefix (it's the default)
+
+            # Add modifier prefixes in the correct order
+            if table_type.reference:
+                prefixes.append('REFERENCE')
+            elif table_type.global_temporary:
+                prefixes.extend(['GLOBAL', 'TEMPORARY'])
+            elif table_type.temporary:
+                prefixes.append('TEMPORARY')
+
+            # Store the original prefixes and add ours
+            original_prefixes = (
+                list(create.element._prefixes)
+                if create.element._prefixes else []
+            )
+            create.element._prefixes = prefixes + original_prefixes
+
         create_table_sql = super().visit_create_table(create, **kw)
 
-        # Get dialect options for SingleStore
-        dialect_opts = create.element.dialect_options.get('singlestoredb', {})
+        # Restore original prefixes if we modified them
+        if table_type is not None:
+            create.element._prefixes = original_prefixes
 
         # Collect all DDL elements to append
         ddl_elements = []
