@@ -637,7 +637,7 @@ class TestVectorKeyTableConstructorIntegration:
         sort_key = table.info['singlestoredb_sort_key']
         vector_indexes = table.info['singlestoredb_vector_indexes']
 
-        assert shard_key.columns == ('user_id',)
+        assert shard_key.columns == [('user_id', 'ASC')]
         assert sort_key.columns == [('created_at', 'ASC')]
         assert len(vector_indexes) == 1
         assert vector_indexes[0].name == 'vec_idx'
