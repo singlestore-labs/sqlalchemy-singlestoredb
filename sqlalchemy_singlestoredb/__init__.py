@@ -41,6 +41,7 @@ from sqlalchemy.dialects.mysql.dml import insert
 
 from . import base
 from .column import PersistedColumn
+from .ddlelement import ColumnGroup
 from .ddlelement import FullTextIndex
 from .ddlelement import MultiValueIndex
 from .ddlelement import ShardKey
@@ -63,6 +64,7 @@ __all__ = (
     'BLOB',
     'BOOLEAN',
     'CHAR',
+    'ColumnGroup',
     'DATE',
     'DATETIME',
     'DECIMAL',

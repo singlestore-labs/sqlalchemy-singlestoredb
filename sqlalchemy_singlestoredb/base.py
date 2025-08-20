@@ -245,6 +245,7 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
                 'singlestoredb_vector_key',
                 'singlestoredb_full_text_index',
                 'singlestoredb_multi_value_index',
+                'singlestoredb_column_group',
             }
         )
 
@@ -305,8 +306,8 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     def visit_create_table(self, create: Any, **kw: Any) -> str:
         """Generate CREATE TABLE DDL with SingleStore-specific extensions.
 
-        Handles SHARD KEY, SORT KEY, VECTOR INDEX, MULTI VALUE INDEX, and
-        FULLTEXT INDEX constraints with all syntax variants.
+        Handles SHARD KEY, SORT KEY, VECTOR INDEX, MULTI VALUE INDEX,
+        FULLTEXT INDEX, and COLUMN GROUP constraints with all syntax variants.
         """
         create_table_sql = super().visit_create_table(create, **kw)
 
@@ -358,6 +359,13 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
             from sqlalchemy_singlestoredb.ddlelement import compile_fulltext_index
             ft_index_sql = compile_fulltext_index(full_text_index, self)
             ddl_elements.append(ft_index_sql)
+
+        # Handle column group (single value only)
+        column_group = dialect_opts.get('column_group')
+        if column_group is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_column_group
+            column_group_sql = compile_column_group(column_group, self)
+            ddl_elements.append(column_group_sql)
 
         # If we have DDL elements to add, modify the SQL
         if ddl_elements:

@@ -815,6 +815,55 @@ class FullTextIndex(DDLElement):
         return f'FullTextIndex({", ".join(args)})'
 
 
+class ColumnGroup(DDLElement):
+    """SingleStore COLUMN GROUP DDL element.
+
+    Represents a COLUMN GROUP constraint that creates a materialized copy
+    of each row as a separate index for columnstore tables, improving
+    full-row retrieval/update on wide tables.
+
+    Parameters
+    ----------
+    name : str, optional, keyword-only
+        Optional name for the column group. If not provided, SingleStore
+        will auto-generate a name. Must be passed as a keyword argument
+        if specified.
+
+    Examples
+    --------
+    Basic column group with name parameter:
+
+    >>> ColumnGroup(name='cg_all_columns')
+
+    Column group without explicit name (auto-generated):
+
+    >>> ColumnGroup()
+
+    Notes
+    -----
+    - Only supported on columnstore tables
+    - Automatically applies to all columns (uses * syntax)
+    - Subset column groups are not supported by SingleStore
+    - Improves full-row retrieval/update performance on wide tables
+    - Uses less RAM than rowstore for similar use cases
+    - If name is not provided, SingleStore will auto-generate one
+
+    """
+
+    name: Optional[str]
+
+    def __init__(self, *, name: Optional[str] = None) -> None:
+        if name is not None and not name:
+            raise ValueError('Column group name cannot be empty string')
+        self.name = name
+
+    def __repr__(self) -> str:
+        if self.name is not None:
+            return f'ColumnGroup(name={self.name!r})'
+        else:
+            return 'ColumnGroup()'
+
+
 @compiles(FullTextIndex, 'singlestoredb.mysql')
 def compile_fulltext_index(element: Any, compiler: Any, **kw: Any) -> str:
     """Compile FullTextIndex DDL element to SQL.
@@ -891,3 +940,37 @@ def compile_fulltext_index(element: Any, compiler: Any, **kw: Any) -> str:
     sql_parts.append(f'({column_list})')
 
     return ' '.join(sql_parts)
+
+
+@compiles(ColumnGroup, 'singlestoredb.mysql')
+def compile_column_group(element: Any, compiler: Any, **kw: Any) -> str:
+    """Compile ColumnGroup DDL element to SQL.
+
+    Parameters
+    ----------
+    element : ColumnGroup
+        The ColumnGroup DDL element to compile
+    compiler : DDLCompiler
+        SQLAlchemy DDL compiler instance
+    **kw : Any
+        Additional compiler keyword arguments
+
+    Returns
+    -------
+    str
+        The compiled SQL string for the COLUMN GROUP clause
+
+    Examples
+    --------
+    >>> compile_column_group(ColumnGroup(name='cg_all'), compiler)
+    'COLUMN GROUP cg_all (*)'
+
+    >>> compile_column_group(ColumnGroup(), compiler)
+    'COLUMN GROUP (*)'
+
+    """
+    if element.name is not None:
+        escaped_name = _escape_column_name(element.name)
+        return f'COLUMN GROUP {escaped_name} (*)'
+    else:
+        return 'COLUMN GROUP (*)'
