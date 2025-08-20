@@ -9,6 +9,7 @@ from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
 from sqlalchemy import Table
+from sqlalchemy import text
 from sqlalchemy.engine.mock import create_mock_engine
 
 
@@ -386,3 +387,227 @@ class TestTableOptions:
         assert 'AUTOSTATS_CARDINALITY_MODE = OFF' in ddl   # Boolean False
         assert 'AUTOSTATS_HISTOGRAM_MODE = CREATE' in ddl  # String value
         assert 'AUTOSTATS_SAMPLING = ON' in ddl            # String value
+
+
+class TestTableOptionsReflection:
+    """Test table options reflection from actual database tables."""
+
+    def test_reflect_table_with_autostats_options(
+        self, test_engine: Any, clean_tables: Any,
+    ) -> None:
+        """Test reflection of table with AUTOSTATS options."""
+        table_name = 'test_autostats_reflection'
+
+        with test_engine.connect() as conn:
+            try:
+                with conn.begin():
+                    # Create table with AUTOSTATS options
+                    # (cannot mix AUTOSTATS_ENABLED with others)
+                    conn.execute(
+                        text(f"""
+                        CREATE TABLE {table_name} (
+                            id INT PRIMARY KEY,
+                            data VARCHAR(100),
+                            metrics JSON,
+                            created_at TIMESTAMP
+                        ) AUTOSTATS_CARDINALITY_MODE = INCREMENTAL
+                        AUTOSTATS_HISTOGRAM_MODE = CREATE
+                        AUTOSTATS_SAMPLING = ON
+                    """),
+                    )
+            except Exception as e:
+                if 'autostats' in str(e).lower() or 'not supported' in str(e).lower():
+                    pytest.skip(f'AUTOSTATS options not supported or incompatible: {e}')
+                else:
+                    raise
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 4
+            assert 'id' in reflected_table.columns
+            assert 'data' in reflected_table.columns
+            assert 'metrics' in reflected_table.columns
+            assert 'created_at' in reflected_table.columns
+
+    def test_reflect_table_with_compression_option(
+        self, test_engine: Any, clean_tables: Any,
+    ) -> None:
+        """Test reflection of table with COMPRESSION option."""
+        table_name = 'test_compression_reflection'
+
+        with test_engine.connect() as conn:
+            with conn.begin():
+                # Create table with COMPRESSION option
+                conn.execute(
+                    text(f"""
+                    CREATE TABLE {table_name} (
+                        user_id INT,
+                        log_data TEXT,
+                        event_time TIMESTAMP,
+                        metadata JSON,
+                        PRIMARY KEY (user_id, event_time)
+                    ) COMPRESSION = SPARSE
+                """),
+                )
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 4
+            assert set(col.name for col in reflected_table.columns) == {
+                'user_id', 'log_data', 'event_time', 'metadata',
+            }
+
+            # Should have composite primary key
+            pk_columns = {col.name for col in reflected_table.primary_key.columns}
+            assert pk_columns == {'user_id', 'event_time'}
+
+    def test_reflect_table_with_multiple_options(
+        self, test_engine: Any, clean_tables: Any,
+    ) -> None:
+        """Test reflection of table with multiple table options."""
+        table_name = 'test_multiple_options_reflection'
+
+        with test_engine.connect() as conn:
+            try:
+                with conn.begin():
+                    # Create table with multiple options
+                    # (cannot mix AUTOSTATS_ENABLED with others)
+                    conn.execute(
+                        text(f"""
+                        CREATE TABLE {table_name} (
+                            doc_id INT PRIMARY KEY,
+                            title VARCHAR(200),
+                            content TEXT,
+                            tags JSON,
+                            score DECIMAL(5,2)
+                        ) COMPRESSION = ADVANCED
+                        AUTOSTATS_CARDINALITY_MODE = PERIODIC
+                    """),
+                    )
+            except Exception as e:
+                if (
+                    'autostats' in str(e).lower() or
+                    'compression' in str(e).lower() or
+                    'not supported' in str(e).lower()
+                ):
+                    pytest.skip(f'Table options not supported or incompatible: {e}')
+                else:
+                    raise
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 5
+            assert set(col.name for col in reflected_table.columns) == {
+                'doc_id', 'title', 'content', 'tags', 'score',
+            }
+
+    def test_reflect_table_with_options_and_keys(
+        self, test_engine: Any, clean_tables: Any,
+    ) -> None:
+        """Test reflection of table with both table options and keys."""
+        table_name = 'test_options_and_keys_reflection'
+
+        with test_engine.connect() as conn:
+            with conn.begin():
+                # Create table with options and keys combined
+                # Cannot mix AUTOSTATS_ENABLED with other autostats options
+                conn.execute(
+                    text(f"""
+                    CREATE TABLE {table_name} (
+                        user_id INT,
+                        session_id VARCHAR(64),
+                        activity_data JSON,
+                        timestamp_col TIMESTAMP,
+                        PRIMARY KEY (user_id, session_id),
+                        SHARD KEY (user_id),
+                        SORT KEY (timestamp_col),
+                        KEY idx_timestamp (timestamp_col)
+                    ) COMPRESSION = SPARSE
+                    AUTOSTATS_CARDINALITY_MODE = PERIODIC
+                """),
+                )
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 4
+            assert set(col.name for col in reflected_table.primary_key.columns) == {
+                'user_id', 'session_id',
+            }
+
+            # Should have regular indexes
+            indexes = reflected_table.indexes
+            index_names = {idx.name for idx in indexes}
+            print(f'\nReflected indexes: {index_names}')
+            assert 'idx_timestamp' in index_names
+
+    def test_reflect_table_with_boolean_options(
+        self, test_engine: Any, clean_tables: Any,
+    ) -> None:
+        """Test reflection of table with boolean-style options."""
+        table_name = 'test_boolean_options_reflection'
+
+        with test_engine.connect() as conn:
+            with conn.begin():
+                # Create table with boolean options (ON/OFF vs TRUE/FALSE)
+                # Cannot mix AUTOSTATS_ENABLED with other autostats options
+                conn.execute(
+                    text(f"""
+                    CREATE TABLE {table_name} (
+                        record_id INT PRIMARY KEY,
+                        payload TEXT,
+                        created_date DATE
+                    ) AUTOSTATS_ENABLED = TRUE
+                """),
+                )
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 3
+            assert 'record_id' in reflected_table.columns
+            assert 'payload' in reflected_table.columns
+            assert 'created_date' in reflected_table.columns

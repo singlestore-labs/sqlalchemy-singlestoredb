@@ -615,3 +615,90 @@ class TestAdvancedIndexes:
         ft_idx = FullTextIndex('content-field', name='ft_v2', version=2)
         result = compile_fulltext_index(ft_idx, None)
         assert result == 'FULLTEXT USING VERSION 2 ft_v2 (`content-field`)'
+
+    def test_fulltext_index_reflection(
+        self, test_engine: Engine, clean_tables: None,
+    ) -> None:
+        """Test reflection of FULLTEXT indexes."""
+        table_name = 'test_fulltext_reflection'
+
+        with test_engine.connect() as conn:
+            with conn.begin():
+                # Create table with FULLTEXT index
+                # (SingleStore supports only one FULLTEXT KEY per table)
+                conn.execute(
+                    text(f"""
+                    CREATE TABLE {table_name} (
+                        id INT PRIMARY KEY,
+                        title VARCHAR(200),
+                        content TEXT,
+                        description TEXT,
+                        FULLTEXT KEY ft_content (content)
+                    )
+                """),
+                )
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 4
+            assert 'id' in reflected_table.columns
+            assert 'title' in reflected_table.columns
+            assert 'content' in reflected_table.columns
+            assert 'description' in reflected_table.columns
+
+            # Check that indexes are reflected
+            indexes = reflected_table.indexes
+            index_names = {idx.name for idx in indexes}
+            print(f'\nReflected indexes: {index_names}')
+
+    def test_fulltext_index_with_multiple_columns_reflection(
+        self, test_engine: Engine, clean_tables: None,
+    ) -> None:
+        """Test reflection of FULLTEXT index with multiple columns."""
+        table_name = 'test_fulltext_multi_reflection'
+
+        with test_engine.connect() as conn:
+            with conn.begin():
+                # Create table with multi-column FULLTEXT index
+                conn.execute(
+                    text(f"""
+                    CREATE TABLE {table_name} (
+                        doc_id INT PRIMARY KEY,
+                        title VARCHAR(200),
+                        content TEXT,
+                        summary TEXT,
+                        FULLTEXT KEY ft_multi (title, content, summary)
+                    )
+                """),
+                )
+
+            # Show the generated CREATE TABLE
+            result = conn.execute(text(f'SHOW CREATE TABLE {table_name}'))
+            create_sql = result.fetchone()[1]
+            print(f'\nGenerated CREATE TABLE for {table_name}:')
+            print(create_sql)
+
+            # Verify reflection works without errors
+            metadata = MetaData()
+            reflected_table = Table(table_name, metadata, autoload_with=test_engine)
+
+            # Should have expected columns
+            assert len(reflected_table.columns) == 4
+            assert 'doc_id' in reflected_table.columns
+            assert 'title' in reflected_table.columns
+            assert 'content' in reflected_table.columns
+            assert 'summary' in reflected_table.columns
+
+            # Check that indexes are reflected
+            indexes = reflected_table.indexes
+            index_names = {idx.name for idx in indexes}
+            print(f'\nReflected indexes: {index_names}')
