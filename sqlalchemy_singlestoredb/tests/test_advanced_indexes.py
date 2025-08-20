@@ -600,7 +600,7 @@ class TestAdvancedIndexes:
 
         # Test multiple columns with special characters
         ft_idx = FullTextIndex(
-            ['title column', 'content-field'], name='search_idx',
+            'title column', 'content-field', name='search_idx',
         )
         result = compile_fulltext_index(ft_idx, None)
         expected = 'FULLTEXT search_idx (`title column`, `content-field`)'

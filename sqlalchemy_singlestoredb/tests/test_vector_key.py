@@ -50,11 +50,11 @@ class TestVectorKeyConstruction:
 
     def test_multi_column_vector_key(self) -> None:
         """Test vector key with multiple columns (if supported)."""
-        vector_key = VectorKey(['embedding1', 'embedding2'], name='multi_vec_idx')
+        vector_key = VectorKey('embedding1', 'embedding2', name='multi_vec_idx')
         assert vector_key.name == 'multi_vec_idx'
         assert vector_key.columns == ('embedding1', 'embedding2')
         assert vector_key.index_options is None
-        expected_repr = "VectorKey(['embedding1', 'embedding2'], name='multi_vec_idx')"
+        expected_repr = "VectorKey('embedding1', 'embedding2', name='multi_vec_idx')"
         assert repr(vector_key) == expected_repr
 
     def test_vector_key_with_complex_options(self) -> None:
@@ -107,7 +107,7 @@ class TestVectorKeyCompiler:
         """Test compilation of multi-column vector key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
 
-        vector_key = VectorKey(['embedding1', 'embedding2'], name='multi_vec_idx')
+        vector_key = VectorKey('embedding1', 'embedding2', name='multi_vec_idx')
         result = compile_vector_key(vector_key, None)
         assert result == 'VECTOR INDEX multi_vec_idx (embedding1, embedding2)'
 
@@ -141,7 +141,7 @@ class TestVectorKeyCompiler:
         assert result == 'VECTOR INDEX (`embedding column`)'
 
         # Test multiple columns with special characters
-        vector_key = VectorKey(['embedding-1', 'embedding 2'], name='multi_idx')
+        vector_key = VectorKey('embedding-1', 'embedding 2', name='multi_idx')
         result = compile_vector_key(vector_key, None)
         assert result == 'VECTOR INDEX multi_idx (`embedding-1`, `embedding 2`)'
 
@@ -621,7 +621,7 @@ class TestVectorKeyTableConstructorIntegration:
             Column('embedding', VECTOR(128, 'F32')),
             Column('created_at', String(50)),
             ShardKey('user_id'),
-            SortKey(['created_at']),
+            SortKey('created_at'),
             VectorKey(
                 'embedding', name='vec_idx',
                 index_options='{"metric_type":"DOT_PRODUCT"}',

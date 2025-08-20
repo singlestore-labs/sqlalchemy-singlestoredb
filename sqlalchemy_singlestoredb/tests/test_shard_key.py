@@ -29,10 +29,10 @@ class TestShardKeyConstruction:
 
     def test_multi_column_shard_key(self) -> None:
         """Test shard key with multiple columns."""
-        shard_key = ShardKey(['user_id', 'category_id'])
+        shard_key = ShardKey('user_id', 'category_id')
         assert shard_key.columns == ('user_id', 'category_id')
         assert shard_key.metadata_only is False
-        assert repr(shard_key) == "ShardKey(['user_id', 'category_id'])"
+        assert repr(shard_key) == "ShardKey('user_id', 'category_id')"
 
     def test_empty_shard_key(self) -> None:
         """Test empty shard key for keyless sharding."""
@@ -50,10 +50,10 @@ class TestShardKeyConstruction:
 
     def test_shard_key_metadata_only_multi_column(self) -> None:
         """Test SHARD KEY ONLY with multiple columns."""
-        shard_key = ShardKey(['user_id', 'category_id'], metadata_only=True)
+        shard_key = ShardKey('user_id', 'category_id', metadata_only=True)
         assert shard_key.columns == ('user_id', 'category_id')
         assert shard_key.metadata_only is True
-        expected_repr = "ShardKey(['user_id', 'category_id'], metadata_only=True)"
+        expected_repr = "ShardKey('user_id', 'category_id', metadata_only=True)"
         assert repr(shard_key) == expected_repr
 
     def test_shard_key_metadata_only_empty(self) -> None:
@@ -61,19 +61,11 @@ class TestShardKeyConstruction:
         shard_key = ShardKey(metadata_only=True)
         assert shard_key.columns == ()
         assert shard_key.metadata_only is True
-        assert repr(shard_key) == 'ShardKey(None, metadata_only=True)'
+        assert repr(shard_key) == 'ShardKey(metadata_only=True)'
 
 
 class TestShardKeyCompiler:
-    """Test ShardKey DDL compilation."""
-
-    def setup_method(self) -> None:
-        """Set up mock engine for DDL compilation."""
-        def dump(sql: Any, *multiparams: Any, **params: Any) -> None:
-            self.compiled_sql = str(sql.compile(dialect=self.mock_engine.dialect))
-
-        self.mock_engine = create_mock_engine('singlestoredb://', dump)
-        self.compiled_sql = ''
+    """Test ShardKey SQL compilation."""
 
     def test_compile_basic_shard_key(self) -> None:
         """Test compilation of basic shard key."""
@@ -87,7 +79,7 @@ class TestShardKeyCompiler:
         """Test compilation of multi-column shard key."""
         from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
 
-        shard_key = ShardKey(['user_id', 'category_id'])
+        shard_key = ShardKey('user_id', 'category_id')
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY (user_id, category_id)'
 
@@ -111,7 +103,7 @@ class TestShardKeyCompiler:
         """Test compilation of SHARD KEY ONLY with multiple columns."""
         from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
 
-        shard_key = ShardKey(['user_id', 'category_id'], metadata_only=True)
+        shard_key = ShardKey('user_id', 'category_id', metadata_only=True)
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY (user_id, category_id) METADATA_ONLY'
 
@@ -138,7 +130,7 @@ class TestShardKeyCompiler:
         assert result == 'SHARD KEY (`user id`)'
 
         # Test multiple columns with special characters
-        shard_key = ShardKey(['user-id', 'tenant id', 'normal_column'])
+        shard_key = ShardKey('user-id', 'tenant id', 'normal_column')
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY (`user-id`, `tenant id`, normal_column)'
 
@@ -247,7 +239,7 @@ class TestShardKeyTableIntegration:
             data = Column(String(50))
 
             __table_args__ = {
-                'info': {'singlestoredb_shard_key': ShardKey(['user_id', 'category_id'])},
+                'info': {'singlestoredb_shard_key': ShardKey('user_id', 'category_id')},
             }
 
         Base.metadata.create_all(self.mock_engine, checkfirst=False)
@@ -640,7 +632,7 @@ class TestTableConstructorIntegration:
             Column('user_id', Integer, primary_key=True),
             Column('category_id', Integer, primary_key=True),
             Column('amount', Integer),
-            ShardKey(['user_id', 'category_id']),
+            ShardKey('user_id', 'category_id'),
         )
 
         # Verify info is set correctly
@@ -661,7 +653,7 @@ class TestTableConstructorIntegration:
             Column('order_id', Integer, primary_key=True),
             Column('created_at', String(50)),
             ShardKey('user_id'),
-            SortKey(['created_at']),
+            SortKey('created_at'),
         )
 
         # Verify info is set correctly
@@ -737,6 +729,6 @@ class TestTableConstructorIntegration:
                 Column('id', Integer, primary_key=True),
                 Column('created_at', String(50)),
                 Column('updated_at', String(50)),
-                SortKey(['created_at']),
-                SortKey(['updated_at']),  # This should cause an error
+                SortKey('created_at'),
+                SortKey('updated_at'),  # This should cause an error
             )

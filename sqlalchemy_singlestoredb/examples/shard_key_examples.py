@@ -51,7 +51,7 @@ class MultiColumnShardTable(Base):  # type: ignore
     amount = Column(Numeric(10, 2))
 
     __table_args__ = {
-        'info': {'singlestoredb_shard_key': ShardKey(['user_id', 'category_id'])},
+        'info': {'singlestoredb_shard_key': ShardKey('user_id', 'category_id')},
     }
 
 
@@ -94,7 +94,7 @@ class ComplexTable(Base):  # type: ignore
     __table_args__ = {
         'info': {
             'singlestoredb_shard_key': ShardKey('user_id'),
-            'singlestoredb_sort_key': SortKey(['order_id', 'amount']),
+            'singlestoredb_sort_key': SortKey('order_id', 'amount'),
         },
     }
 
@@ -111,7 +111,7 @@ class MultiColumnOnlyTable(Base):  # type: ignore
     __table_args__ = {
         'info': {
             'singlestoredb_shard_key': ShardKey(
-                ['user_id', 'region_id'], metadata_only=True,
+                'user_id', 'region_id', metadata_only=True,
             ),
         },
     }
