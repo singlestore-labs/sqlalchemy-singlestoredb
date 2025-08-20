@@ -67,6 +67,26 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
     """Parses the results of a SHOW CREATE TABLE statement."""
 
     def _parse_constraints(self, line: str) -> Tuple[str, Dict[str, Any]]:
+        # Check for SingleStore table options that might not be caught by parent parser
+        # These typically start with whitespace and contain options like COMPRESSION
+        stripped_line = line.strip()
+        if (
+            stripped_line and
+            (
+                'COMPRESSION=' in stripped_line or
+                'AUTOSTATS_' in stripped_line
+            ) and
+            not stripped_line.startswith(
+                (
+                    'KEY ', 'SHARD KEY', 'SORT KEY',
+                    'VECTOR ', 'PRIMARY KEY', 'FOREIGN KEY',
+                    'UNIQUE ', 'INDEX ', 'FULLTEXT ',
+                ),
+            )
+        ):
+            # This looks like a table options line that wasn't caught by MySQL parser
+            # Return a special type to avoid the "Unknown schema content" warning
+            return 'singlestore_table_option', {'line': line}
         # First try to match VECTOR INDEX pattern
         m = self._re_vector_index.match(line)
         if m:
@@ -167,6 +187,9 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
                     state.ck_constraints.append(spec)
                 elif type_ in ('shard_key', 'sort_key', 'vector_key'):
                     # Don't add SHARD KEY, SORT KEY, and VECTOR KEY to the keys list
+                    pass
+                elif type_ == 'singlestore_table_option':
+                    # Silently ignore SingleStore table options to avoid warnings
                     # as they're not regular indexes
                     pass
                 else:
