@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -459,10 +461,12 @@ class VectorKey(DDLElement):
     name : str, optional, keyword-only
         Index name for the vector index. If not provided, SingleStore will
         auto-generate a name.
-    index_options : str, optional, keyword-only
-        JSON string containing vector index options such as metric_type.
+    index_options : str or Dict[str, Any], optional, keyword-only
+        Index options for the vector index. Can be either a JSON string or
+        a dictionary that will be automatically JSON-serialized.
         Common values: '{"metric_type":"EUCLIDEAN_DISTANCE"}',
         '{"metric_type":"DOT_PRODUCT"}', '{"metric_type":"COSINE_SIMILARITY"}'
+        Or as dict: {"metric_type": "EUCLIDEAN_DISTANCE"}
 
     Examples
     --------
@@ -474,10 +478,15 @@ class VectorKey(DDLElement):
 
     >>> VectorKey('embedding', name='vec_idx')
 
-    Vector index with options:
+    Vector index with options (string):
 
     >>> VectorKey('embedding', name='vec_idx',
     ...           index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}')
+
+    Vector index with options (dict):
+
+    >>> VectorKey('embedding', name='vec_idx',
+    ...           index_options={"metric_type": "EUCLIDEAN_DISTANCE"})
 
     Multiple vector columns (if supported):
 
@@ -493,7 +502,7 @@ class VectorKey(DDLElement):
         self,
         *columns: str,
         name: Optional[str] = None,
-        index_options: Optional[str] = None,
+        index_options: Optional[Union[str, Dict[str, Any]]] = None,
     ) -> None:
         if not columns:
             raise ValueError(
@@ -507,7 +516,12 @@ class VectorKey(DDLElement):
 
         self.columns = columns
         self.name = name
-        self.index_options = index_options
+
+        # Handle index_options: if dict, convert to JSON string
+        if isinstance(index_options, dict):
+            self.index_options = json.dumps(index_options)
+        else:
+            self.index_options = index_options
 
     def __repr__(self) -> str:
         args = [repr(col) for col in self.columns]
@@ -585,8 +599,9 @@ class MultiValueIndex(DDLElement):
     *columns : str
         Variable number of column names to include in the multi-value index.
         Must be JSON columns.
-    index_options : str, optional, keyword-only
-        JSON string containing multi-value index options.
+    index_options : str or Dict[str, Any], optional, keyword-only
+        Index options for the multi-value index. Can be either a JSON string or
+        a dictionary that will be automatically JSON-serialized.
 
     Examples
     --------
@@ -598,9 +613,13 @@ class MultiValueIndex(DDLElement):
 
     >>> MultiValueIndex('tags', 'categories')
 
-    Multi-value index with options:
+    Multi-value index with options (string):
 
     >>> MultiValueIndex('tags', index_options='{"some_option":"value"}')
+
+    Multi-value index with options (dict):
+
+    >>> MultiValueIndex('tags', index_options={"some_option": "value"})
 
     Notes
     -----
@@ -610,7 +629,14 @@ class MultiValueIndex(DDLElement):
     The columns must be of JSON type for multi-value indexing to work properly.
     """
 
-    def __init__(self, *columns: str, index_options: Optional[str] = None) -> None:
+    columns: Tuple[str, ...]
+    index_options: Optional[str]
+
+    def __init__(
+        self,
+        *columns: str,
+        index_options: Optional[Union[str, Dict[str, Any]]] = None,
+    ) -> None:
         if not columns:
             raise ValueError(
                 'At least one column must be specified for MULTI VALUE index',
@@ -622,7 +648,12 @@ class MultiValueIndex(DDLElement):
                 raise TypeError('All column names must be strings')
 
         self.columns = columns
-        self.index_options = index_options
+
+        # Handle index_options: if dict, convert to JSON string
+        if isinstance(index_options, dict):
+            self.index_options = json.dumps(index_options)
+        else:
+            self.index_options = index_options
 
     def __repr__(self) -> str:
         args = [repr(col) for col in self.columns]
