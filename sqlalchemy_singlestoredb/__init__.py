@@ -42,8 +42,10 @@ from sqlalchemy.dialects.mysql.dml import insert
 from . import base
 from .column import PersistedColumn
 from .ddlelement import ColumnGroup
+from .ddlelement import ColumnStore
 from .ddlelement import FullTextIndex
 from .ddlelement import MultiValueIndex
+from .ddlelement import RowStore
 from .ddlelement import ShardKey
 from .ddlelement import SortKey
 from .ddlelement import VectorKey
@@ -65,6 +67,7 @@ __all__ = (
     'BOOLEAN',
     'CHAR',
     'ColumnGroup',
+    'ColumnStore',
     'DATE',
     'DATETIME',
     'DECIMAL',
@@ -85,11 +88,12 @@ __all__ = (
     'NVARCHAR',
     'NUMERIC',
     'PersistedColumn',
-    'SET',
-    'SMALLINT',
-    'ShardKey',
-    'SortKey',
     'REAL',
+    'RowStore',
+    'SET',
+    'ShardKey',
+    'SMALLINT',
+    'SortKey',
     'TEXT',
     'TIME',
     'TIMESTAMP',

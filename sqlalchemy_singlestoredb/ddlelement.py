@@ -974,3 +974,148 @@ def compile_column_group(element: Any, compiler: Any, **kw: Any) -> str:
         return f'COLUMN GROUP {escaped_name} (*)'
     else:
         return 'COLUMN GROUP (*)'
+
+
+class TableType(DDLElement):
+    """Base class for SingleStore table type specifications.
+
+    This is the base class for table type modifiers like RowStore and ColumnStore.
+    Table types determine how data is stored and accessed in SingleStore.
+    """
+
+    def __init__(
+        self, reference: bool = False, temporary: bool = False,
+        global_temporary: bool = False,
+    ) -> None:
+        # Validate that only one modifier is set
+        modifiers = [reference, temporary, global_temporary]
+        modifier_count = sum(bool(mod) for mod in modifiers)
+
+        if modifier_count > 1:
+            raise ValueError(
+                'Only one of reference, temporary, or global_temporary can be True',
+            )
+
+        self.reference = reference
+        self.temporary = temporary
+        self.global_temporary = global_temporary
+
+
+class RowStore(TableType):
+    """SingleStore rowstore table type specification.
+
+    Rowstore tables are in-memory tables optimized for OLTP workloads
+    with fast point lookups and updates.
+
+    Parameters
+    ----------
+    reference : bool, default False
+        Create a reference table that is replicated across all nodes
+    temporary : bool, default False
+        Create a temporary table that exists only during the client session
+    global_temporary : bool, default False
+        Create a global temporary table that persists beyond client sessions
+
+    Examples
+    --------
+    Basic rowstore table:
+
+    >>> Table('cache', metadata,
+    ...       Column('key', String),
+    ...       singlestoredb_table_type=RowStore())
+
+    Temporary rowstore table:
+
+    >>> Table('temp_data', metadata,
+    ...       Column('id', Integer),
+    ...       singlestoredb_table_type=RowStore(temporary=True))
+
+    Global temporary rowstore table:
+
+    >>> Table('global_temp', metadata,
+    ...       Column('id', Integer),
+    ...       singlestoredb_table_type=RowStore(global_temporary=True))
+
+    Reference rowstore table:
+
+    >>> Table('lookups', metadata,
+    ...       Column('code', String),
+    ...       singlestoredb_table_type=RowStore(reference=True))
+
+    """
+
+    def __init__(
+        self, reference: bool = False, temporary: bool = False,
+        global_temporary: bool = False,
+    ) -> None:
+        super().__init__(reference, temporary, global_temporary)
+
+    def __repr__(self) -> str:
+        args = []
+        if self.reference:
+            args.append('reference=True')
+        if self.temporary:
+            args.append('temporary=True')
+        if self.global_temporary:
+            args.append('global_temporary=True')
+
+        if args:
+            return f'RowStore({", ".join(args)})'
+        else:
+            return 'RowStore()'
+
+
+class ColumnStore(TableType):
+    """SingleStore columnstore table type specification.
+
+    Columnstore tables are disk-based tables optimized for analytical workloads
+    with fast scans and aggregations. This is the default table type in SingleStore.
+
+    Parameters
+    ----------
+    reference : bool, default False
+        Create a reference table that is replicated across all nodes
+    temporary : bool, default False
+        Create a temporary table that exists only during the client session
+
+    Note
+    ----
+    global_temporary is not supported for columnstore tables.
+
+    Examples
+    --------
+    Basic columnstore table (default):
+
+    >>> Table('analytics', metadata,
+    ...       Column('user_id', Integer),
+    ...       singlestoredb_table_type=ColumnStore())
+
+    Temporary columnstore table:
+
+    >>> Table('temp_analytics', metadata,
+    ...       Column('id', Integer),
+    ...       singlestoredb_table_type=ColumnStore(temporary=True))
+
+    Reference columnstore table:
+
+    >>> Table('ref_data', metadata,
+    ...       Column('code', String),
+    ...       singlestoredb_table_type=ColumnStore(reference=True))
+
+    """
+
+    def __init__(self, reference: bool = False, temporary: bool = False) -> None:
+        # ColumnStore doesn't support global_temporary
+        super().__init__(reference, temporary, global_temporary=False)
+
+    def __repr__(self) -> str:
+        args = []
+        if self.reference:
+            args.append('reference=True')
+        if self.temporary:
+            args.append('temporary=True')
+
+        if args:
+            return f'ColumnStore({", ".join(args)})'
+        else:
+            return 'ColumnStore()'
