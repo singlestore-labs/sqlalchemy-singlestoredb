@@ -7,6 +7,7 @@ equivalent functionality and coverage for sort keys.
 """
 from __future__ import annotations
 
+import typing
 from typing import Any
 from typing import Dict
 from typing import Tuple
@@ -635,14 +636,17 @@ class TestSortKeyReflectionParser:
             )
             type_, spec_dict = result
 
-            assert type_ == case['expected_type'], (  # type: ignore[index]
-                f"Line: {case['line']}, Expected type: "  # type: ignore[index]
-                f"{case['expected_type']}, Got: {type_}"
-            )
-            assert spec_dict['columns'] == case['expected_columns'], (  # type: ignore[index]  # noqa: E501
-                f"Line: {case['line']}, Expected columns: "  # type: ignore[index]
-                f"{case['expected_columns']}, Got: {spec_dict['columns']}"  # noqa: E501
-            )
+            @typing.no_type_check
+            def do_checks() -> None:
+                assert type_ == case['expected_type'], (
+                    f"Line: {case['line']}, Expected type: "
+                    f"{case['expected_type']}, Got: {type_}"
+                )
+                assert spec_dict['columns'] == case['expected_columns'], (
+                    f"Line: {case['line']}, Expected columns: "
+                    f"{case['expected_columns']}, Got: {spec_dict['columns']}"
+                )
+            do_checks()
 
     def test_parser_quoted_column_names(self) -> None:
         """Test parser handles quoted column identifiers correctly."""
