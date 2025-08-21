@@ -591,13 +591,13 @@ class TestShardKeyReflectionParser:
             {
                 'line': '  SHARD KEY (user_id)',
                 'expected_type': 'shard_key',
-                'expected_columns': ['user_id'],
+                'expected_columns': [('user_id', 'ASC')],
                 'expected_only': False,
             },
             {
                 'line': '  SHARD KEY ONLY (user_id)',
                 'expected_type': 'shard_key',
-                'expected_columns': ['user_id'],
+                'expected_columns': [('user_id', 'ASC')],
                 'expected_only': True,
             },
             {
@@ -609,19 +609,19 @@ class TestShardKeyReflectionParser:
             {
                 'line': '  SHARD KEY (user_id, category_id)',
                 'expected_type': 'shard_key',
-                'expected_columns': ['user_id', 'category_id'],
+                'expected_columns': [('user_id', 'ASC'), ('category_id', 'ASC')],
                 'expected_only': False,
             },
             {
                 'line': '  SHARD KEY ONLY (user_id, category_id)',
                 'expected_type': 'shard_key',
-                'expected_columns': ['user_id', 'category_id'],
+                'expected_columns': [('user_id', 'ASC'), ('category_id', 'ASC')],
                 'expected_only': True,
             },
             {
                 'line': '  SORT KEY (created_at)',
                 'expected_type': 'sort_key',
-                'expected_columns': ['created_at'],
+                'expected_columns': [('created_at', 'ASC')],
                 'expected_only': False,
             },
         ]
@@ -657,15 +657,15 @@ class TestShardKeyReflectionParser:
         test_cases = [
             {
                 'line': '  SHARD KEY (`user_id`)',
-                'expected_columns': ['user_id'],
+                'expected_columns': [('user_id', 'ASC')],
             },
             {
                 'line': '  SHARD KEY (`user_id`, `category_id`)',
-                'expected_columns': ['user_id', 'category_id'],
+                'expected_columns': [('user_id', 'ASC'), ('category_id', 'ASC')],
             },
             {
                 'line': '  SHARD KEY (`order-id`)',  # Column name with special characters
-                'expected_columns': ['order-id'],
+                'expected_columns': [('order-id', 'ASC')],
             },
         ]
 

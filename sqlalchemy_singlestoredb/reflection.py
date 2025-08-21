@@ -119,24 +119,41 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             spec = m.groupdict()
             key_type = spec['type'].lower()  # 'shard' or 'sort'
 
-            # Parse columns - handle both empty () and actual column lists
+            # Parse columns - handle both empty () and actual column lists with ASC/DESC
             columns_str = spec.get('columns', '').strip()
+            columns = []
             if columns_str:
-                # Parse column names - simple split for now,
-                # may need enhancement for quoted identifiers
-                columns = [
-                    col.strip().strip('`') for col in columns_str.split(',')
-                    if col.strip()
-                ]
-            else:
-                columns = []
+                # Parse column names with ASC/DESC directions
+                # Example: "user_id DESC, category_id" ->
+                # [("user_id", "DESC"), ("category_id", "ASC")]
+                import re
+
+                # Split by comma and process each column specification
+                for col_spec in columns_str.split(','):
+                    col_spec = col_spec.strip()
+                    if not col_spec:
+                        continue
+
+                    # Check for explicit DESC or ASC at the end
+                    direction_match = re.match(
+                        r'^(.+?)\s+(DESC|ASC)\s*$', col_spec, re.IGNORECASE,
+                    )
+                    if direction_match:
+                        col_name = direction_match.group(1).strip().strip('`')
+                        direction = direction_match.group(2).upper()
+                        columns.append((col_name, direction))
+                    else:
+                        # No explicit direction, default to ASC
+                        col_name = col_spec.strip().strip('`')
+                        columns.append((col_name, 'ASC'))
 
             # Create spec dictionary with parsed information
             parsed_spec = {
                 'type': spec['type'],  # 'SHARD' or 'SORT'
-                'name': None,
+                'name': spec.get('name'),  # Optional key name
                 'columns': columns,
                 'only': spec.get('only') is not None,  # True if ONLY was specified
+                'metadata_only': spec.get('metadata_only') is not None,
             }
 
             return f'{key_type}_key', parsed_spec
@@ -156,6 +173,43 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             type_ = f"{spec['type'].lower()}_key"
 
         return type_, spec
+
+    def _parse_table_name(self, line: str, state: Any) -> None:
+        """Parse CREATE TABLE line to extract table name and table type information."""
+        # Call parent to handle standard parsing
+        super()._parse_table_name(line, state)
+
+        # Parse table type information from CREATE statement
+        # Patterns we need to detect:
+        # CREATE ROWSTORE TABLE -> RowStore()
+        # CREATE ROWSTORE TEMPORARY TABLE -> RowStore(temporary=True)
+        # CREATE ROWSTORE GLOBAL TEMPORARY TABLE -> RowStore(global_temporary=True)
+        # CREATE ROWSTORE REFERENCE TABLE -> RowStore(reference=True)
+        # CREATE TEMPORARY TABLE -> ColumnStore(temporary=True)
+        # CREATE REFERENCE TABLE -> ColumnStore(reference=True)
+        # CREATE TABLE -> ColumnStore() (default)
+
+        line_clean = line.strip()
+
+        # Parse table type specification
+        is_rowstore = 'ROWSTORE' in line_clean
+        is_global_temporary = 'GLOBAL TEMPORARY' in line_clean
+        # Exclude GLOBAL TEMPORARY from regular TEMPORARY
+        is_temporary = 'TEMPORARY' in line_clean and not is_global_temporary
+        is_reference = 'REFERENCE' in line_clean
+
+        # Store table type info for later conversion to dialect options
+        if not hasattr(state, 'singlestore_features'):
+            state.singlestore_features = {}
+
+        table_type_spec = {
+            'is_rowstore': is_rowstore,
+            'is_temporary': is_temporary,
+            'is_global_temporary': is_global_temporary,
+            'is_reference': is_reference,
+        }
+
+        state.singlestore_features['table_type'] = table_type_spec
 
     def parse(self, show_create: str, charset: str) -> ReflectedState:
         state = ReflectedState()
@@ -186,8 +240,10 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
                 elif type_ == 'ck_constraint':
                     state.ck_constraints.append(spec)
                 elif type_ in ('shard_key', 'sort_key', 'vector_key'):
-                    # Don't add SHARD KEY, SORT KEY, and VECTOR KEY to the keys list
-                    pass
+                    # Store SingleStore features for later conversion to dialect options
+                    if not hasattr(state, 'singlestore_features'):
+                        state.singlestore_features = {}
+                    state.singlestore_features[type_] = spec
                 elif type_ == 'singlestore_table_option':
                     # Silently ignore SingleStore table options to avoid warnings
                     # as they're not regular indexes
@@ -237,13 +293,15 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
 
         # SingleStore specific SHARD KEY and SORT KEY patterns
         # Handles: SHARD KEY (columns), SHARD KEY ONLY (columns),
-        # SHARD KEY (), SORT KEY (columns), etc.
+        # SHARD KEY (), SORT KEY (columns), SHARD KEY name (columns) METADATA_ONLY, etc.
         self._re_singlestore_key = _re_compile(
             r'  (?:, *)?'  # Handle optional leading comma
             r'(?P<type>SHARD|SORT)'  # Key type
             r' +KEY'  # KEY immediately after type
             r'(?: +(?P<only>ONLY))?'  # Optional ONLY modifier for SHARD KEY
-            r' +\((?P<columns>.*?)\)'  # Column list (can be empty)
+            r'(?:[ `]*(?P<name>[^`\s()]+)[ `]*)?'  # Optional key name (may be quoted)
+            r' *\((?P<columns>.*?)\)'  # Column list (can be empty)
+            r'(?: +(?P<metadata_only>METADATA_ONLY))?'  # Optional METADATA_ONLY suffix
             r' *,?$',  # Handle trailing comma and spaces
         )
 

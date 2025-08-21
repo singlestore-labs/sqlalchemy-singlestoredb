@@ -8,6 +8,8 @@ equivalent functionality and coverage for sort keys.
 from __future__ import annotations
 
 from typing import Any
+from typing import Dict
+from typing import Tuple
 
 import pytest
 from sqlalchemy import Column
@@ -606,12 +608,12 @@ class TestSortKeyReflectionParser:
             {
                 'line': '  SORT KEY (created_at)',
                 'expected_type': 'sort_key',
-                'expected_columns': ['created_at'],
+                'expected_columns': [('created_at', 'ASC')],
             },
             {
                 'line': '  SORT KEY (user_id, created_at)',
                 'expected_type': 'sort_key',
-                'expected_columns': ['user_id', 'created_at'],
+                'expected_columns': [('user_id', 'ASC'), ('created_at', 'ASC')],
             },
             {
                 'line': '  SORT KEY ()',
@@ -621,20 +623,25 @@ class TestSortKeyReflectionParser:
             {
                 'line': '  SORT KEY (timestamp, priority, status)',
                 'expected_type': 'sort_key',
-                'expected_columns': ['timestamp', 'priority', 'status'],
+                'expected_columns': [
+                    ('timestamp', 'ASC'), ('priority', 'ASC'), ('status', 'ASC'),
+                ],
             },
         ]
 
         for case in test_cases:
-            type_, spec = parser._parse_constraints(str(case['line']))
+            result: Tuple[str, Dict[str, Any]] = parser._parse_constraints(
+                str(case['line']),  # type: ignore[index]
+            )
+            type_, spec_dict = result
 
-            assert type_ == case['expected_type'], (
-                f"Line: {case['line']}, Expected type: "
+            assert type_ == case['expected_type'], (  # type: ignore[index]
+                f"Line: {case['line']}, Expected type: "  # type: ignore[index]
                 f"{case['expected_type']}, Got: {type_}"
             )
-            assert spec['columns'] == case['expected_columns'], (
-                f"Line: {case['line']}, Expected columns: "
-                f"{case['expected_columns']}, Got: {spec['columns']}"
+            assert spec_dict['columns'] == case['expected_columns'], (  # type: ignore[index]  # noqa: E501
+                f"Line: {case['line']}, Expected columns: "  # type: ignore[index]
+                f"{case['expected_columns']}, Got: {spec_dict['columns']}"  # noqa: E501
             )
 
     def test_parser_quoted_column_names(self) -> None:
@@ -652,25 +659,28 @@ class TestSortKeyReflectionParser:
         test_cases = [
             {
                 'line': '  SORT KEY (`created_at`)',
-                'expected_columns': ['created_at'],
+                'expected_columns': [('created_at', 'ASC')],
             },
             {
                 'line': '  SORT KEY (`user_id`, `created_at`)',
-                'expected_columns': ['user_id', 'created_at'],
+                'expected_columns': [('user_id', 'ASC'), ('created_at', 'ASC')],
             },
             {
                 # Column name with special characters
                 'line': '  SORT KEY (`order-timestamp`)',
-                'expected_columns': ['order-timestamp'],
+                'expected_columns': [('order-timestamp', 'ASC')],
             },
         ]
 
         for case in test_cases:
-            type_, spec = parser._parse_constraints(str(case['line']))
+            result: Tuple[str, Dict[str, Any]] = parser._parse_constraints(
+                str(case['line']),
+            )
+            type_, spec_dict = result
             assert type_ == 'sort_key'
-            assert spec['columns'] == case['expected_columns'], (
+            assert spec_dict['columns'] == case['expected_columns'], (
                 f"Line: {case['line']}, Expected: "
-                f"{case['expected_columns']}, Got: {spec['columns']}"
+                f"{case['expected_columns']}, Got: {spec_dict['columns']}"  # noqa: E501
             )
 
 
