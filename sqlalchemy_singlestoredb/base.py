@@ -748,6 +748,137 @@ class SingleStoreDBDialect(MySQLDialect):
 
         return any(indicator in error_msg for indicator in disconnect_indicators)
 
+    def get_table_options(
+        self, connection: Any, table_name: str, schema: Optional[str] = None, **kw: Any,
+    ) -> Dict[str, Any]:
+        """Reflect table options including SingleStore-specific features."""
+        options = super().get_table_options(
+            connection, table_name, schema=schema, **kw,
+        )
+
+        # Parse the CREATE TABLE statement to extract SingleStore features
+        parsed_state = self._parsed_state_or_create(
+            connection, table_name, schema, **kw,
+        )
+
+        # Convert parsed SingleStore features back to dialect options
+        if hasattr(parsed_state, 'singlestore_features'):
+            from sqlalchemy_singlestoredb.ddlelement import (
+                ShardKey, SortKey, VectorKey, RowStore, ColumnStore,
+            )
+
+            for feature_type, spec in parsed_state.singlestore_features.items():
+                if feature_type == 'shard_key':
+                    # Convert parsed spec back to ShardKey object
+                    # Handle multiple formats:
+                    # 1. New SingleStore format: [(col_name, direction), ...]
+                    # 2. MySQL fallback format: [(col_name, direction, extra), ...]
+                    # 3. Legacy format: [col_name, ...]
+                    columns = spec['columns']
+                    column_specs = []
+
+                    if columns and isinstance(columns[0], tuple):
+                        # Check if this is our new format or MySQL format
+                        first_tuple = columns[0]
+                        if (
+                            len(first_tuple) == 2 and isinstance(first_tuple[1], str) and
+                            first_tuple[1] in ('ASC', 'DESC')
+                        ):
+                            # New SingleStore format: [(col_name, direction), ...]
+                            column_specs = columns
+                        else:
+                            # MySQL parser format: [(col_name, direction, extra), ...]
+                            # Extract just the column names
+                            column_specs = [(col[0], 'ASC') for col in columns if col[0]]
+                    else:
+                        # Legacy SingleStore parser format: [col_name, ...]
+                        column_specs = [(col, 'ASC') for col in columns]
+
+                    # Check for metadata_only flag
+                    metadata_only = spec.get('metadata_only', False)
+                    shard_key = ShardKey(*column_specs, metadata_only=metadata_only)
+                    options['singlestoredb_shard_key'] = shard_key
+
+                elif feature_type == 'sort_key':
+                    # Convert parsed spec back to SortKey object
+                    # Handle multiple formats (same logic as shard_key)
+                    columns = spec['columns']
+                    column_specs = []
+
+                    if columns and isinstance(columns[0], tuple):
+                        # Check if this is our new format or MySQL format
+                        first_tuple = columns[0]
+                        if (
+                            len(first_tuple) == 2 and isinstance(first_tuple[1], str) and
+                            first_tuple[1] in ('ASC', 'DESC')
+                        ):
+                            # New SingleStore format: [(col_name, direction), ...]
+                            column_specs = columns
+                        else:
+                            # MySQL parser format: [(col_name, direction, extra), ...]
+                            # Extract just the column names
+                            column_specs = [(col[0], 'ASC') for col in columns if col[0]]
+                    else:
+                        # Legacy SingleStore parser format: [col_name, ...]
+                        column_specs = [(col, 'ASC') for col in columns]
+
+                    sort_key = SortKey(*column_specs)
+                    options['singlestoredb_sort_key'] = sort_key
+
+                elif feature_type == 'vector_key':
+                    # Convert parsed spec back to VectorKey object
+                    # Handle both SingleStore format (list of strings) and MySQL
+                    # fallback format (list of tuples)
+                    columns = spec['columns']
+                    if columns and isinstance(columns[0], tuple):
+                        # MySQL parser format: [(col_name, direction, extra), ...]
+                        # Extract just the column names
+                        column_names = [col[0] for col in columns if col[0]]
+                    else:
+                        # SingleStore parser format: [col_name, ...]
+                        column_names = columns
+
+                    vector_key = VectorKey(
+                        *column_names,
+                        name=spec.get('name'),
+                        index_options=spec.get('index_options'),
+                    )
+                    # For vector keys, store as list if multiple exist
+                    existing = options.get('singlestoredb_vector_key')
+                    if existing:
+                        if isinstance(existing, list):
+                            existing.append(vector_key)
+                        else:
+                            options['singlestoredb_vector_key'] = [existing, vector_key]
+                    else:
+                        options['singlestoredb_vector_key'] = vector_key
+
+                elif feature_type == 'table_type':
+                    # Convert parsed table type spec back to TableType object
+                    is_rowstore = spec.get('is_rowstore', False)
+                    is_temporary = spec.get('is_temporary', False)
+                    is_global_temporary = spec.get('is_global_temporary', False)
+                    is_reference = spec.get('is_reference', False)
+
+                    if is_rowstore:
+                        # Create RowStore with appropriate modifiers
+                        table_type = RowStore(
+                            temporary=is_temporary,
+                            global_temporary=is_global_temporary,
+                            reference=is_reference,
+                        )
+                    else:
+                        # Default to ColumnStore (handles CREATE TABLE without ROWSTORE)
+                        # Note: ColumnStore doesn't support global_temporary
+                        table_type = ColumnStore(
+                            temporary=is_temporary,
+                            reference=is_reference,
+                        )
+
+                    options['singlestoredb_table_type'] = table_type
+
+        return options
+
     def on_connect(self) -> Optional[Callable[[Any], None]]:
         """Return a callable that will be executed on new connections."""
         def connect(dbapi_connection: Any) -> None:
