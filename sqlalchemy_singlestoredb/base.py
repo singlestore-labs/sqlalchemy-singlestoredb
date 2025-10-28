@@ -412,7 +412,10 @@ class SingleStoreDBDialect(MySQLDialect):
 
     def create_connect_args(self, url: URL) -> List[Any]:
         from singlestoredb.connection import build_params
-        return [[], build_params(host=render_as_string(url))]
+        return [
+            [],
+            build_params(host=render_as_string(url), client_found_rows=True),
+        ]
 
     def _extract_error_code(self, exception: Exception) -> int:
         return getattr(exception, 'errno', -1)
