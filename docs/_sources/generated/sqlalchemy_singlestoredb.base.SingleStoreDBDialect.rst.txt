@@ -122,7 +122,6 @@
       ~SingleStoreDBDialect.ischema_names
       ~SingleStoreDBDialect.isolation_level
       ~SingleStoreDBDialect.loaded_dbapi
-      ~SingleStoreDBDialect.logger
       ~SingleStoreDBDialect.max_constraint_name_length
       ~SingleStoreDBDialect.max_identifier_length
       ~SingleStoreDBDialect.max_index_name_length
@@ -166,10 +165,10 @@
       ~SingleStoreDBDialect.update_returning_multifrom
       ~SingleStoreDBDialect.use_insertmanyvalues
       ~SingleStoreDBDialect.use_insertmanyvalues_wo_returning
+      ~SingleStoreDBDialect.identifier_preparer
       ~SingleStoreDBDialect.positional
       ~SingleStoreDBDialect.paramstyle
       ~SingleStoreDBDialect.compiler_linting
       ~SingleStoreDBDialect.type_compiler_instance
-      ~SingleStoreDBDialect.identifier_preparer
       ~SingleStoreDBDialect.default_isolation_level
       ~SingleStoreDBDialect.label_length

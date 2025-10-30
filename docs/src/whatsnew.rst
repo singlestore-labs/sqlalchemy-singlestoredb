@@ -8,6 +8,10 @@ This document outlines features and improvements from each release.
    are for non-production testing and evaluation, and may include
    changes to the API.
 
+v1.1.3 - October 30, 2025
+-------------------------
+* Change client_found_rows to True on all connections
+
 v1.1.2 - June 11, 2025
 ----------------------
 * Fix special character handling in passwords in URLs
