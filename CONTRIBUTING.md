@@ -24,17 +24,18 @@ pre-commit run --all-files
 
 ### Running tests
 
-To execute tests, run the following to create a test environment:
+To execute tests, run the following to install the package with development dependencies:
 ```
-pip install -r requirements.txt
-pip install -r test-requirements.txt
+pip install -e ".[dev]"
 ```
+
+This installs the package in editable mode along with all testing dependencies (pytest, pytest-cov, coverage).
 
 The tests must be run in multiple modes: standard protocol and Data API (HTTP).
 If you have Docker installed, you can simply run the following:
 ```
 pytest -v sqlalchemy_singlestoredb/tests
-USE_DATA_API=1 -v sqlalchemy_singlestoredb/tests
+USE_DATA_API=1 pytest -v sqlalchemy_singlestoredb/tests
 ```
 
 You can also specify a SingleStoreDB server if you need to run against a

@@ -1,8 +1,8 @@
-{% set data = load_setup_py_data() %}
+{% set version = load_file_regex(load_file='../pyproject.toml', regex_pattern='version = [\'\"](.*)[\'"]', from_recipe_dir=True).group(1) %}
 
 package:
     name: sqlalchemy-singlestoredb
-    version: {{ data.get('version') }}
+    version: {{ version }}
 
 source:
     path: ..

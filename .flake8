@@ -1,0 +1,9 @@
+[flake8]
+min-python-version = 3.9.0
+exclude =
+    docs/*
+    resources/*
+max-complexity = 20
+max-line-length = 90
+per-file-ignores =
+    sqlalchemy_singlestoredb/__init__.py:F401

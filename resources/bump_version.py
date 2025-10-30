@@ -24,6 +24,17 @@ import tempfile
 import time
 from pathlib import Path
 
+# Try to import tomllib (Python 3.11+) or fall back to tomli
+try:
+    import tomllib  # type: ignore[import-not-found,unused-ignore]
+except ImportError:
+    try:
+        import tomli as tomllib  # type: ignore[import-not-found,no-redef,unused-ignore]
+    except ImportError:
+        print('Error: tomli or tomllib is required for Python < 3.11', file=sys.stderr)
+        print('Install with: pip install tomli', file=sys.stderr)
+        sys.exit(1)
+
 
 def status(message: str) -> None:
     """Show status messages to indicate progress."""
@@ -36,16 +47,17 @@ def step(step_num: int, total_steps: int, message: str) -> None:
 
 
 def get_current_version() -> str:
-    """Get the current version from setup.cfg."""
-    setup_cfg_path = Path(__file__).parent.parent / 'setup.cfg'
-    with open(setup_cfg_path, 'r') as f:
-        content = f.read()
+    """Get the current version from pyproject.toml."""
+    pyproject_path = Path(__file__).parent.parent / 'pyproject.toml'
+    with open(pyproject_path, 'rb') as f:
+        data = tomllib.load(f)
 
-    match = re.search(r'^version\s*=\s*(.+)$', content, re.MULTILINE)
-    if not match:
-        raise ValueError('Could not find version in setup.cfg')
+    try:
+        version = data['project']['version']
+    except KeyError:
+        raise ValueError('Could not find version in pyproject.toml')
 
-    return match.group(1).strip()
+    return version
 
 
 def bump_version(current_version: str, bump_type: str) -> str:
@@ -75,10 +87,10 @@ def update_version_in_file(file_path: Path, old_version: str, new_version: str) 
     with open(file_path, 'r') as f:
         content = f.read()
 
-    # For setup.cfg
-    if file_path.name == 'setup.cfg':
-        pattern = r'^(version\s*=\s*)' + re.escape(old_version) + r'$'
-        replacement = r'\g<1>' + new_version
+    # For pyproject.toml
+    if file_path.name == 'pyproject.toml':
+        pattern = r"^(version\s*=\s*['\"])" + re.escape(old_version) + r"(['\"])$"
+        replacement = r'\g<1>' + new_version + r'\g<2>'
         content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
 
     # For __init__.py
@@ -299,7 +311,7 @@ def stage_files() -> None:
     status('📦 Staging files for commit...')
 
     files_to_stage = [
-        'setup.cfg',
+        'pyproject.toml',
         'sqlalchemy_singlestoredb/__init__.py',
         'docs/src/whatsnew.rst',
         'docs/',  # All generated documentation files
@@ -352,8 +364,8 @@ def main() -> None:
     step(2, 6, 'Updating version in files')
     start_time = time.time()
 
-    update_version_in_file(Path(__file__).parent.parent / 'setup.cfg', current_version, new_version)
-    status('   ✓ Updated setup.cfg')
+    update_version_in_file(Path(__file__).parent.parent / 'pyproject.toml', current_version, new_version)
+    status('   ✓ Updated pyproject.toml')
 
     update_version_in_file(
         Path(__file__).parent.parent / 'sqlalchemy_singlestoredb' / '__init__.py',
@@ -391,7 +403,7 @@ def main() -> None:
         status('🔄 Reverting version changes...')
 
         # Revert version changes
-        update_version_in_file(Path(__file__).parent.parent / 'setup.cfg', new_version, current_version)
+        update_version_in_file(Path(__file__).parent.parent / 'pyproject.toml', new_version, current_version)
         update_version_in_file(
             Path(__file__).parent.parent / 'sqlalchemy_singlestoredb' / '__init__.py',
             new_version,
