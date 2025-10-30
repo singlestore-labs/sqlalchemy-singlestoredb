@@ -38,8 +38,9 @@ singlestoredb = 'sqlalchemy_singlestoredb:dialect'
 'singlestoredb.http' = 'sqlalchemy_singlestoredb:dialect'
 'singlestoredb.https' = 'sqlalchemy_singlestoredb:dialect'
 
-[tool.setuptools]
-packages = ['sqlalchemy_singlestoredb']
+[tool.setuptools.packages.find]
+where = ['.']
+include = ['sqlalchemy_singlestoredb*']
 
 [tool.setuptools.package-data]
 '*' = ['*.sql', '*.csv']
