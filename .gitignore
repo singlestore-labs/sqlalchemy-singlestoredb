@@ -47,6 +47,8 @@ dist
 *.egg-info
 .eggs
 .pypirc
+# hypothesis testing
+.hypothesis
 
 ## tox testing tool
 .tox
@@ -76,3 +78,10 @@ docs/src/_build/doctrees
 docs/src/generated
 
 dask-worker-space
+
+## Local development files
+CLAUDE.md
+dev-docs/
+.claude/
+.serena/
+*.ipynb
