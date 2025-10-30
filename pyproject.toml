@@ -27,6 +27,7 @@ dev = [
     'coverage',
     'pytest',
     'pytest-cov',
+    'tomli; python_version<"3.11"',
 ]
 
 [project.urls]
