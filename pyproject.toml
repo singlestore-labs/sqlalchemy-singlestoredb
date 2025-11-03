@@ -25,6 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     'coverage',
+    'docker',
     'pytest',
     'pytest-cov',
     'tomli; python_version<"3.11"',

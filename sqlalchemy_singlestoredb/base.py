@@ -300,7 +300,7 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
                 table_opts.append(f'{opt}={arg_str}')
 
         if table_opts:
-            return ' ' + ' '.join(table_opts)
+            return ' ' + ', '.join(table_opts)
         else:
             return ''
 

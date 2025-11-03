@@ -252,7 +252,7 @@ class TestColumnGroupReflection:
                             data1 VARCHAR(100),
                             data2 VARCHAR(100),
                             data3 INT,
-                            KEY cg_all_data ALL COLUMNS
+                            COLUMN GROUP cg_all_data (*)
                         )
                     """),
                     )
@@ -297,7 +297,7 @@ class TestColumnGroupReflection:
                             email VARCHAR(200),
                             created_at TIMESTAMP,
                             PRIMARY KEY (user_id),
-                            KEY cg_user_info ALL COLUMNS
+                            COLUMN GROUP cg_user_info (*)
                         )
                     """),
                     )
@@ -345,7 +345,7 @@ class TestColumnGroupReflection:
                             SHARD KEY (user_id),
                             SORT KEY (created_at),
                             KEY idx_title (title),
-                            KEY cg_all_data ALL COLUMNS
+                            COLUMN GROUP cg_all_data (*)
                         )
                     """),
                     )

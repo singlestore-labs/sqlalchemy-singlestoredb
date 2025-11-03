@@ -87,7 +87,20 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             # This looks like a table options line that wasn't caught by MySQL parser
             # Return a special type to avoid the "Unknown schema content" warning
             return 'singlestore_table_option', {'line': line}
-        # First try to match VECTOR INDEX pattern
+
+        # First try to match COLUMN GROUP pattern
+        m = self._re_column_group.match(line)
+        if m:
+            spec = m.groupdict()
+
+            # Create spec dictionary with parsed information
+            parsed_spec = {
+                'name': spec.get('name'),
+            }
+
+            return 'column_group', parsed_spec
+
+        # Next try to match VECTOR INDEX pattern
         m = self._re_vector_index.match(line)
         if m:
             spec = m.groupdict()
@@ -158,11 +171,48 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
 
             return f'{key_type}_key', parsed_spec
 
+        # Check if this line matches our extended KEY pattern with ALL COLUMNS
+        # We need to handle this before calling parent to avoid passing
+        # None to _parse_keyexprs
+        m = self._re_key.match(line)
+        if m and m.groupdict().get('all_columns'):
+            # This is a column group with ALL COLUMNS syntax
+            spec = m.groupdict()
+
+            # Merge name_quoted and name_unquoted into single name field
+            if spec.get('name_quoted'):
+                spec['name'] = spec['name_quoted']
+                del spec['name_quoted']
+            elif spec.get('name_unquoted'):
+                spec['name'] = spec['name_unquoted']
+                del spec['name_unquoted']
+
+            # Set columns to empty list for ALL COLUMNS
+            spec['columns'] = []
+            del spec['all_columns']
+
+            # Process other fields that parent would normally process
+            if spec.get('parser'):
+                spec['parser'] = self.preparer.unformat_identifiers(
+                    spec['parser'],
+                )[0]
+
+            return 'key', spec
+
         # Fall back to parent class parsing
         type_, spec = super(
             SingleStoreDBTableDefinitionParser,
             self,
         )._parse_constraints(line)
+
+        # Merge name_quoted and name_unquoted into single name field
+        if type_ == 'key' and spec:
+            if spec.get('name_quoted'):
+                spec['name'] = spec['name_quoted']
+                del spec['name_quoted']
+            elif spec.get('name_unquoted'):
+                spec['name'] = spec['name_unquoted']
+                del spec['name_unquoted']
 
         # Check if this is a SHARD KEY, SORT KEY, or VECTOR KEY line
         # that was recognized by parent
@@ -239,7 +289,7 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
                     state.fk_constraints.append(spec)
                 elif type_ == 'ck_constraint':
                     state.ck_constraints.append(spec)
-                elif type_ in ('shard_key', 'sort_key', 'vector_key'):
+                elif type_ in ('shard_key', 'sort_key', 'vector_key', 'column_group'):
                     # Store SingleStore features for later conversion to dialect options
                     if not hasattr(state, 'singlestore_features'):
                         state.singlestore_features = {}
@@ -278,10 +328,12 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
         # Handle VECTOR INDEX_OPTIONS
         self._re_key = _re_compile(
             r'  (?:, *)?'  # Handle optional leading comma for SingleStore
-            r'(?:(?P<type>\S+)(?: +USING +VERSION +\d+)? )?KEY'
-            r'(?: +%(iq)s(?P<name>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s)?'
+            r'(?:(?P<type>MULTI +VALUE|\S+)(?: +USING +VERSION +\d+)? )?'
+            r'(?:KEY|INDEX)'
+            r'(?: +(?:%(iq)s(?P<name_quoted>(?:%(esc_fq)s|[^%(fq)s])+)%(fq)s'
+            r'|(?P<name_unquoted>\w+)))?'
             r'(?: +USING +(?P<using_pre>\S+))?'
-            r' +\((?P<columns>.*?)\)'
+            r'(?:(?: +\((?P<columns>.*?)\)| +(?P<all_columns>ALL +COLUMNS)))'
             r'(?: +INDEX_OPTIONS *= *(?P<index_options>".*?"))?'  # JSON
             r'(?: +USING +(?P<using_post>\S+|CLUSTERED +COLUMNSTORE))?'
             r'(?: +KEY_BLOCK_SIZE *[ =]? *(?P<keyblock>\S+))?'
@@ -313,6 +365,16 @@ class SingleStoreDBTableDefinitionParser(MySQLTableDefinitionParser):
             r' +(?P<name>\w+)'  # Index name (required for VECTOR INDEX)
             r' +\((?P<columns>.*?)\)'  # Column list
             r'(?:\s+INDEX_OPTIONS=\'(?P<index_options>.*?)\')?'  # Optional INDEX_OPTIONS
+            r' *,?$',  # Handle trailing comma and spaces
+        )
+
+        # SingleStore specific COLUMN GROUP pattern
+        # Handles: COLUMN GROUP name (*), COLUMN GROUP (*)
+        self._re_column_group = _re_compile(
+            r'  (?:, *)?'  # Handle optional leading comma
+            r'COLUMN +GROUP'  # COLUMN GROUP keywords
+            r'(?:[ `]*(?P<name>[^`\s()]+)[ `]*)?'  # Optional group name (may be quoted)
+            r' *\(\*\)'  # (*) literal
             r' *,?$',  # Handle trailing comma and spaces
         )
 

@@ -498,7 +498,7 @@ class TestTableOptionsReflection:
                             content TEXT,
                             tags JSON,
                             score DECIMAL(5,2)
-                        ) COMPRESSION = ADVANCED
+                        ) COMPRESSION = SPARSE,
                         AUTOSTATS_CARDINALITY_MODE = PERIODIC
                     """),
                     )
