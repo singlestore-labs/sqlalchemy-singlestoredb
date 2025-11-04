@@ -289,14 +289,15 @@ def test_engine(
 
     # Make sure the HTTP endpoint is reachable if using HTTP
     if 'http:' in test_url or 'https:' in test_url:
-        print('PINGING...')
         import urllib
         import requests
+        ping_url = urllib.parse.urljoin(
+            test_url.replace('singlestoredb+', ''),
+            '/ping',
+        )
+        print(f'PINGING {ping_url}')
         try:
-            out = requests.get(
-                urllib.parse.urljoin(test_url.replace('singlestoredb+', ''), '/ping'),
-                timeout=5,
-            )
+            out = requests.get(ping_url, timeout=5)
             print('PING:', out.text)
         except Exception:
             print('PING FAILED')
