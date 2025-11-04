@@ -34,16 +34,16 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    services:
-      singlestore:
-        image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
-        ports:
-          - 3307:3306
-          - 8081:8080
-          - 9080:9000
-        env:
-          SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
-          ROOT_PASSWORD: "root"
+#   services:
+#     singlestore:
+#       image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
+#       ports:
+#         - 3307:3306
+#         - 8081:8080
+#         - 9080:9000
+#       env:
+#         SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
+#         ROOT_PASSWORD: "root"
 
     steps:
       - uses: actions/checkout@v3
