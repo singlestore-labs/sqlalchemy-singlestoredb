@@ -39,7 +39,7 @@ jobs:
 
       - name: Run HTTP protocol tests
         run: |
-          pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests.test_basics
+          pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
