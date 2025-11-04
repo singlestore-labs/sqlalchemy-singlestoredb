@@ -49,7 +49,9 @@ def _docker_server() -> Optional[Any]:
 
         url = os.environ.get('SINGLESTOREDB_URL')
 
-        _docker_server_instance = docker.start()
+        # Use an empty string for license to get around issue in
+        # singlestoredb client for now.
+        _docker_server_instance = docker.start(license='')
 
         if url is None:
             del os.environ['SINGLESTOREDB_URL']
@@ -71,11 +73,8 @@ def _docker_server() -> Optional[Any]:
         for attempt in range(max_retries):
             try:
                 # Test connection to verify server is ready
-                with _docker_server_instance.connect() as test_conn:
-                    with test_conn.cursor() as cur:
-                        cur.execute('SHOW GLOBAL VARIABLES LIKE "%http%"')
-                        for row in cur:
-                            print(*row)
+                with _docker_server_instance.connect() as _:
+                    pass
                 print(f'SingleStoreDB is ready! (took {attempt + 1} seconds)')
                 break
             except Exception as e:
@@ -286,21 +285,6 @@ def test_engine(
         test_url += f'?{query}'
 
     print(f'Using engine URL: {test_url}')
-
-    # Make sure the HTTP endpoint is reachable if using HTTP
-    if 'http:' in test_url or 'https:' in test_url:
-        import urllib
-        import requests
-        ping_url = urllib.parse.urljoin(
-            test_url.replace('singlestoredb+', ''),
-            '/ping',
-        )
-        print(f'PINGING {ping_url}')
-        try:
-            out = requests.get(ping_url, timeout=5)
-            print('PING:', out.text)
-        except Exception:
-            print('PING FAILED')
 
     engine = create_engine(test_url)
 
