@@ -43,6 +43,7 @@ jobs:
         env:
           COVERAGE_FILE: "coverage-http.cov"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
+          USE_DATA_API: "1"
 
       - name: Install SingleStore package and SQLAlchemy 1.4.x
         run: |
