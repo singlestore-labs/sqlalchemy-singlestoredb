@@ -283,11 +283,11 @@ def test_engine(
     print(f'Using engine URL: {test_url}')
 
     # Make sure the HTTP endpoint is reachable if using HTTP
-    if 'singlestoredb+http' in test_url or 'singlestoredb+https' in test_url:
+    if 'http:' in test_url or 'https:' in test_url:
         import urllib
         import requests
         out = requests.get(
-            urllib.parse.urljoin(test_url.split('+', 1)[-1], '/ping'),
+            urllib.parse.urljoin(test_url.replace('singlestoredb+', ''), '/ping'),
             timeout=5,
         )
         print('PING:', out.text)
