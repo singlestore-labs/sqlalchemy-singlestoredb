@@ -46,6 +46,7 @@ jobs:
           pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests.test_basics
         env:
           COVERAGE_FILE: "coverage-http.cov"
+          SINGLESTORE_LICENSE: ""
 #         SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
           # Can not change databases using HTTP API. The URL below will be
@@ -58,6 +59,7 @@ jobs:
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-2-0.cov"
+          SINGLESTORE_LICENSE: ""
 #         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
@@ -70,6 +72,7 @@ jobs:
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-1-4.cov"
+          SINGLESTORE_LICENSE: ""
 #         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
