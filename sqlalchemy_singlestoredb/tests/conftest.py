@@ -71,8 +71,11 @@ def _docker_server() -> Optional[Any]:
         for attempt in range(max_retries):
             try:
                 # Test connection to verify server is ready
-                test_conn = _docker_server_instance.connect()
-                test_conn.close()
+                with _docker_server_instance.connect() as test_conn:
+                    with test_conn.cursor() as cur:
+                        cur.execute('SHOW GLOBAL VARIABLES LIKE "%http%"')
+                        for row in cur:
+                            print(*row)
                 print(f'SingleStoreDB is ready! (took {attempt + 1} seconds)')
                 break
             except Exception as e:
@@ -89,6 +92,7 @@ def _docker_server() -> Optional[Any]:
                 time.sleep(retry_interval)
 
         yield _docker_server_instance
+
     except Exception as e:
         # If Docker fails, provide helpful error message
         pytest.fail(
@@ -97,6 +101,7 @@ def _docker_server() -> Optional[Any]:
             '1. Set SINGLESTOREDB_URL environment variable to use an existing server\n'
             '2. Ensure Docker is installed and running for automatic container support',
         )
+
     finally:
         # Clean up Docker container
         if _docker_server_instance:
@@ -284,7 +289,7 @@ def test_engine(
 
     # Make sure the HTTP endpoint is reachable if using HTTP
     if 'http:' in test_url or 'https:' in test_url:
-        print('Checking HTTP endpoint connectivity...')
+        print('PINGING...')
         import urllib
         import requests
         try:
