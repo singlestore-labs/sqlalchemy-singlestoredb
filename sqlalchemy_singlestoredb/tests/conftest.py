@@ -287,11 +287,14 @@ def test_engine(
         print('Checking HTTP endpoint connectivity...')
         import urllib
         import requests
-        out = requests.get(
-            urllib.parse.urljoin(test_url.replace('singlestoredb+', ''), '/ping'),
-            timeout=5,
-        )
-        print('PING:', out.text)
+        try:
+            out = requests.get(
+                urllib.parse.urljoin(test_url.replace('singlestoredb+', ''), '/ping'),
+                timeout=5,
+            )
+            print('PING:', out.text)
+        except Exception:
+            print('PING FAILED')
 
     engine = create_engine(test_url)
 
