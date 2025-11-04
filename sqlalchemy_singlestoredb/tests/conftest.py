@@ -285,7 +285,7 @@ def test_engine(
     if query:
         test_url += f'?{query}'
 
-    print(f'Using engine URL: {test_url.replace("http", "____")}')
+    print(f'Using engine URL: {test_url}')
 
     # Make sure the HTTP endpoint is reachable if using HTTP
     if 'http:' in test_url or 'https:' in test_url:

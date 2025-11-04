@@ -11,16 +11,16 @@ jobs:
   test-coverage:
     runs-on: ubuntu-latest
 
-    services:
-      singlestore:
-        image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
-        ports:
-          - 3307:3306
-          - 8081:8080
-          - 9080:9080
-        env:
-          SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
-          ROOT_PASSWORD: "root"
+#   services:
+#     singlestore:
+#       image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
+#       ports:
+#         - 3307:3306
+#         - 8081:8080
+#         - 9080:9080
+#       env:
+#         SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
+#         ROOT_PASSWORD: "root"
 
     steps:
       - uses: actions/checkout@v3
@@ -46,19 +46,19 @@ jobs:
           pytest -s -vv --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests.test_basics
         env:
           COVERAGE_FILE: "coverage-http.cov"
-          SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
+#         SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
           # Can not change databases using HTTP API. The URL below will be
           # used to create the database and the generated database name will
           # be applied to the above URL.
-          SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3307"
+#         SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3307"
 
       - name: Run MySQL protocol tests
         run: |
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-2-0.cov"
-          SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
+#         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Install SingleStore package and SQLAlchemy 1.4.x
@@ -70,7 +70,7 @@ jobs:
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-mysql-1-4.cov"
-          SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
+#         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Generate report
