@@ -284,6 +284,7 @@ def test_engine(
 
     # Make sure the HTTP endpoint is reachable if using HTTP
     if 'http:' in test_url or 'https:' in test_url:
+        print('Checking HTTP endpoint connectivity...')
         import urllib
         import requests
         out = requests.get(
