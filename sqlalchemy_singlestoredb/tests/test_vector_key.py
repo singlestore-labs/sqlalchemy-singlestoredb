@@ -180,7 +180,7 @@ class TestVectorKeyTableIntegration:
         """Test table creation with basic vector index."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table_vector'
 
             id = Column(Integer, primary_key=True)
@@ -201,7 +201,7 @@ class TestVectorKeyTableIntegration:
         """Test table creation with vector index including options."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table_vector_opts'
 
             id = Column(Integer, primary_key=True)
@@ -227,7 +227,7 @@ class TestVectorKeyTableIntegration:
         """Test table creation with multiple vector indexes."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table_multi_vector'
 
             id = Column(Integer, primary_key=True)

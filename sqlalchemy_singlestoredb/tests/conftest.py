@@ -5,6 +5,7 @@ Provides fixtures for database connection management and test isolation.
 """
 from __future__ import annotations
 
+import logging
 import os
 import random
 import re
@@ -19,6 +20,10 @@ import singlestoredb
 from sqlalchemy import create_engine
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
+
+
+# Configure logger for test fixtures
+logger = logging.getLogger(__name__)
 
 
 # Global variable to store Docker server instance
@@ -36,7 +41,13 @@ def _docker_server() -> Optional[Any]:
     global _docker_server_instance
 
     # Check if we should use an existing server
-    if os.environ.get('SINGLESTOREDB_URL'):
+    existing_url = os.environ.get('SINGLESTOREDB_URL')
+    if existing_url:
+        logger.info('=' * 70)
+        logger.info('Using EXISTING SingleStoreDB server (not Docker)')
+        logger.info('Connection method: Environment variable SINGLESTOREDB_URL')
+        logger.info('URL: %s', existing_url)
+        logger.info('=' * 70)
         yield None
         return
 
@@ -45,7 +56,11 @@ def _docker_server() -> Optional[Any]:
         from singlestoredb.server import docker
         import time
 
-        print('\nStarting SingleStoreDB Docker container for testing...')
+        logger.info('=' * 70)
+        logger.info('Using DOCKER container for SingleStoreDB')
+        logger.info('Connection method: Dynamically started Docker container')
+        logger.info('=' * 70)
+        logger.info('Starting SingleStoreDB Docker container...')
 
         url = os.environ.get('SINGLESTOREDB_URL')
 
@@ -58,15 +73,20 @@ def _docker_server() -> Optional[Any]:
         elif url:
             os.environ['SINGLESTOREDB_URL'] = url
 
-        if os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on'):
+        use_data_api = os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on')
+        if use_data_api:
             conn_url = _docker_server_instance.http_connection_url
+            api_type = 'Data API (HTTP)'
         else:
             conn_url = _docker_server_instance.connection_url
+            api_type = 'Direct connection (MySQL protocol)'
 
-        print(f'Docker container started. Connection URL: {conn_url}')
+        logger.info('Docker container started successfully!')
+        logger.info('API type: %s', api_type)
+        logger.info('Connection URL: %s', conn_url)
 
         # Wait for the container to be ready by testing the connection
-        print('Waiting for SingleStoreDB to be ready...')
+        logger.info('Waiting for SingleStoreDB to be ready...')
         max_retries = 30  # 30 seconds max wait time
         retry_interval = 1  # Check every 1 second
 
@@ -75,7 +95,7 @@ def _docker_server() -> Optional[Any]:
                 # Test connection to verify server is ready
                 with _docker_server_instance.connect() as _:
                     pass
-                print(f'SingleStoreDB is ready! (took {attempt + 1} seconds)')
+                logger.info('SingleStoreDB is ready! (took %d seconds)', attempt + 1)
                 break
             except Exception as e:
                 if attempt == max_retries - 1:
@@ -84,9 +104,10 @@ def _docker_server() -> Optional[Any]:
                         f'SingleStoreDB container failed to become ready after '
                         f'{max_retries} seconds. Last error: {e}',
                     )
-                print(
-                    f'Container not ready yet, retrying... '
-                    f'({attempt + 1}/{max_retries})',
+                logger.debug(
+                    'Container not ready yet, retrying... (%d/%d)',
+                    attempt + 1,
+                    max_retries,
                 )
                 time.sleep(retry_interval)
 
@@ -105,11 +126,14 @@ def _docker_server() -> Optional[Any]:
         # Clean up Docker container
         if _docker_server_instance:
             try:
-                print('\nStopping SingleStoreDB Docker container...')
+                logger.info('=' * 70)
+                logger.info('Stopping SingleStoreDB Docker container...')
+                logger.info('=' * 70)
                 _docker_server_instance.stop()
                 _docker_server_instance = None
+                logger.info('Docker container stopped successfully.')
             except Exception as e:
-                print(f'Warning: Failed to stop Docker container: {e}')
+                logger.warning('Failed to stop Docker container: %s', e)
 
 
 @pytest.fixture(scope='session')
@@ -128,23 +152,29 @@ def base_connection_url(_docker_server: Optional[Any]) -> str:
     # First check environment variable
     url = os.environ.get('SINGLESTOREDB_URL', '').strip()
     if url:
-        print(f'Using SINGLESTOREDB_URL from environment: {url}')
+        logger.info('-' * 70)
+        logger.info('base_connection_url: Using EXISTING server')
+        logger.info('URL from SINGLESTOREDB_URL: %s', url)
+        logger.info('-' * 70)
         return ensure_standard_url(url)
 
     # If no env var, use Docker server if available
     if _docker_server:
-        if os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on'):
+        use_data_api = os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on')
+        if use_data_api:
             # Use Data API connection URL
-            print(
-                'Using SingleStoreDB Docker container with Data API connection URL: ' +
-                _docker_server.http_connection_url,
-            )
-            return _docker_server.http_connection_url
-        print(
-            'Using SingleStoreDB Docker container with direct connection URL: ' +
-            _docker_server.connection_url,
-        )
-        return _docker_server.connection_url
+            conn_url = _docker_server.http_connection_url
+            api_type = 'Data API (HTTP)'
+        else:
+            conn_url = _docker_server.connection_url
+            api_type = 'Direct connection (MySQL protocol)'
+
+        logger.info('-' * 70)
+        logger.info('base_connection_url: Using DOCKER container')
+        logger.info('API type: %s', api_type)
+        logger.info('Connection URL: %s', conn_url)
+        logger.info('-' * 70)
+        return conn_url
 
     # Neither env var nor Docker available
     raise ValueError(
@@ -229,20 +259,34 @@ def get_url_components(url: str) -> tuple[str, str, str]:
 
 
 @pytest.fixture(scope='session')
-def test_database(base_connection_url: str) -> Generator[str, None, None]:
+def test_database(
+    base_connection_url: str,
+    _docker_server: Optional[Any],
+) -> Generator[str, None, None]:
     """Create a single test database for the entire test session."""
 
-    # If SINGLESTOREDB_INIT_DB_URL is set, use it to create the database
+    # Determine the URL to use for database creation
+    # Database creation requires MySQL protocol, not HTTP Data API
     db_connection_url = base_connection_url
+
     if os.environ.get('SINGLESTOREDB_INIT_DB_URL', '').strip():
+        # User explicitly provided an init URL
         db_connection_url = ensure_standard_url(
             os.environ['SINGLESTOREDB_INIT_DB_URL'].strip(),
+        )
+    elif (
+        _docker_server and
+        os.environ.get('USE_DATA_API', '0').lower() in ('1', 'true', 'on')
+    ):
+        # Using Docker with Data API - must use direct connection for DB creation
+        db_connection_url = _docker_server.connection_url
+        logger.info(
+            'Using MySQL protocol for database creation '
+            '(Data API does not support CREATE DATABASE)',
         )
 
     db_connection_url = ensure_standard_url(db_connection_url)
     base_connection_url = ensure_standard_url(base_connection_url)
-
-    print(f'Using base connection URL: {db_connection_url} for database creation')
 
     # If the URL specifies a database, use it as-is
     has_database = False
@@ -254,22 +298,34 @@ def test_database(base_connection_url: str) -> Generator[str, None, None]:
 
     # Create the test database
     if not has_database:
+        logger.info('-' * 70)
+        logger.info('test_database: Creating new test database')
+        logger.info('Database name: %s', db_name)
+        logger.info('Connection URL for creation: %s', db_connection_url)
+        logger.info('-' * 70)
         with singlestoredb.connect(db_connection_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(f'CREATE DATABASE IF NOT EXISTS {db_name}')
-        print(f'Created shared test database: {db_name}')
+        logger.info('Test database created successfully: %s', db_name)
     else:
-        print(f'Using existing database from connection URL: {db_name}')
+        logger.info('-' * 70)
+        logger.info('test_database: Using EXISTING database from connection URL')
+        logger.info('Database name: %s', db_name)
+        logger.info('-' * 70)
 
     # Yield the database name for all tests to use
     yield db_name
 
     # Cleanup: Drop the test database at the end of the session
     if not has_database:
-        print(f'Cleaning up shared test database: {db_name}')
+        logger.info('-' * 70)
+        logger.info('test_database: Cleaning up test database')
+        logger.info('Dropping database: %s', db_name)
+        logger.info('-' * 70)
         with singlestoredb.connect(db_connection_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(f'DROP DATABASE IF EXISTS {db_name}')
+        logger.info('Test database dropped successfully: %s', db_name)
 
 
 @pytest.fixture(scope='session')
@@ -284,7 +340,11 @@ def test_engine(
     if query:
         test_url += f'?{query}'
 
-    print(f'Using engine URL: {test_url}')
+    logger.info('-' * 70)
+    logger.info('test_engine: Creating SQLAlchemy engine')
+    logger.info('Database: %s', test_database)
+    logger.info('Engine URL: %s', test_url)
+    logger.info('-' * 70)
 
     engine = create_engine(test_url)
 

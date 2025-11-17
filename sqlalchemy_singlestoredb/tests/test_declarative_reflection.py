@@ -41,7 +41,7 @@ class TestDeclarativeShardKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_shard_basic'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -82,7 +82,7 @@ class TestDeclarativeShardKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_shard_multi'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -171,7 +171,7 @@ class TestDeclarativeShardKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_shard_desc'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -212,7 +212,7 @@ class TestDeclarativeShardKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_shard_all_desc'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -256,7 +256,7 @@ class TestDeclarativeSortKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_sort_basic'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -294,7 +294,7 @@ class TestDeclarativeSortKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_sort_multi'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -337,7 +337,7 @@ class TestDeclarativeSortKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_sort_empty'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -373,7 +373,7 @@ class TestDeclarativeSortKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_sort_desc'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -414,7 +414,7 @@ class TestDeclarativeSortKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_sort_all_desc'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -424,7 +424,11 @@ class TestDeclarativeSortKeyReflection:
             data = Column(String(50))
 
             __table_args__ = {
-                'singlestoredb_sort_key': SortKey(('timestamp', 'DESC'), ('score', 'DESC'), ('rank', 'DESC')),  # noqa: E501
+                'singlestoredb_sort_key': SortKey(
+                    ('timestamp', 'DESC'),
+                    ('score', 'DESC'),
+                    ('rank', 'DESC'),
+                ),
             }
 
         # Create the table in the database
@@ -457,7 +461,7 @@ class TestDeclarativeSortKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_sort_mixed'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -512,7 +516,7 @@ class TestDeclarativeVectorKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_vector_basic'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -555,7 +559,7 @@ class TestDeclarativeVectorKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_vector_options'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -601,7 +605,7 @@ class TestDeclarativeVectorKeyReflection:
         Base = declarative_base()
         table_name = 'test_decl_vector_multiple'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -682,7 +686,7 @@ class TestDeclarativeCombinedFeaturesReflection:
         Base = declarative_base()
         table_name = 'test_decl_shard_sort'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -728,7 +732,7 @@ class TestDeclarativeCombinedFeaturesReflection:
         Base = declarative_base()
         table_name = 'test_decl_all_features'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -804,7 +808,7 @@ class TestDeclarativeCombinedFeaturesReflection:
         Base = declarative_base()
         table_name = 'test_decl_mixed_indexes'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -867,7 +871,7 @@ class TestDeclarativeCombinedFeaturesReflection:
         Base = declarative_base()
         table_name = 'test_decl_shard_sort_desc'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -878,7 +882,11 @@ class TestDeclarativeCombinedFeaturesReflection:
 
             __table_args__ = {
                 'singlestoredb_shard_key': ShardKey(('user_id', 'DESC')),
-                'singlestoredb_sort_key': SortKey(('created_at', 'DESC'), ('priority', 'ASC'), ('amount', 'DESC')),  # noqa: E501
+                'singlestoredb_sort_key': SortKey(
+                    ('created_at', 'DESC'),
+                    ('priority', 'ASC'),
+                    ('amount', 'DESC'),
+                ),
             }
 
         # Create the table in the database
@@ -918,7 +926,7 @@ class TestDeclarativeCombinedFeaturesReflection:
         Base = declarative_base()
         table_name = 'test_decl_all_features_desc'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -930,8 +938,15 @@ class TestDeclarativeCombinedFeaturesReflection:
             score = Column(Integer)
 
             __table_args__ = {
-                'singlestoredb_shard_key': ShardKey(('user_id', 'DESC'), ('doc_id', 'ASC')),  # noqa: E501
-                'singlestoredb_sort_key': SortKey(('created_at', 'DESC'), ('priority', 'DESC'), ('score', 'ASC')),  # noqa: E501
+                'singlestoredb_shard_key': ShardKey(
+                    ('user_id', 'DESC'),
+                    ('doc_id', 'ASC'),
+                ),
+                'singlestoredb_sort_key': SortKey(
+                    ('created_at', 'DESC'),
+                    ('priority', 'DESC'),
+                    ('score', 'ASC'),
+                ),
                 'singlestoredb_vector_key': VectorKey(
                     'embedding',
                     name='content_vec_idx_desc',
@@ -1013,7 +1028,7 @@ class TestDeclarativeReflectionFeaturePreservation:
         Base = declarative_base()
         table_name = 'test_shard_preservation'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             user_id = Column(Integer, primary_key=True)
@@ -1066,7 +1081,7 @@ class TestDeclarativeReflectionFeaturePreservation:
         Base = declarative_base()
         table_name = 'test_sort_preservation'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)
@@ -1106,7 +1121,7 @@ class TestDeclarativeReflectionFeaturePreservation:
         Base = declarative_base()
         table_name = 'test_vector_preservation'
 
-        class TestTable(Base):  # type: ignore
+        class TestTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = table_name
 
             id = Column(Integer, primary_key=True)

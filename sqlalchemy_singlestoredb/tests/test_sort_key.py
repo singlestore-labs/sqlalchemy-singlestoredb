@@ -368,7 +368,7 @@ class TestSortKeyTableIntegration:
         """Test table creation with basic sort key."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table'
 
             id = Column(Integer, primary_key=True)
@@ -389,7 +389,7 @@ class TestSortKeyTableIntegration:
         """Test table creation with empty sort key."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table_empty'
 
             id = Column(Integer, primary_key=True)
@@ -409,7 +409,7 @@ class TestSortKeyTableIntegration:
         """Test table creation with multi-column sort key."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table_multi'
 
             id = Column(Integer, primary_key=True)
@@ -431,7 +431,7 @@ class TestSortKeyTableIntegration:
         """Test table creation with three-column sort key."""
         Base = declarative_base()
 
-        class MyTable(Base):  # type: ignore
+        class MyTable(Base):  # type: ignore  # noqa: F841
             __tablename__ = 'test_table_three'
 
             id = Column(Integer, primary_key=True)

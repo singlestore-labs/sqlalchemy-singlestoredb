@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 import singlestoredb
 
-import sqlalchemy_singlestoredb.base
+import sqlalchemy_singlestoredb
 from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
 from sqlalchemy_singlestoredb.base import SingleStoreDBExecutionContext
 from sqlalchemy_singlestoredb.compat import HAS_CACHE_KEY
@@ -370,24 +370,6 @@ class TestErrorHandling:
         )
         assert success is True
         assert mock_dialect.new_attr == 'new_value'
-
-#   @unittest.skip('Complex mocking scenarios require real connection context')
-#   def test_set_dialect_attribute_failure(self) -> None:
-#       """Test set_dialect_attribute handles failures."""
-#       from sqlalchemy_singlestoredb.compat import set_dialect_attribute
-
-#       # Mock object that raises exception on setattr
-#       mock_dialect = Mock()
-
-#       def raise_on_setattr(name: str, value: Any) -> None:
-#           if name == 'readonly_attr':
-#               raise AttributeError('Cannot set attribute')
-
-#       mock_dialect.__setattr__ = raise_on_setattr
-
-#       # Should return False on exception
-#       success = set_dialect_attribute(mock_dialect, 'readonly_attr', 'value')
-#       assert success is False
 
     def test_feature_map_unknown_feature(self) -> None:
         """Test has_feature with unknown feature name."""
