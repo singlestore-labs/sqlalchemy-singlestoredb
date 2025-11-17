@@ -11,6 +11,9 @@ from typing import Union
 
 import sqlalchemy.dialects.mysql.base as mybase
 
+from .compat import HAS_CACHE_KEY
+from .compat import make_cache_key
+
 
 def _json_deserializer(value: Union[str, bytes, Dict[str, Any], List[Any]]) -> Any:
     if value is None:
@@ -24,7 +27,7 @@ class JSON(mybase.JSON):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         kwargs.pop('collate', None)
-        mybase.JSON(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def result_processor(self, dialect: Any, coltype: Any) -> Any:
         string_process = self._str_impl.result_processor(dialect, coltype)
@@ -40,6 +43,18 @@ class JSON(mybase.JSON):
             return json_deserializer(value)  # type: ignore
 
         return process
+
+    def _cached_literal_processor(self, dialect: Any) -> Any:
+        """Return a literal processor for caching support."""
+        if HAS_CACHE_KEY:
+            return super()._cached_literal_processor(dialect)
+        return None
+
+    def _gen_cache_key(self, anon_map: Any, bindparams: Any) -> Any:
+        """Generate a cache key for this type."""
+        if HAS_CACHE_KEY:
+            return make_cache_key((JSON,), anon_map, bindparams)
+        return None
 
 
 class VECTOR(mybase.BLOB):
@@ -77,3 +92,19 @@ class VECTOR(mybase.BLOB):
             return json_deserializer(value)  # type: ignore
 
         return process
+
+    def _cached_literal_processor(self, dialect: Any) -> Any:
+        """Return a literal processor for caching support."""
+        if HAS_CACHE_KEY:
+            return super()._cached_literal_processor(dialect)
+        return None
+
+    def _gen_cache_key(self, anon_map: Any, bindparams: Any) -> Any:
+        """Generate a cache key for this type including dimensions and element type."""
+        if HAS_CACHE_KEY:
+            return make_cache_key(
+                (VECTOR, self.n_elems, self.elem_type),
+                anon_map,
+                bindparams,
+            )
+        return None

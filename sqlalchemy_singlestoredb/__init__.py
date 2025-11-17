@@ -41,8 +41,14 @@ from sqlalchemy.dialects.mysql.dml import insert
 
 from . import base
 from .column import PersistedColumn
+from .ddlelement import ColumnGroup
+from .ddlelement import ColumnStore
+from .ddlelement import FullTextIndex
+from .ddlelement import MultiValueIndex
+from .ddlelement import RowStore
 from .ddlelement import ShardKey
 from .ddlelement import SortKey
+from .ddlelement import VectorKey
 from .dtypes import JSON
 from .dtypes import VECTOR
 
@@ -60,12 +66,15 @@ __all__ = (
     'BLOB',
     'BOOLEAN',
     'CHAR',
+    'ColumnGroup',
+    'ColumnStore',
     'DATE',
     'DATETIME',
     'DECIMAL',
     'DOUBLE',
     'ENUM',
     'FLOAT',
+    'FullTextIndex',
     'INTEGER',
     'INTEGER',
     'JSON',
@@ -74,15 +83,17 @@ __all__ = (
     'MEDIUMBLOB',
     'MEDIUMINT',
     'MEDIUMTEXT',
+    'MultiValueIndex',
     'NCHAR',
     'NVARCHAR',
     'NUMERIC',
     'PersistedColumn',
-    'SET',
-    'SMALLINT',
-    'ShardKey',
-    'SortKey',
     'REAL',
+    'RowStore',
+    'SET',
+    'ShardKey',
+    'SMALLINT',
+    'SortKey',
     'TEXT',
     'TIME',
     'TIMESTAMP',
@@ -92,6 +103,7 @@ __all__ = (
     'VARBINARY',
     'VARCHAR',
     'VECTOR',
+    'VectorKey',
     'YEAR',
     'dialect',
     'insert',

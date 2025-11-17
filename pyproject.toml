@@ -25,6 +25,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     'coverage',
+    'docker',
     'pytest',
     'pytest-cov',
     'tomli; python_version<"3.11"',
@@ -65,6 +66,10 @@ disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ['sqlalchemy_singlestoredb/tests']
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(levelname)s %(message)s"
+log_cli_date_format = "%H:%M:%S"
 
 [tool.coverage.run]
 source = ['sqlalchemy_singlestoredb']

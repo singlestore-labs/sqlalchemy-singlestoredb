@@ -1,4 +1,9 @@
 ## Editor temporary/working/backup files
+.hypothesis
+.serena
+.claude
+CLAUDE.md
+dev-docs
 .#*
 *\#*\#
 [#]*#
@@ -57,6 +62,7 @@ dist
 # wheel files
 *.whl
 **/wheelhouse/*
+**/.hypothesis
 # coverage
 .coverage
 swat.egg-info/
@@ -72,6 +78,20 @@ test-reports/
 ehthumbs.db
 Icon?
 Thumbs.db
+
+**/CLAUDE.md
+.claude
+.serena
+.vscode
+.venv
+**/.hypothesis
+dev-docs
+**/.ipynb_checkpoints
+**/.benchmarks
+*.ipynb
+certs
+**/*.prof
+**/*.pprof
 
 ## Documentation generated files
 docs/src/_build/doctrees

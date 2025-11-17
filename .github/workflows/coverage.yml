@@ -11,24 +11,13 @@ jobs:
   test-coverage:
     runs-on: ubuntu-latest
 
-    services:
-      singlestore:
-        image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
-        ports:
-          - 3307:3306
-          - 8081:8080
-          - 9080:9080
-        env:
-          SINGLESTORE_LICENSE: ${{ secrets.SINGLESTORE_LICENSE }}
-          ROOT_PASSWORD: "root"
-
     steps:
       - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
           cache: "pip"
 
       - name: Install dependencies
@@ -36,16 +25,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: Install SingleStore package
+      - name: Install SingleStore package and SQLAlchemy 2.0.x
         run: |
+          pip install 'sqlalchemy~=2.0.0'
           pip install .
 
       - name: Run MySQL protocol tests
         run: |
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
-          COVERAGE_FILE: "coverage-mysql.cov"
-          SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
+          COVERAGE_FILE: "coverage-mysql-2-0.cov"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Run HTTP protocol tests
@@ -53,16 +42,23 @@ jobs:
           pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
         env:
           COVERAGE_FILE: "coverage-http.cov"
-          SINGLESTOREDB_URL: "http://root:root@127.0.0.1:9080"
           SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
-          # Can not change databases using HTTP API. The URL below will be
-          # used to create the database and the generated database name will
-          # be applied to the above URL.
-          SINGLESTOREDB_INIT_DB_URL: "root:root@127.0.0.1:3307"
+          USE_DATA_API: "1"
+
+      - name: Install SingleStore package and SQLAlchemy 1.4.x
+        run: |
+          pip install 'sqlalchemy~=1.4.0'
+
+      - name: Run MySQL protocol tests
+        run: |
+          pytest -v --cov=sqlalchemy_singlestoredb --pyargs sqlalchemy_singlestoredb.tests
+        env:
+          COVERAGE_FILE: "coverage-mysql-1-4.cov"
+          SINGLESTOREDB_MANAGEMENT_TOKEN: ${{ secrets.CLUSTER_API_KEY }}
 
       - name: Generate report
         run: |
-          coverage combine coverage-mysql.cov coverage-http.cov
+          coverage combine coverage-mysql-2-0.cov coverage-mysql-1-4.cov
           coverage report
           coverage xml
           coverage html

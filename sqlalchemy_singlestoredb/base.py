@@ -35,6 +35,9 @@ except ImportError:
 
 from . import reflection
 from .column import PersistedColumn
+from .compat import supports_statement_cache
+from .compat import get_dialect_features
+from .compat import has_feature
 from .dtypes import _json_deserializer
 from .dtypes import JSON
 from .dtypes import VECTOR
@@ -43,6 +46,7 @@ from .dtypes import VECTOR
 class CaseInsensitiveDict(Dict[str, Any]):
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__()
         data = dict(*args, **kwargs)
         self._data = dict((k.lower(), k) for k in data)
         for k in data:
@@ -77,6 +81,20 @@ ischema_names['vector'] = VECTOR
 
 class SingleStoreDBExecutionContext(MySQLExecutionContext):
     """SingleStoreDB SQLAlchemy execution context."""
+
+    def create_server_side_cursor(self) -> Optional[Any]:
+        """Create a server-side cursor for streaming results."""
+        if self.dialect.supports_server_side_cursors:
+            cursor = self._dbapi_connection.cursor()
+            # Configure cursor for server-side operation if supported by driver
+            if hasattr(cursor, 'buffered'):
+                cursor.buffered = False
+            return cursor
+        return None
+
+    def handle_dbapi_exception(self, e: Any) -> Any:
+        """Handle DBAPI exceptions with proper error context."""
+        return super().handle_dbapi_exception(e)
 
 
 class Array(se.Tuple):
@@ -212,21 +230,214 @@ class SingleStoreDBCompiler(MySQLCompiler):
 class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
     """SingleStoreDB SQLAlchemy DDL compiler."""
 
-    def visit_create_table(self, create: Any, **kw: Any) -> str:
-        create_table_sql = super().visit_create_table(create, **kw)
-        shard_key = create.element.info.get('singlestoredb_shard_key')
-        if shard_key is not None:
-            shard_columns = ', '.join(shard_key.columns)
-            shard_key_sql = f'SHARD KEY ({shard_columns})'
-            # Append the SHARD KEY definition to the original SQL
-            create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{shard_key_sql}\n)'
+    def post_create_table(self, table: Any) -> str:
+        """Build table-level CREATE options, including SingleStore-specific options."""
+        table_opts = []
 
-        sort_key = create.element.info.get('singlestoredb_sort_key')
+        # Get opts the same way MySQL does, but filter out our DDL element options
+        opts = dict(
+            (k[len(self.dialect.name) + 1:].upper(), v)
+            for k, v in table.kwargs.items()
+            if k.startswith('%s_' % self.dialect.name)
+            and k not in {
+                'singlestoredb_shard_key',
+                'singlestoredb_sort_key',
+                'singlestoredb_vector_key',
+                'singlestoredb_full_text_index',
+                'singlestoredb_multi_value_index',
+                'singlestoredb_column_group',
+                'singlestoredb_table_type',
+            }
+        )
+
+        if table.comment is not None:
+            opts['COMMENT'] = table.comment
+
+        # Handle SingleStore-specific table options with proper formatting
+        singlestore_opts = {
+            'AUTOSTATS_ENABLED': ['TRUE', 'FALSE'],
+            'AUTOSTATS_CARDINALITY_MODE': ['INCREMENTAL', 'PERIODIC', 'OFF'],
+            'AUTOSTATS_HISTOGRAM_MODE': ['CREATE', 'UPDATE', 'OFF'],
+            'AUTOSTATS_SAMPLING': ['ON', 'OFF'],
+            'COMPRESSION': ['SPARSE'],
+        }
+
+        # Boolean conversion mappings for SingleStore options
+        # For options that accept OFF, False maps to OFF
+        # For AUTOSTATS_ENABLED, False maps to FALSE (specific to that option)
+        # For AUTOSTATS_SAMPLING, True maps to ON (specific to that option)
+        boolean_mappings = {
+            'AUTOSTATS_ENABLED': {True: 'TRUE', False: 'FALSE'},
+            'AUTOSTATS_CARDINALITY_MODE': {False: 'OFF'},  # Only False->OFF
+            'AUTOSTATS_HISTOGRAM_MODE': {False: 'OFF'},    # Only False->OFF
+            'AUTOSTATS_SAMPLING': {True: 'ON', False: 'OFF'},
+        }
+
+        # Process remaining options
+        for opt, arg in opts.items():
+            # Handle boolean values for specific SingleStore options
+            if opt in boolean_mappings and isinstance(arg, bool):
+                if arg in boolean_mappings[opt]:
+                    arg_str = boolean_mappings[opt][arg]
+                else:
+                    # Boolean value not supported for this option, convert to string
+                    arg_str = str(arg)
+            else:
+                arg_str = str(arg)
+
+            # Handle SingleStore-specific options with validation
+            if opt in singlestore_opts:
+                if arg_str.upper() in singlestore_opts[opt]:
+                    table_opts.append(f'{opt} = {arg_str.upper()}')
+                else:
+                    valid_values = ', '.join(singlestore_opts[opt])
+                    raise ValueError(
+                        f'Invalid value "{arg_str}" for {opt}. '
+                        f'Valid values are: {valid_values}',
+                    )
+            else:
+                # Standard table options
+                table_opts.append(f'{opt}={arg_str}')
+
+        if table_opts:
+            return ' ' + ', '.join(table_opts)
+        else:
+            return ''
+
+    def visit_create_table(self, create: Any, **kw: Any) -> str:
+        """Generate CREATE TABLE DDL with SingleStore-specific extensions.
+
+        Handles table type prefixes (ROWSTORE, COLUMNSTORE, REFERENCE, TEMPORARY, etc.)
+        and DDL elements (SHARD KEY, SORT KEY, VECTOR INDEX, MULTI VALUE INDEX,
+        FULLTEXT INDEX, and COLUMN GROUP constraints) with all syntax variants.
+        """
+        # Get dialect options for SingleStore table type
+        dialect_opts = create.element.dialect_options.get('singlestoredb', {})
+        table_type = dialect_opts.get('table_type')
+
+        # Handle table type prefixes before calling super()
+        if table_type is not None:
+            from sqlalchemy_singlestoredb.ddlelement import (
+                TableType,
+                RowStore,
+            )
+
+            if not isinstance(table_type, TableType):
+                raise TypeError(
+                    f'singlestoredb_table_type must be a RowStore or '
+                    f'ColumnStore instance, got {type(table_type).__name__}',
+                )
+
+            # Build the appropriate prefixes based on table type and modifiers
+            prefixes = []
+
+            if isinstance(table_type, RowStore):
+                # RowStore always gets ROWSTORE prefix
+                prefixes.append('ROWSTORE')
+            # ColumnStore doesn't get a prefix (it's the default)
+
+            # Add modifier prefixes in the correct order
+            if table_type.reference:
+                prefixes.append('REFERENCE')
+            elif table_type.global_temporary:
+                prefixes.extend(['GLOBAL', 'TEMPORARY'])
+            elif table_type.temporary:
+                prefixes.append('TEMPORARY')
+
+            # Store the original prefixes and add ours
+            original_prefixes = (
+                list(create.element._prefixes)
+                if create.element._prefixes else []
+            )
+            create.element._prefixes = prefixes + original_prefixes
+
+        create_table_sql = super().visit_create_table(create, **kw)
+
+        # Restore original prefixes if we modified them
+        if table_type is not None:
+            create.element._prefixes = original_prefixes
+
+        # Collect all DDL elements to append
+        ddl_elements = []
+
+        # Handle shard key (single value only)
+        shard_key = dialect_opts.get('shard_key')
+        if shard_key is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+            shard_key_sql = compile_shard_key(shard_key, self)
+            ddl_elements.append(shard_key_sql)
+
+        # Handle sort key (single value only)
+        sort_key = dialect_opts.get('sort_key')
         if sort_key is not None:
-            sort_columns = ', '.join(sort_key.columns)
-            sort_key_sql = f'SORT KEY ({sort_columns})'
-            # Append the SHARD KEY definition to the original SQL
-            create_table_sql = f'{create_table_sql.rstrip()[:-2]},\n\t{sort_key_sql}\n)'
+            from sqlalchemy_singlestoredb.ddlelement import compile_sort_key
+            sort_key_sql = compile_sort_key(sort_key, self)
+            ddl_elements.append(sort_key_sql)
+
+        # Handle vector keys (single value or list)
+        vector_key = dialect_opts.get('vector_key')
+        if vector_key is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_vector_key
+            # Ensure it's a list for uniform processing
+            vector_keys = vector_key if isinstance(vector_key, list) else [vector_key]
+            for vector_index in vector_keys:
+                vector_index_sql = compile_vector_key(vector_index, self)
+                ddl_elements.append(vector_index_sql)
+
+        # Handle multi-value indexes (single value or list)
+        multi_value_index = dialect_opts.get('multi_value_index')
+        if multi_value_index is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_multi_value_index
+            # Ensure it's a list for uniform processing
+            multi_value_indexes = multi_value_index if isinstance(
+                multi_value_index, list,
+            ) else [multi_value_index]
+            for mv_index in multi_value_indexes:
+                mv_index_sql = compile_multi_value_index(mv_index, self)
+                ddl_elements.append(mv_index_sql)
+
+        # Handle fulltext index (single value only - SingleStore limitation)
+        full_text_index = dialect_opts.get('full_text_index')
+        if full_text_index is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_fulltext_index
+            ft_index_sql = compile_fulltext_index(full_text_index, self)
+            ddl_elements.append(ft_index_sql)
+
+        # Handle column group (single value only)
+        column_group = dialect_opts.get('column_group')
+        if column_group is not None:
+            from sqlalchemy_singlestoredb.ddlelement import compile_column_group
+            column_group_sql = compile_column_group(column_group, self)
+            ddl_elements.append(column_group_sql)
+
+        # If we have DDL elements to add, modify the SQL
+        if ddl_elements:
+            # We need to handle the case where table options might be present
+            sql_stripped = create_table_sql.rstrip()
+
+            # Look for table options (they come after the closing parenthesis)
+            # Pattern: ") TABLE_OPTION1=value1 TABLE_OPTION2=value2"
+            closing_paren_pos = sql_stripped.rfind(')')
+
+            if closing_paren_pos != -1:
+                # Split into table definition and table options parts
+                table_def_part = sql_stripped[:closing_paren_pos]  # Before ')'
+                table_options_part = sql_stripped[closing_paren_pos + 1:]  # After ')'
+
+                # Add DDL elements inside the table definition
+                # Remove trailing newline from table definition and add comma
+                table_def_clean = table_def_part.rstrip()
+                formatted_ddl_elements = ',\n\t'.join(ddl_elements)
+
+                # Reconstruct with proper formatting
+                create_table_sql = (
+                    f'{table_def_clean},\n\t{formatted_ddl_elements}\n)'
+                    f'{table_options_part}'
+                )
+            else:
+                # This shouldn't happen with normal CREATE TABLE, but handle it
+                ddl_part = ',\n\t' + ',\n\t'.join(ddl_elements)
+                create_table_sql = f'{sql_stripped}{ddl_part}'
 
         return create_table_sql
 
@@ -360,16 +571,18 @@ class SingleStoreDBDialect(MySQLDialect):
     supports_sane_rowcount = True
     supports_sane_multi_rowcount = True
     supports_native_decimal = True
+    supports_server_side_cursors = True
     colspecs = util.update_copy(MySQLDialect.colspecs, {BIT: _myconnpyBIT})
 
     statement_compiler = SingleStoreDBCompiler
     ddl_compiler = SingleStoreDBDDLCompiler
     type_compiler = SingleStoreDBTypeCompiler
     preparer = SingleStoreDBIdentifierPreparer
+    execution_ctx_cls = SingleStoreDBExecutionContext
 
     driver = ''
 
-    supports_statement_cache = False
+    supports_statement_cache = supports_statement_cache()
 
     _double_percents = True
 
@@ -386,6 +599,16 @@ class SingleStoreDBDialect(MySQLDialect):
             json_deserializer=json_deserializer or _json_deserializer,
             is_mariadb=False, **kwargs,
         )
+
+        # Apply SQLAlchemy version-specific dialect features
+        dialect_features = get_dialect_features()
+        for feature_name, feature_value in dialect_features.items():
+            if hasattr(self, feature_name):
+                setattr(self, feature_name, feature_value)
+
+        # Enable server-side cursors if supported
+        if has_feature('server_side_cursors'):
+            self.supports_server_side_cursors = True
 
     @classmethod
     def dbapi(cls) -> Any:
@@ -408,7 +631,14 @@ class SingleStoreDBDialect(MySQLDialect):
             self.default_isolation_level = 'READ COMMITTED'
             return
 
-        return MySQLDialect.initialize(self, connection)
+        # Initialize connection pool optimization settings
+        result = MySQLDialect.initialize(self, connection)
+
+        # Configure pool settings based on SingleStore capabilities
+        if hasattr(connection.engine.pool, 'pre_ping'):
+            connection.engine.pool.pre_ping = True
+
+        return result
 
     def create_connect_args(self, url: URL) -> List[Any]:
         from singlestoredb.connection import build_params
@@ -445,6 +675,226 @@ class SingleStoreDBDialect(MySQLDialect):
         if params['host'] == 'singlestore.com':
             return
         dbapi_connection.rollback()
+
+    def _execute_context(
+        self,
+        dialect: Any,
+        constructor: Any,
+        statement: Any,
+        parameters: Any,
+        *args: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Override to handle stream_results execution option."""
+        execution_options = getattr(constructor, 'execution_options', {})
+
+        # Check for stream_results option
+        stream_results = execution_options.get('stream_results', False)
+        if stream_results and self.supports_server_side_cursors:
+            # Enable server-side cursor for streaming
+            kwargs.setdefault('server_side_cursor', True)
+
+        return super()._execute_context(
+            dialect, constructor, statement, parameters, *args, **kwargs,
+        )
+
+    def get_default_isolation_level(self, dbapi_conn: Any) -> str:
+        """Get the default isolation level."""
+        params = getattr(dbapi_conn, 'connection_params', {})
+        if params.get('host') == 'singlestore.com':
+            return 'READ COMMITTED'
+        return super().get_default_isolation_level(dbapi_conn)
+
+    def do_ping(self, dbapi_connection: Any) -> bool:
+        """Ping the database connection to test if it's alive."""
+        try:
+            # Try to execute a simple query
+            cursor = dbapi_connection.cursor()
+            try:
+                cursor.execute('SELECT 1')
+                cursor.fetchone()
+                return True
+            finally:
+                cursor.close()
+        except Exception:
+            return False
+
+    def is_disconnect(
+        self, e: Any, connection: Any, cursor: Any,
+    ) -> bool:
+        """Check if an exception indicates a disconnected state."""
+        if super().is_disconnect(e, connection, cursor):
+            return True
+
+        # SingleStore-specific disconnect error codes
+        error_codes = {
+            2006,  # MySQL server has gone away
+            2013,  # Lost connection to MySQL server during query
+            2055,  # Lost connection to server at '%s', system error: %d
+        }
+
+        if hasattr(e, 'errno') and e.errno in error_codes:
+            return True
+
+        # Check error message for disconnect indicators
+        error_msg = str(e).lower()
+        disconnect_indicators = [
+            'connection lost',
+            'server has gone away',
+            'lost connection',
+            'broken pipe',
+            'connection reset',
+        ]
+
+        return any(indicator in error_msg for indicator in disconnect_indicators)
+
+    def get_table_options(
+        self, connection: Any, table_name: str, schema: Optional[str] = None, **kw: Any,
+    ) -> Dict[str, Any]:
+        """Reflect table options including SingleStore-specific features."""
+        options = super().get_table_options(
+            connection, table_name, schema=schema, **kw,
+        )
+
+        # Parse the CREATE TABLE statement to extract SingleStore features
+        parsed_state = self._parsed_state_or_create(
+            connection, table_name, schema, **kw,
+        )
+
+        # Convert parsed SingleStore features back to dialect options
+        if hasattr(parsed_state, 'singlestore_features'):
+            from sqlalchemy_singlestoredb.ddlelement import (
+                ShardKey, SortKey, VectorKey, RowStore, ColumnStore,
+            )
+
+            for feature_type, spec in parsed_state.singlestore_features.items():
+                if feature_type == 'shard_key':
+                    # Convert parsed spec back to ShardKey object
+                    # Handle multiple formats:
+                    # 1. New SingleStore format: [(col_name, direction), ...]
+                    # 2. MySQL fallback format: [(col_name, direction, extra), ...]
+                    # 3. Legacy format: [col_name, ...]
+                    columns = spec['columns']
+                    column_specs = []
+
+                    if columns and isinstance(columns[0], tuple):
+                        # Check if this is our new format or MySQL format
+                        first_tuple = columns[0]
+                        if (
+                            len(first_tuple) == 2 and isinstance(first_tuple[1], str) and
+                            first_tuple[1] in ('ASC', 'DESC')
+                        ):
+                            # New SingleStore format: [(col_name, direction), ...]
+                            column_specs = columns
+                        else:
+                            # MySQL parser format: [(col_name, direction, extra), ...]
+                            # Extract just the column names
+                            column_specs = [(col[0], 'ASC') for col in columns if col[0]]
+                    else:
+                        # Legacy SingleStore parser format: [col_name, ...]
+                        column_specs = [(col, 'ASC') for col in columns]
+
+                    # Check for metadata_only flag
+                    metadata_only = spec.get('metadata_only', False)
+                    shard_key = ShardKey(*column_specs, metadata_only=metadata_only)
+                    options['singlestoredb_shard_key'] = shard_key
+
+                elif feature_type == 'sort_key':
+                    # Convert parsed spec back to SortKey object
+                    # Handle multiple formats (same logic as shard_key)
+                    columns = spec['columns']
+                    column_specs = []
+
+                    if columns and isinstance(columns[0], tuple):
+                        # Check if this is our new format or MySQL format
+                        first_tuple = columns[0]
+                        if (
+                            len(first_tuple) == 2 and isinstance(first_tuple[1], str) and
+                            first_tuple[1] in ('ASC', 'DESC')
+                        ):
+                            # New SingleStore format: [(col_name, direction), ...]
+                            column_specs = columns
+                        else:
+                            # MySQL parser format: [(col_name, direction, extra), ...]
+                            # Extract just the column names
+                            column_specs = [(col[0], 'ASC') for col in columns if col[0]]
+                    else:
+                        # Legacy SingleStore parser format: [col_name, ...]
+                        column_specs = [(col, 'ASC') for col in columns]
+
+                    sort_key = SortKey(*column_specs)
+                    options['singlestoredb_sort_key'] = sort_key
+
+                elif feature_type == 'vector_key':
+                    # Convert parsed spec back to VectorKey object
+                    # Handle both SingleStore format (list of strings) and MySQL
+                    # fallback format (list of tuples)
+                    columns = spec['columns']
+                    if columns and isinstance(columns[0], tuple):
+                        # MySQL parser format: [(col_name, direction, extra), ...]
+                        # Extract just the column names
+                        column_names = [col[0] for col in columns if col[0]]
+                    else:
+                        # SingleStore parser format: [col_name, ...]
+                        column_names = columns
+
+                    vector_key = VectorKey(
+                        *column_names,
+                        name=spec.get('name'),
+                        index_options=spec.get('index_options'),
+                    )
+                    # For vector keys, store as list if multiple exist
+                    existing = options.get('singlestoredb_vector_key')
+                    if existing:
+                        if isinstance(existing, list):
+                            existing.append(vector_key)
+                        else:
+                            options['singlestoredb_vector_key'] = [existing, vector_key]
+                    else:
+                        options['singlestoredb_vector_key'] = vector_key
+
+                elif feature_type == 'table_type':
+                    # Convert parsed table type spec back to TableType object
+                    is_rowstore = spec.get('is_rowstore', False)
+                    is_temporary = spec.get('is_temporary', False)
+                    is_global_temporary = spec.get('is_global_temporary', False)
+                    is_reference = spec.get('is_reference', False)
+
+                    if is_rowstore:
+                        # Create RowStore with appropriate modifiers
+                        table_type = RowStore(
+                            temporary=is_temporary,
+                            global_temporary=is_global_temporary,
+                            reference=is_reference,
+                        )
+                    else:
+                        # Default to ColumnStore (handles CREATE TABLE without ROWSTORE)
+                        # Note: ColumnStore doesn't support global_temporary
+                        table_type = ColumnStore(
+                            temporary=is_temporary,
+                            reference=is_reference,
+                        )
+
+                    options['singlestoredb_table_type'] = table_type
+
+        return options
+
+    def on_connect(self) -> Optional[Callable[[Any], None]]:
+        """Return a callable that will be executed on new connections."""
+        def connect(dbapi_connection: Any) -> None:
+            # Set connection charset
+            cursor = dbapi_connection.cursor()
+            try:
+                cursor.execute("SET NAMES 'utf8mb4'")
+                # Set session variables if needed
+                cursor.execute("SET sql_mode = 'TRADITIONAL'")
+            except Exception:
+                # Ignore errors for cloud connections or unsupported features
+                pass
+            finally:
+                cursor.close()
+
+        return connect
 
 
 dialect: Type[SingleStoreDBDialect] = SingleStoreDBDialect
