@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sqlalchemy_singlestoredb.base.SingleStoreDBDialect &mdash; SingleStoreDB SQLAlchemy Dialect 1.1.3 documentation</title>
+  <title>sqlalchemy_singlestoredb.base.SingleStoreDBDialect &mdash; SingleStoreDB SQLAlchemy Dialect 1.2.0 documentation</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
-        <script src="../_static/documentation_options.js?v=cb7bf70b"></script>
+        <script src="../_static/documentation_options.js?v=6efca38a"></script>
         <script src="../_static/doctools.js?v=9a2dae69"></script>
         <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../_static/js/theme.js"></script>
@@ -28,7 +28,7 @@
             SingleStoreDB SQLAlchemy Dialect
           </a>
               <div class="version">
-                1.1.3
+                1.2.0
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -137,7 +137,7 @@
 <td><p>Provide an implementation of <code class="docutils literal notranslate"><span class="pre">cursor.executemany(statement,</span> <span class="pre">parameters)</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_ping</span></code>(dbapi_connection)</p></td>
-<td><p>ping the DBAPI connection and return True if the connection is usable.</p></td>
+<td><p>Ping the database connection to test if it's alive.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">do_prepare_twophase</span></code>(connection, xid)</p></td>
 <td><p>Prepare a two phase transaction on the given connection.</p></td>
@@ -179,7 +179,7 @@
 <td><p>Return information about columns in <code class="docutils literal notranslate"><span class="pre">table_name</span></code>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_isolation_level</span></code>(dbapi_conn)</p></td>
-<td><p>Given a DBAPI connection, return its isolation level, or a default isolation level if one cannot be retrieved.</p></td>
+<td><p>Get the default isolation level.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dialect_cls</span></code>(url)</p></td>
 <td><p>Given a URL, return the <code class="xref py py-class docutils literal notranslate"><span class="pre">Dialect</span></code> that will be used.</p></td>
@@ -248,7 +248,7 @@
 <td><p>Return a Unicode SHOW TABLES from a given schema.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_table_options</span></code>(connection, table_name[, ...])</p></td>
-<td><p>Return a dictionary of options specified when <code class="docutils literal notranslate"><span class="pre">table_name</span></code> was created.</p></td>
+<td><p>Reflect table options including SingleStore-specific features.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_temp_table_names</span></code>(connection[, schema])</p></td>
 <td><p>Return a list of temporary table names on the given connection, if supported by the underlying backend.</p></td>
@@ -284,7 +284,7 @@
 <td><p>Called during strategized creation of the dialect with a connection.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_disconnect</span></code>(e, connection, cursor)</p></td>
-<td><p>Return True if the given DB-API error indicates an invalid connection</p></td>
+<td><p>Check if an exception indicates a disconnected state.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_provisioning</span></code>()</p></td>
 <td><p>set up the provision.py module for this dialect.</p></td>
@@ -293,7 +293,7 @@
 <td><p>convert the given name to lowercase if it is detected as case insensitive.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_connect</span></code>()</p></td>
-<td><p>return a callable which sets up a newly created DBAPI connection.</p></td>
+<td><p>Return a callable that will be executed on new connections.</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">on_connect_url</span></code>(url)</p></td>
 <td><p>return a callable which sets up a newly created DBAPI connection.</p></td>

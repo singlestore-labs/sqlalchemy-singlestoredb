@@ -57,7 +57,7 @@ array = base.array
 # default dialect
 dialect = base.dialect
 
-__version__ = '1.1.3'
+__version__ = '1.2.0'
 
 __all__ = (
     'BIGINT',

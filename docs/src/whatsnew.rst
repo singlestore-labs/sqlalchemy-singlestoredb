@@ -8,6 +8,12 @@ This document outlines features and improvements from each release.
    are for non-production testing and evaluation, and may include
    changes to the API.
 
+v1.2.0 - November 17, 2025
+--------------------------
+* Improve parsing of SingleStoreDB-specific features in reflected SQL
+* Add `singlestoredb_` keyword parameters for SingleStoreDB-specific parameters in SQL objects
+* Automatically used Docker container when running tests with `pytest`
+
 v1.1.3 - October 30, 2025
 -------------------------
 * Change client_found_rows to True on all connections
