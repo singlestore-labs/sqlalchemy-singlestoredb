@@ -10,9 +10,13 @@ on:
 jobs:
   test-coverage:
     runs-on: ubuntu-latest
+    environment: Base
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -24,6 +28,27 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+
+      - name: Check for release preparation commit
+        id: check-release
+        run: |
+          # Check if this is a release preparation commit
+          COMMIT_MSG=$(git log -1 --format='%s' HEAD)
+          if [[ "$COMMIT_MSG" =~ ^Prepare\ for\ v[0-9]+\.[0-9]+\.[0-9]+\ release$ ]]; then
+            echo "🚀 Release preparation commit detected: $COMMIT_MSG"
+            echo "is-release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is-release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Trigger smoke tests for release
+        if: steps.check-release.outputs.is-release == 'true'
+        run: |
+          echo "🔥 Triggering smoke tests for release preparation..."
+          gh workflow run smoke-test.yml
+          echo "✅ Smoke tests triggered successfully"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install SingleStore package and SQLAlchemy 2.0.x
         run: |
