@@ -1,4 +1,4 @@
-# This workflow will upload a Python Package using Twine when a release is created
+# This workflow will upload a Python Package using PyPI trusted publishing when a release is created
 # For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
 
 # This workflow uses actions that are not certified by GitHub.
@@ -34,6 +34,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write   # Required for OIDC trusted publishing
+      contents: read    # Required for repository access
+
+    environment:
+      name: publish
+      url: https://pypi.org/p/sqlalchemy-singlestoredb
+
 #   services:
 #     singlestore:
 #       image: ghcr.io/singlestore-labs/singlestoredb-dev:latest
@@ -62,9 +70,8 @@ jobs:
       - name: Build PyPI package
         run: |
           python -m pip install --upgrade pip
-          pip install build twine
+          pip install build
           python -m build
-          twine check dist/*
 
 #     - name: Build Conda package
 #       run: |
@@ -80,11 +87,7 @@ jobs:
 
       - name: Publish PyPI package
         if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}
-        env:
-          TWINE_USERNAME: __token__
-          TWINE_PASSWORD: "${{ secrets.PYPI_TOKEN }}"
-        run: |
-          twine upload dist/*
+        uses: pypa/gh-action-pypi-publish@release/v1
 
 #     - name: Publish Conda package
 #       if: ${{ github.event_name == 'release' || github.event.inputs.publish_anaconda == 'true' }}
