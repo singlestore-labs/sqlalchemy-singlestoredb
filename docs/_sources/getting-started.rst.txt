@@ -7,7 +7,7 @@ Connecting to SingleStoreDB
 Connections to SingleStoreDB are made using URLs just like any other
 SQLAlchemy dialect.
 .. code-block:: python
-    from sqlalchemy import create_engine
+    from sqlalchemy import create_engine, text
     # Basic connection
     engine = create_engine('singlestoredb://user:password@host:3306/database')
     # With additional options

@@ -8,6 +8,14 @@ This document outlines features and improvements from each release.
    are for non-production testing and evaluation, and may include
    changes to the API.
 
+v1.2.1 - January 28, 2026
+-------------------------
+* Add documentation, docstring examples, and tests
+
+v1.2.1 - January 28, 2026
+-------------------------
+* Add documentation, docstring examples and tests
+
 v1.2.0 - November 17, 2025
 --------------------------
 * Improve parsing of SingleStoreDB-specific features in reflected SQL
