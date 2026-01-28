@@ -13,7 +13,7 @@ SQLAlchemy dialect.
 
 .. code-block:: python
 
-    from sqlalchemy import create_engine
+    from sqlalchemy import create_engine, text
 
     # Basic connection
     engine = create_engine('singlestoredb://user:password@host:3306/database')
