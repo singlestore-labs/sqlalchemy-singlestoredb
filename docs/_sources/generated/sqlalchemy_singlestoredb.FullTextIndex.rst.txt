@@ -1,0 +1,46 @@
+﻿sqlalchemy\_singlestoredb.FullTextIndex
+=======================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: FullTextIndex
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~FullTextIndex.__init__
+      ~FullTextIndex.against
+      ~FullTextIndex.asc
+      ~FullTextIndex.compare
+      ~FullTextIndex.compile
+      ~FullTextIndex.desc
+      ~FullTextIndex.execute_if
+      ~FullTextIndex.execution_options
+      ~FullTextIndex.get_children
+      ~FullTextIndex.get_execution_options
+      ~FullTextIndex.memoized_instancemethod
+      ~FullTextIndex.options
+      ~FullTextIndex.params
+      ~FullTextIndex.self_group
+      ~FullTextIndex.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~FullTextIndex.allows_lambda
+      ~FullTextIndex.description
+      ~FullTextIndex.entity_namespace
+      ~FullTextIndex.inherit_cache
+      ~FullTextIndex.is_clause_element
+      ~FullTextIndex.is_delete
+      ~FullTextIndex.is_dml
+      ~FullTextIndex.is_from_statement
+      ~FullTextIndex.is_insert
+      ~FullTextIndex.is_select
+      ~FullTextIndex.is_selectable
+      ~FullTextIndex.is_text
+      ~FullTextIndex.is_update
+      ~FullTextIndex.stringify_dialect
+      ~FullTextIndex.supports_execution
+      ~FullTextIndex.target
+      ~FullTextIndex.uses_inspection
+      ~FullTextIndex.name
+      ~FullTextIndex.columns
+      ~FullTextIndex.version
+      ~FullTextIndex.negation_clause
+      ~FullTextIndex.proxy_set

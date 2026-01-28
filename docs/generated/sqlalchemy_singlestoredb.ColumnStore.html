@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sqlalchemy_singlestoredb.ColumnStore &mdash; SingleStoreDB SQLAlchemy Dialect 1.2.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+        <script src="../_static/documentation_options.js?v=6efca38a"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sqlalchemy_singlestoredb.VECTOR" href="sqlalchemy_singlestoredb.VECTOR.html" />
+    <link rel="prev" title="sqlalchemy_singlestoredb.RowStore" href="sqlalchemy_singlestoredb.RowStore.html" />
+</head>
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          <a href="../index.html" class="icon icon-home">
+            SingleStoreDB SQLAlchemy Dialect
+          </a>
+              <div class="version">
+                1.2.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../whatsnew.html">What’s New</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#connections">Connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#ddl-elements">DDL Elements</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#table-types">Table Types</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sqlalchemy_singlestoredb.RowStore.html">sqlalchemy_singlestoredb.RowStore</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sqlalchemy_singlestoredb.ColumnStore</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sqlalchemy_singlestoredb.ColumnStore"><code class="docutils literal notranslate"><span class="pre">ColumnStore</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#data-types">Data Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+        </div>
+      </div>
+    </nav>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SingleStoreDB SQLAlchemy Dialect</a>
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Reference</a></li>
+      <li class="breadcrumb-item active">sqlalchemy_singlestoredb.ColumnStore</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/sqlalchemy_singlestoredb.ColumnStore.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+  <section id="sqlalchemy-singlestoredb-columnstore">
+<h1>sqlalchemy_singlestoredb.ColumnStore<a class="headerlink" href="#sqlalchemy-singlestoredb-columnstore" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlalchemy_singlestoredb.ColumnStore">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sqlalchemy_singlestoredb.</span></span><span class="sig-name descname"><span class="pre">ColumnStore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temporary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sqlalchemy_singlestoredb.ColumnStore" title="Link to this definition">¶</a></dt>
+<dd><p>SingleStore columnstore table type specification.</p>
+<p>Columnstore tables are disk-based tables optimized for analytical workloads
+(OLAP) with fast scans and aggregations over large datasets. This is the
+default table type in SingleStore.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>reference</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default False</em>) – Create a reference table that is replicated across all nodes</p></li>
+<li><p><strong>temporary</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>default False</em>) – Create a temporary table that exists only during the client session</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>global_temporary is not supported for columnstore tables.</p>
+</div>
+<p class="rubric">Examples</p>
+<p>Basic columnstore table (default):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ColumnStore</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Temporary columnstore table:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ColumnStore</span><span class="p">(</span><span class="n">temporary</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Reference columnstore table:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ColumnStore</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Table Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">MetaData</span><span class="p">,</span> <span class="n">Numeric</span><span class="p">,</span> <span class="n">Table</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="n">ColumnStore</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">MetaData</span><span class="p">()</span>
+<span class="n">analytics</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;analytics&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;user_id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;event_time&#39;</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;amount&#39;</span><span class="p">,</span> <span class="n">Numeric</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">)),</span>
+    <span class="n">singlestoredb_table_type</span><span class="o">=</span><span class="n">ColumnStore</span><span class="p">(),</span>
+<span class="p">)</span>
+<span class="c1"># Temporary columnstore table</span>
+<span class="n">temp_analytics</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;temp_analytics&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">),</span>
+    <span class="n">singlestoredb_table_type</span><span class="o">=</span><span class="n">ColumnStore</span><span class="p">(</span><span class="n">temporary</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="c1"># Reference columnstore table</span>
+<span class="n">country_codes</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;country_codes&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span>
+    <span class="n">singlestoredb_table_type</span><span class="o">=</span><span class="n">ColumnStore</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>ORM Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">Numeric</span><span class="p">,</span> <span class="n">String</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">declarative_base</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="n">ColumnStore</span>
+<span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">Analytics</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;analytics&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">event_time</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">)</span>
+    <span class="n">amount</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Numeric</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">ColumnStore</span><span class="p">(),</span>
+    <span class="p">}</span>
+<span class="k">class</span> <span class="nc">CountryCode</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&#39;&#39;&#39;Reference table replicated to all nodes.&#39;&#39;&#39;</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;country_codes&#39;</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">ColumnStore</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlalchemy_singlestoredb.ColumnStore.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temporary</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#sqlalchemy_singlestoredb.ColumnStore.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sqlalchemy_singlestoredb.ColumnStore.__init__" title="sqlalchemy_singlestoredb.ColumnStore.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([reference, temporary])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">against</span></code>(target)</p></td>
+<td><p>Return a copy of this <code class="xref py py-class docutils literal notranslate"><span class="pre">_schema.ExecutableDDLElement</span></code> which will include the given target.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare</span></code>(other, **kw)</p></td>
+<td><p>Compare this <code class="xref py py-class docutils literal notranslate"><span class="pre">_expression.ClauseElement</span></code> to the given <code class="xref py py-class docutils literal notranslate"><span class="pre">_expression.ClauseElement</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compile</span></code>([bind, dialect])</p></td>
+<td><p>Compile this SQL expression.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">execute_if</span></code>([dialect, callable_, state])</p></td>
+<td><p>Return a callable that will execute this <code class="xref py py-class docutils literal notranslate"><span class="pre">_ddl.ExecutableDDLElement</span></code> conditionally within an event handler.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">execution_options</span></code>(**kw)</p></td>
+<td><p>Set non-SQL options for the statement which take effect during execution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_children</span></code>(*[, omit_attrs])</p></td>
+<td><p>Return immediate child <code class="xref py py-class docutils literal notranslate"><span class="pre">visitors.HasTraverseInternals</span></code> elements of this <code class="xref py py-class docutils literal notranslate"><span class="pre">visitors.HasTraverseInternals</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_execution_options</span></code>()</p></td>
+<td><p>Get the non-SQL options which will take effect during execution.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">memoized_instancemethod</span></code>(fn)</p></td>
+<td><p>Decorate a method memoize its return value.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">options</span></code>(*options)</p></td>
+<td><p>Apply options to this statement.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">params</span></code>([_ClauseElement__optionaldict])</p></td>
+<td><p>Return a copy with <code class="xref py py-func docutils literal notranslate"><span class="pre">_expression.bindparam()</span></code> elements replaced.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">self_group</span></code>([against])</p></td>
+<td><p>Apply a 'grouping' to this <code class="xref py py-class docutils literal notranslate"><span class="pre">_expression.ClauseElement</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">unique_params</span></code>([_ClauseElement__optionaldict])</p></td>
+<td><p>Return a copy with <code class="xref py py-func docutils literal notranslate"><span class="pre">_expression.bindparam()</span></code> elements replaced.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">allows_lambda</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">entity_namespace</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">inherit_cache</span></code></p></td>
+<td><p>Indicate if this <code class="xref py py-class docutils literal notranslate"><span class="pre">HasCacheKey</span></code> instance should make use of the cache key generation scheme used by its immediate superclass.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_clause_element</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_delete</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_dml</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_from_statement</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_insert</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_select</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_selectable</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_text</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_update</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">stringify_dialect</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">supports_execution</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">target</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">uses_inspection</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">negation_clause</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">proxy_set</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+</section>
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sqlalchemy_singlestoredb.RowStore.html" class="btn btn-neutral float-left" title="sqlalchemy_singlestoredb.RowStore" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sqlalchemy_singlestoredb.VECTOR.html" class="btn btn-neutral float-right" title="sqlalchemy_singlestoredb.VECTOR" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+  <hr/>
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 SingleStore. All Rights Reserved.</p>
+  </div>
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+﻿sqlalchemy\_singlestoredb.RowStore
+==================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: RowStore
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~RowStore.__init__
+      ~RowStore.against
+      ~RowStore.compare
+      ~RowStore.compile
+      ~RowStore.execute_if
+      ~RowStore.execution_options
+      ~RowStore.get_children
+      ~RowStore.get_execution_options
+      ~RowStore.memoized_instancemethod
+      ~RowStore.options
+      ~RowStore.params
+      ~RowStore.self_group
+      ~RowStore.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~RowStore.allows_lambda
+      ~RowStore.description
+      ~RowStore.entity_namespace
+      ~RowStore.inherit_cache
+      ~RowStore.is_clause_element
+      ~RowStore.is_delete
+      ~RowStore.is_dml
+      ~RowStore.is_from_statement
+      ~RowStore.is_insert
+      ~RowStore.is_select
+      ~RowStore.is_selectable
+      ~RowStore.is_text
+      ~RowStore.is_update
+      ~RowStore.stringify_dialect
+      ~RowStore.supports_execution
+      ~RowStore.target
+      ~RowStore.uses_inspection
+      ~RowStore.negation_clause
+      ~RowStore.proxy_set

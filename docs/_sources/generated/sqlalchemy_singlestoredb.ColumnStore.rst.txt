@@ -1,0 +1,41 @@
+﻿sqlalchemy\_singlestoredb.ColumnStore
+=====================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: ColumnStore
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~ColumnStore.__init__
+      ~ColumnStore.against
+      ~ColumnStore.compare
+      ~ColumnStore.compile
+      ~ColumnStore.execute_if
+      ~ColumnStore.execution_options
+      ~ColumnStore.get_children
+      ~ColumnStore.get_execution_options
+      ~ColumnStore.memoized_instancemethod
+      ~ColumnStore.options
+      ~ColumnStore.params
+      ~ColumnStore.self_group
+      ~ColumnStore.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~ColumnStore.allows_lambda
+      ~ColumnStore.description
+      ~ColumnStore.entity_namespace
+      ~ColumnStore.inherit_cache
+      ~ColumnStore.is_clause_element
+      ~ColumnStore.is_delete
+      ~ColumnStore.is_dml
+      ~ColumnStore.is_from_statement
+      ~ColumnStore.is_insert
+      ~ColumnStore.is_select
+      ~ColumnStore.is_selectable
+      ~ColumnStore.is_text
+      ~ColumnStore.is_update
+      ~ColumnStore.stringify_dialect
+      ~ColumnStore.supports_execution
+      ~ColumnStore.target
+      ~ColumnStore.uses_inspection
+      ~ColumnStore.negation_clause
+      ~ColumnStore.proxy_set

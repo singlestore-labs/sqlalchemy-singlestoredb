@@ -20,3 +20,30 @@ Dialect
    SingleStoreDBDialect.import_dbapi
    SingleStoreDBDialect.initialize
    SingleStoreDBDialect.create_connect_args
+DDL Elements
+------------
+SingleStoreDB-specific DDL elements for table definition.
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autosummary::
+   :toctree: generated/
+   ShardKey
+   SortKey
+   VectorKey
+   MultiValueIndex
+   FullTextIndex
+   ColumnGroup
+Table Types
+-----------
+Table storage type specifications for rowstore and columnstore tables.
+.. autosummary::
+   :toctree: generated/
+   RowStore
+   ColumnStore
+Data Types
+----------
+SingleStoreDB-specific data types.
+.. autosummary::
+   :toctree: generated/
+   VECTOR
+   JSON
+   PersistedColumn

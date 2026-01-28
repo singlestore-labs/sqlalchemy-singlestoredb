@@ -1,0 +1,42 @@
+﻿sqlalchemy\_singlestoredb.ColumnGroup
+=====================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: ColumnGroup
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~ColumnGroup.__init__
+      ~ColumnGroup.against
+      ~ColumnGroup.compare
+      ~ColumnGroup.compile
+      ~ColumnGroup.execute_if
+      ~ColumnGroup.execution_options
+      ~ColumnGroup.get_children
+      ~ColumnGroup.get_execution_options
+      ~ColumnGroup.memoized_instancemethod
+      ~ColumnGroup.options
+      ~ColumnGroup.params
+      ~ColumnGroup.self_group
+      ~ColumnGroup.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~ColumnGroup.allows_lambda
+      ~ColumnGroup.description
+      ~ColumnGroup.entity_namespace
+      ~ColumnGroup.inherit_cache
+      ~ColumnGroup.is_clause_element
+      ~ColumnGroup.is_delete
+      ~ColumnGroup.is_dml
+      ~ColumnGroup.is_from_statement
+      ~ColumnGroup.is_insert
+      ~ColumnGroup.is_select
+      ~ColumnGroup.is_selectable
+      ~ColumnGroup.is_text
+      ~ColumnGroup.is_update
+      ~ColumnGroup.stringify_dialect
+      ~ColumnGroup.supports_execution
+      ~ColumnGroup.target
+      ~ColumnGroup.uses_inspection
+      ~ColumnGroup.name
+      ~ColumnGroup.negation_clause
+      ~ColumnGroup.proxy_set

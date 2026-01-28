@@ -62,6 +62,37 @@ class TestShardKeyConstruction:
         assert shard_key.metadata_only is True
         assert repr(shard_key) == 'ShardKey(metadata_only=True)'
 
+    def test_shard_key_with_btree_index_type(self) -> None:
+        """Test shard key with BTREE index type."""
+        shard_key = ShardKey('user_id', index_type='BTREE')
+        assert shard_key.columns == [('user_id', 'ASC')]
+        assert shard_key.index_type == 'BTREE'
+        assert repr(shard_key) == "ShardKey('user_id', index_type='BTREE')"
+
+    def test_shard_key_with_hash_index_type(self) -> None:
+        """Test shard key with HASH index type."""
+        shard_key = ShardKey('user_id', index_type='HASH')
+        assert shard_key.columns == [('user_id', 'ASC')]
+        assert shard_key.index_type == 'HASH'
+        assert repr(shard_key) == "ShardKey('user_id', index_type='HASH')"
+
+    def test_shard_key_index_type_case_insensitive(self) -> None:
+        """Test that index_type is case-insensitive."""
+        shard_key = ShardKey('user_id', index_type='btree')
+        assert shard_key.index_type == 'BTREE'
+
+        shard_key2 = ShardKey('user_id', index_type='hash')
+        assert shard_key2.index_type == 'HASH'
+
+    def test_shard_key_with_index_type_and_metadata_only(self) -> None:
+        """Test shard key with both index_type and metadata_only."""
+        shard_key = ShardKey('user_id', index_type='BTREE', metadata_only=True)
+        assert shard_key.columns == [('user_id', 'ASC')]
+        assert shard_key.index_type == 'BTREE'
+        assert shard_key.metadata_only is True
+        expected = "ShardKey('user_id', index_type='BTREE', metadata_only=True)"
+        assert repr(shard_key) == expected
+
 
 class TestShardKeyStaticMethods:
     """Test ShardKey static helper methods for ASC/DESC."""
@@ -331,6 +362,38 @@ class TestShardKeyCompiler:
         result = compile_shard_key(shard_key, None)
         assert result == 'SHARD KEY (`user-id`, `created at` DESC)'
 
+    def test_compile_shard_key_with_btree_index_type(self) -> None:
+        """Test compilation with BTREE index type."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey('user_id', index_type='BTREE')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY USING BTREE (user_id)'
+
+    def test_compile_shard_key_with_hash_index_type(self) -> None:
+        """Test compilation with HASH index type."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey('user_id', index_type='HASH')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY USING HASH (user_id)'
+
+    def test_compile_shard_key_index_type_with_multi_column(self) -> None:
+        """Test compilation with index type and multiple columns."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey('user_id', 'tenant_id', index_type='HASH')
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY USING HASH (user_id, tenant_id)'
+
+    def test_compile_shard_key_index_type_with_metadata_only(self) -> None:
+        """Test compilation with index type and METADATA_ONLY."""
+        from sqlalchemy_singlestoredb.ddlelement import compile_shard_key
+
+        shard_key = ShardKey('user_id', index_type='BTREE', metadata_only=True)
+        result = compile_shard_key(shard_key, None)
+        assert result == 'SHARD KEY USING BTREE (user_id) METADATA_ONLY'
+
 
 class TestShardKeyTableIntegration:
     """Test ShardKey integration with table creation."""
@@ -408,6 +471,34 @@ class TestShardKeyTableIntegration:
         table.create(self.mock_engine, checkfirst=False)
         assert 'SHARD KEY (user_id, category_id)' in self.compiled_ddl
         assert 'CREATE TABLE test_table_multi' in self.compiled_ddl
+
+    def test_table_with_shard_key_btree_index(self) -> None:
+        """Test table creation with BTREE index type shard key."""
+        table = Table(
+            'test_table_btree', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('data', String(50)),
+            singlestoredb_shard_key=ShardKey('user_id', index_type='BTREE'),
+        )
+
+        table.create(self.mock_engine, checkfirst=False)
+        assert 'SHARD KEY USING BTREE (user_id)' in self.compiled_ddl
+        assert 'CREATE TABLE test_table_btree' in self.compiled_ddl
+
+    def test_table_with_shard_key_hash_index(self) -> None:
+        """Test table creation with HASH index type shard key."""
+        table = Table(
+            'test_table_hash', self.metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('data', String(50)),
+            singlestoredb_shard_key=ShardKey('user_id', index_type='HASH'),
+        )
+
+        table.create(self.mock_engine, checkfirst=False)
+        assert 'SHARD KEY USING HASH (user_id)' in self.compiled_ddl
+        assert 'CREATE TABLE test_table_hash' in self.compiled_ddl
 
 
 class TestShardKeyReflection:

@@ -457,7 +457,7 @@ class SingleStoreDBDDLCompiler(MySQLDDLCompiler):
             'AS',
             column.persisted_expression,
             'PERSISTED',
-            self.dialect.type_compiler_instance.process(
+            self.dialect.type_compiler.process(
                 column.type, type_expression=column,
             ),
         ]

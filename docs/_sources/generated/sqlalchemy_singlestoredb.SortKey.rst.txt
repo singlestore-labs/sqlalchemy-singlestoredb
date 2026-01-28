@@ -1,0 +1,43 @@
+﻿sqlalchemy\_singlestoredb.SortKey
+=================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: SortKey
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~SortKey.__init__
+      ~SortKey.against
+      ~SortKey.asc
+      ~SortKey.compare
+      ~SortKey.compile
+      ~SortKey.desc
+      ~SortKey.execute_if
+      ~SortKey.execution_options
+      ~SortKey.get_children
+      ~SortKey.get_execution_options
+      ~SortKey.memoized_instancemethod
+      ~SortKey.options
+      ~SortKey.params
+      ~SortKey.self_group
+      ~SortKey.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~SortKey.allows_lambda
+      ~SortKey.description
+      ~SortKey.entity_namespace
+      ~SortKey.inherit_cache
+      ~SortKey.is_clause_element
+      ~SortKey.is_delete
+      ~SortKey.is_dml
+      ~SortKey.is_from_statement
+      ~SortKey.is_insert
+      ~SortKey.is_select
+      ~SortKey.is_selectable
+      ~SortKey.is_text
+      ~SortKey.is_update
+      ~SortKey.stringify_dialect
+      ~SortKey.supports_execution
+      ~SortKey.target
+      ~SortKey.uses_inspection
+      ~SortKey.negation_clause
+      ~SortKey.proxy_set

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sqlalchemy_singlestoredb.VECTOR &mdash; SingleStoreDB SQLAlchemy Dialect 1.2.0 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+        <script src="../_static/documentation_options.js?v=6efca38a"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="sqlalchemy_singlestoredb.JSON" href="sqlalchemy_singlestoredb.JSON.html" />
+    <link rel="prev" title="sqlalchemy_singlestoredb.ColumnStore" href="sqlalchemy_singlestoredb.ColumnStore.html" />
+</head>
+<body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          <a href="../index.html" class="icon icon-home">
+            SingleStoreDB SQLAlchemy Dialect
+          </a>
+              <div class="version">
+                1.2.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../whatsnew.html">What’s New</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting-started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#connections">Connections</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#ddl-elements">DDL Elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#table-types">Table Types</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#data-types">Data Types</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">sqlalchemy_singlestoredb.VECTOR</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sqlalchemy_singlestoredb.VECTOR"><code class="docutils literal notranslate"><span class="pre">VECTOR</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="sqlalchemy_singlestoredb.JSON.html">sqlalchemy_singlestoredb.JSON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sqlalchemy_singlestoredb.PersistedColumn.html">sqlalchemy_singlestoredb.PersistedColumn</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+        </div>
+      </div>
+    </nav>
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SingleStoreDB SQLAlchemy Dialect</a>
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Reference</a></li>
+      <li class="breadcrumb-item active">sqlalchemy_singlestoredb.VECTOR</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/generated/sqlalchemy_singlestoredb.VECTOR.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+  <section id="sqlalchemy-singlestoredb-vector">
+<h1>sqlalchemy_singlestoredb.VECTOR<a class="headerlink" href="#sqlalchemy-singlestoredb-vector" title="Link to this heading">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="sqlalchemy_singlestoredb.VECTOR">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sqlalchemy_singlestoredb.</span></span><span class="sig-name descname"><span class="pre">VECTOR</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_elems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elem_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sqlalchemy_singlestoredb.VECTOR" title="Link to this definition">¶</a></dt>
+<dd><p>SingleStore VECTOR data type for storing fixed-dimension vectors.</p>
+<p>VECTOR is commonly used in AI/ML applications for embeddings and
+similarity search.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_elems</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of elements (dimensions) in the vector. Defaults to 1.</p></li>
+<li><p><strong>elem_type</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><em>str</em></a><em>, </em><em>optional</em>) – <p>Element type for the vector. Defaults to ‘F32’.</p>
+<p><strong>Floating Point Types:</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">F16</span></code> / <code class="docutils literal notranslate"><span class="pre">FLOAT16</span></code>: 16-bit float (half precision)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">F32</span></code> / <code class="docutils literal notranslate"><span class="pre">FLOAT32</span></code>: 32-bit float (single precision, default)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">F64</span></code> / <code class="docutils literal notranslate"><span class="pre">FLOAT64</span></code>: 64-bit float (double precision)</p></li>
+</ul>
+<p><strong>Integer Types:</strong></p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">I8</span></code> / <code class="docutils literal notranslate"><span class="pre">INT8</span></code>: 8-bit integer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I16</span></code> / <code class="docutils literal notranslate"><span class="pre">INT16</span></code>: 16-bit integer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I32</span></code> / <code class="docutils literal notranslate"><span class="pre">INT32</span></code>: 32-bit integer</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I64</span></code> / <code class="docutils literal notranslate"><span class="pre">INT64</span></code>: 64-bit integer</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Basic vector column:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With element type:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">768</span><span class="p">,</span> <span class="n">elem_type</span><span class="o">=</span><span class="n">VECTOR</span><span class="o">.</span><span class="n">F16</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Table Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">MetaData</span><span class="p">,</span> <span class="n">Table</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="n">VECTOR</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">MetaData</span><span class="p">()</span>
+<span class="n">embeddings</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;embeddings&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">)),</span>
+<span class="p">)</span>
+<span class="c1"># With different element types</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;documents&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;embedding_f16&#39;</span><span class="p">,</span> <span class="n">VECTOR</span><span class="p">(</span><span class="mi">768</span><span class="p">,</span> <span class="n">elem_type</span><span class="o">=</span><span class="n">VECTOR</span><span class="o">.</span><span class="n">F16</span><span class="p">)),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;embedding_i8&#39;</span><span class="p">,</span> <span class="n">VECTOR</span><span class="p">(</span><span class="mi">768</span><span class="p">,</span> <span class="n">elem_type</span><span class="o">=</span><span class="n">VECTOR</span><span class="o">.</span><span class="n">I8</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>ORM Usage:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">declarative_base</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="n">VECTOR</span>
+<span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">Embedding</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;embeddings&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+    <span class="n">embedding</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">))</span>
+<span class="k">class</span> <span class="nc">Document</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;documents&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">10000</span><span class="p">))</span>
+    <span class="n">embedding</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">768</span><span class="p">,</span> <span class="n">elem_type</span><span class="o">=</span><span class="n">VECTOR</span><span class="o">.</span><span class="n">F16</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="sqlalchemy_singlestoredb.VECTOR.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_elems</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">elem_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#sqlalchemy_singlestoredb.VECTOR.__init__" title="Link to this definition">¶</a></dt>
+<dd><p>Construct a LargeBinary type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>length</strong> – optional, a length for the column for use in
+DDL statements, for those binary types that accept a length,
+such as the MySQL BLOB type.</p>
+</dd>
+</dl>
+</dd></dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#sqlalchemy_singlestoredb.VECTOR.__init__" title="sqlalchemy_singlestoredb.VECTOR.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>([n_elems, elem_type])</p></td>
+<td><p>Construct a LargeBinary type.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">adapt</span></code>(cls, **kw)</p></td>
+<td><p>Produce an &quot;adapted&quot; form of this type, given an &quot;impl&quot; class to work with.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_generic</span></code>([allow_nulltype])</p></td>
+<td><p>Return an instance of the generic type corresponding to this type using heuristic rule.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">bind_expression</span></code>(bindvalue)</p></td>
+<td><p>Given a bind value (i.e. a <code class="xref py py-class docutils literal notranslate"><span class="pre">BindParameter</span></code> instance), return a SQL expression in its place.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">bind_processor</span></code>(dialect)</p></td>
+<td><p>Return a conversion function for processing bind values.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">coerce_compared_value</span></code>(op, value)</p></td>
+<td><p>See <code class="xref py py-meth docutils literal notranslate"><span class="pre">TypeEngine.coerce_compared_value()</span></code> for a description.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">column_expression</span></code>(colexpr)</p></td>
+<td><p>Given a SELECT column expression, return a wrapping SQL expression.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compare_values</span></code>(x, y)</p></td>
+<td><p>Compare two values for equality.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compile</span></code>([dialect])</p></td>
+<td><p>Produce a string-compiled form of this <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeEngine</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy</span></code>(**kw)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy_value</span></code>(value)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">dialect_impl</span></code>(dialect)</p></td>
+<td><p>Return a dialect-specific implementation for this <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeEngine</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluates_none</span></code>()</p></td>
+<td><p>Return a copy of this type which has the <code class="xref py py-attr docutils literal notranslate"><span class="pre">should_evaluate_none</span></code> flag set to True.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dbapi_type</span></code>(dbapi)</p></td>
+<td><p>Return the corresponding type object from the underlying DB-API, if any.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">literal_processor</span></code>(dialect)</p></td>
+<td><p>Return a conversion function for processing literal values that are to be rendered directly without using binds.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">result_processor</span></code>(dialect, coltype)</p></td>
+<td><p>Return a conversion function for processing result row values.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">with_variant</span></code>(type_, *dialect_names)</p></td>
+<td><p>Produce a copy of this type object that will utilize the given type when applied to the dialect of the given name.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">F16</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">F32</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">F64</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">FLOAT16</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">FLOAT32</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">FLOAT64</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">I16</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">I32</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">I64</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">I8</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">INT16</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">INT32</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">INT64</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">INT8</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">hashable</span></code></p></td>
+<td><p>Flag, if False, means values from this type aren't hashable.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">python_type</span></code></p></td>
+<td><p>Return the Python type object expected to be returned by instances of this type, if known.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_bind_cast</span></code></p></td>
+<td><p>Render bind casts for <code class="xref py py-attr docutils literal notranslate"><span class="pre">BindTyping.RENDER_CASTS</span></code> mode.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_literal_cast</span></code></p></td>
+<td><p>render casts when rendering a value as an inline literal, e.g. with <code class="xref py py-meth docutils literal notranslate"><span class="pre">TypeEngine.literal_processor()</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">should_evaluate_none</span></code></p></td>
+<td><p>If True, the Python constant <code class="docutils literal notranslate"><span class="pre">None</span></code> is considered to be handled explicitly by this type.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">sort_key_function</span></code></p></td>
+<td><p>A sorting function that can be passed as the key to sorted.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">length</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+</section>
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="sqlalchemy_singlestoredb.ColumnStore.html" class="btn btn-neutral float-left" title="sqlalchemy_singlestoredb.ColumnStore" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="sqlalchemy_singlestoredb.JSON.html" class="btn btn-neutral float-right" title="sqlalchemy_singlestoredb.JSON" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+  <hr/>
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022 SingleStore. All Rights Reserved.</p>
+  </div>
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+</body>
+</html>

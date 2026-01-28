@@ -1,0 +1,44 @@
+﻿sqlalchemy\_singlestoredb.VectorKey
+===================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: VectorKey
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~VectorKey.__init__
+      ~VectorKey.against
+      ~VectorKey.compare
+      ~VectorKey.compile
+      ~VectorKey.execute_if
+      ~VectorKey.execution_options
+      ~VectorKey.get_children
+      ~VectorKey.get_execution_options
+      ~VectorKey.memoized_instancemethod
+      ~VectorKey.options
+      ~VectorKey.params
+      ~VectorKey.self_group
+      ~VectorKey.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~VectorKey.allows_lambda
+      ~VectorKey.description
+      ~VectorKey.entity_namespace
+      ~VectorKey.inherit_cache
+      ~VectorKey.is_clause_element
+      ~VectorKey.is_delete
+      ~VectorKey.is_dml
+      ~VectorKey.is_from_statement
+      ~VectorKey.is_insert
+      ~VectorKey.is_select
+      ~VectorKey.is_selectable
+      ~VectorKey.is_text
+      ~VectorKey.is_update
+      ~VectorKey.stringify_dialect
+      ~VectorKey.supports_execution
+      ~VectorKey.target
+      ~VectorKey.uses_inspection
+      ~VectorKey.name
+      ~VectorKey.columns
+      ~VectorKey.index_options
+      ~VectorKey.negation_clause
+      ~VectorKey.proxy_set
