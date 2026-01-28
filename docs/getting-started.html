@@ -42,7 +42,16 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="install.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="whatsnew.html">What’s New</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#connecting-to-singlestoredb">Connecting to SingleStoreDB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-tables-core-api">Creating Tables (Core API)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#creating-tables-orm">Creating Tables (ORM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#basic-crud-operations">Basic CRUD Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vector-similarity-search">Vector Similarity Search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#table-type-selection">Table Type Selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#next-steps">Next Steps</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
 </ul>
@@ -69,18 +78,212 @@
            <div itemprop="articleBody">
   <section id="getting-started">
 <h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
+<p>This guide covers the basics of using SQLAlchemy with SingleStoreDB.</p>
+<section id="connecting-to-singlestoredb">
+<h2>Connecting to SingleStoreDB<a class="headerlink" href="#connecting-to-singlestoredb" title="Link to this heading">¶</a></h2>
 <p>Connections to SingleStoreDB are made using URLs just like any other
 SQLAlchemy dialect.</p>
-<div class="highlight-ipython notranslate"><div class="highlight"><pre><span></span><span class="gp">In [1]: </span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
-<span class="gp">In [2]: </span><span class="n">eng</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s1">&#39;singlestoredb://user:password@host.com:port/database&#39;</span><span class="p">)</span>
-<span class="gp">In [3]: </span><span class="k">with</span> <span class="n">eng</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
-<span class="gp">   ...: </span>     <span class="n">res</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="gp">   ...: </span>     <span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
-<span class="gp">   ...: </span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="c1"># Basic connection</span>
+<span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s1">&#39;singlestoredb://user:password@host:3306/database&#39;</span><span class="p">)</span>
+<span class="c1"># With additional options</span>
+<span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span>
+    <span class="s1">&#39;singlestoredb://user:password@host:3306/database&#39;</span><span class="p">,</span>
+    <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">pool_recycle</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1"># Test the connection</span>
+<span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s1">&#39;SELECT 1&#39;</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">fetchone</span><span class="p">())</span>
 </pre></div>
 </div>
 <p>More examples of connection usage can be found at the
-<a class="reference external" href="https://docs.sqlalchemy.org/en/14/index.html">SQLAlchemy</a> site.</p>
+<a class="reference external" href="https://docs.sqlalchemy.org/en/20/index.html">SQLAlchemy</a> site.</p>
+</section>
+<section id="creating-tables-core-api">
+<h2>Creating Tables (Core API)<a class="headerlink" href="#creating-tables-core-api" title="Link to this heading">¶</a></h2>
+<p>Use SQLAlchemy’s Table construct with SingleStoreDB-specific options:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">MetaData</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">text</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ColumnStore</span><span class="p">,</span>
+    <span class="n">JSON</span><span class="p">,</span>
+    <span class="n">MultiValueIndex</span><span class="p">,</span>
+    <span class="n">ShardKey</span><span class="p">,</span>
+    <span class="n">SortKey</span><span class="p">,</span>
+    <span class="n">VECTOR</span><span class="p">,</span>
+    <span class="n">VectorKey</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">metadata</span> <span class="o">=</span> <span class="n">MetaData</span><span class="p">()</span>
+<span class="c1"># Basic table with shard key and sort key</span>
+<span class="n">users</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;users&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">100</span><span class="p">)),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;email&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">)),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">),</span>
+    <span class="n">singlestoredb_shard_key</span><span class="o">=</span><span class="n">ShardKey</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
+    <span class="n">singlestoredb_sort_key</span><span class="o">=</span><span class="n">SortKey</span><span class="p">(</span><span class="s1">&#39;created_at&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="c1"># Table with vector embeddings for AI/ML</span>
+<span class="n">documents</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
+    <span class="s1">&#39;documents&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">200</span><span class="p">)),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">)),</span>
+    <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">JSON</span><span class="p">),</span>
+    <span class="n">singlestoredb_table_type</span><span class="o">=</span><span class="n">ColumnStore</span><span class="p">(),</span>
+    <span class="n">singlestoredb_shard_key</span><span class="o">=</span><span class="n">ShardKey</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
+    <span class="n">singlestoredb_vector_keys</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">index_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;metric_type&#39;</span><span class="p">:</span> <span class="s1">&#39;COSINE_SIMILARITY&#39;</span><span class="p">}),</span>
+    <span class="p">],</span>
+    <span class="n">singlestoredb_multi_value_indexes</span><span class="o">=</span><span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
+<span class="p">)</span>
+<span class="c1"># Create all tables</span>
+<span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="creating-tables-orm">
+<h2>Creating Tables (ORM)<a class="headerlink" href="#creating-tables-orm" title="Link to this heading">¶</a></h2>
+<p>Use SQLAlchemy’s declarative ORM with <code class="docutils literal notranslate"><span class="pre">__table_args__</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">DateTime</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">declarative_base</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ColumnStore</span><span class="p">,</span>
+    <span class="n">JSON</span><span class="p">,</span>
+    <span class="n">MultiValueIndex</span><span class="p">,</span>
+    <span class="n">ShardKey</span><span class="p">,</span>
+    <span class="n">SortKey</span><span class="p">,</span>
+    <span class="n">VECTOR</span><span class="p">,</span>
+    <span class="n">VectorKey</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">User</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;users&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">255</span><span class="p">))</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">DateTime</span><span class="p">)</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_shard_key&#39;</span><span class="p">:</span> <span class="n">ShardKey</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;singlestoredb_sort_key&#39;</span><span class="p">:</span> <span class="n">SortKey</span><span class="p">(</span><span class="s1">&#39;created_at&#39;</span><span class="p">),</span>
+    <span class="p">}</span>
+<span class="k">class</span> <span class="nc">Document</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;documents&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+    <span class="n">embedding</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">))</span>
+    <span class="n">tags</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">JSON</span><span class="p">)</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">ColumnStore</span><span class="p">(),</span>
+        <span class="s1">&#39;singlestoredb_shard_key&#39;</span><span class="p">:</span> <span class="n">ShardKey</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;singlestoredb_vector_keys&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">index_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;metric_type&#39;</span><span class="p">:</span> <span class="s1">&#39;COSINE_SIMILARITY&#39;</span><span class="p">}),</span>
+        <span class="p">],</span>
+        <span class="s1">&#39;singlestoredb_multi_value_indexes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
+    <span class="p">}</span>
+<span class="c1"># Create all tables</span>
+<span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="basic-crud-operations">
+<h2>Basic CRUD Operations<a class="headerlink" href="#basic-crud-operations" title="Link to this heading">¶</a></h2>
+<p><strong>Insert data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">Session</span>
+<span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Alice&#39;</span><span class="p">,</span> <span class="n">email</span><span class="o">=</span><span class="s1">&#39;alice@example.com&#39;</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Query data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="c1"># Get all users</span>
+    <span class="n">users</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="c1"># Filter by condition</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">email</span> <span class="o">==</span> <span class="s1">&#39;alice@example.com&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="c1"># Using select() (SQLAlchemy 2.0 style)</span>
+    <span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">select</span>
+    <span class="n">stmt</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;Alice&#39;</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Update data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="n">user</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Alice Smith&#39;</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Delete data:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">User</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">User</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="n">session</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="vector-similarity-search">
+<h2>Vector Similarity Search<a class="headerlink" href="#vector-similarity-search" title="Link to this heading">¶</a></h2>
+<p>SingleStoreDB supports vector similarity search for AI/ML applications:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">func</span><span class="p">,</span> <span class="n">select</span>
+<span class="c1"># Assuming you have a query embedding from your ML model</span>
+<span class="n">query_embedding</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>  <span class="c1"># 1536-dimension vector</span>
+<span class="k">with</span> <span class="n">Session</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="c1"># Find similar documents using dot product</span>
+    <span class="n">stmt</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">select</span><span class="p">(</span><span class="n">Document</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">dot_product</span><span class="p">(</span><span class="n">Document</span><span class="o">.</span><span class="n">embedding</span><span class="p">,</span> <span class="n">query_embedding</span><span class="p">)</span><span class="o">.</span><span class="n">desc</span><span class="p">())</span>
+        <span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">similar_docs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span><span class="o">.</span><span class="n">scalars</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="table-type-selection">
+<h2>Table Type Selection<a class="headerlink" href="#table-type-selection" title="Link to this heading">¶</a></h2>
+<p>Choose the right table type for your workload:</p>
+<p><strong>ColumnStore</strong> (default) - Best for analytical workloads:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Analytics</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;analytics&#39;</span>
+    <span class="c1"># ... columns ...</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">ColumnStore</span><span class="p">(),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>RowStore</strong> - Best for transactional workloads:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sqlalchemy_singlestoredb</span> <span class="kn">import</span> <span class="n">RowStore</span>
+<span class="k">class</span> <span class="nc">Session</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;sessions&#39;</span>
+    <span class="c1"># ... columns ...</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">RowStore</span><span class="p">(),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Reference tables</strong> - Replicated to all nodes for fast joins:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Country</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;countries&#39;</span>
+    <span class="c1"># ... columns ...</span>
+    <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">RowStore</span><span class="p">(</span><span class="n">reference</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="next-steps">
+<h2>Next Steps<a class="headerlink" href="#next-steps" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>See the <a class="reference internal" href="api.html#api"><span class="std std-ref">API Reference</span></a> for detailed documentation of all
+SingleStoreDB-specific features</p></li>
+<li><p>Learn about <a class="reference internal" href="generated/sqlalchemy_singlestoredb.ShardKey.html#sqlalchemy_singlestoredb.ShardKey" title="sqlalchemy_singlestoredb.ShardKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">ShardKey</span></code></a> for optimal data distribution</p></li>
+<li><p>Explore <a class="reference internal" href="generated/sqlalchemy_singlestoredb.VectorKey.html#sqlalchemy_singlestoredb.VectorKey" title="sqlalchemy_singlestoredb.VectorKey"><code class="xref py py-class docutils literal notranslate"><span class="pre">VectorKey</span></code></a> for AI/ML similarity search</p></li>
+<li><p>Check <a class="reference internal" href="generated/sqlalchemy_singlestoredb.PersistedColumn.html#sqlalchemy_singlestoredb.PersistedColumn" title="sqlalchemy_singlestoredb.PersistedColumn"><code class="xref py py-class docutils literal notranslate"><span class="pre">PersistedColumn</span></code></a> for computed columns</p></li>
+</ul>
+</section>
 </section>
            </div>
           </div>

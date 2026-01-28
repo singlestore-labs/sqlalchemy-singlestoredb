@@ -1,0 +1,33 @@
+﻿sqlalchemy\_singlestoredb.JSON
+==============================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: JSON
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~JSON.__init__
+      ~JSON.adapt
+      ~JSON.as_generic
+      ~JSON.bind_expression
+      ~JSON.bind_processor
+      ~JSON.coerce_compared_value
+      ~JSON.column_expression
+      ~JSON.compare_values
+      ~JSON.compile
+      ~JSON.copy
+      ~JSON.copy_value
+      ~JSON.dialect_impl
+      ~JSON.evaluates_none
+      ~JSON.get_dbapi_type
+      ~JSON.literal_processor
+      ~JSON.result_processor
+      ~JSON.with_variant
+   .. rubric:: Attributes
+   .. autosummary::
+      ~JSON.NULL
+      ~JSON.hashable
+      ~JSON.python_type
+      ~JSON.render_bind_cast
+      ~JSON.render_literal_cast
+      ~JSON.should_evaluate_none
+      ~JSON.sort_key_function

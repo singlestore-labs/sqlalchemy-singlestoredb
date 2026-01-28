@@ -1,0 +1,47 @@
+﻿sqlalchemy\_singlestoredb.VECTOR
+================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: VECTOR
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~VECTOR.__init__
+      ~VECTOR.adapt
+      ~VECTOR.as_generic
+      ~VECTOR.bind_expression
+      ~VECTOR.bind_processor
+      ~VECTOR.coerce_compared_value
+      ~VECTOR.column_expression
+      ~VECTOR.compare_values
+      ~VECTOR.compile
+      ~VECTOR.copy
+      ~VECTOR.copy_value
+      ~VECTOR.dialect_impl
+      ~VECTOR.evaluates_none
+      ~VECTOR.get_dbapi_type
+      ~VECTOR.literal_processor
+      ~VECTOR.result_processor
+      ~VECTOR.with_variant
+   .. rubric:: Attributes
+   .. autosummary::
+      ~VECTOR.F16
+      ~VECTOR.F32
+      ~VECTOR.F64
+      ~VECTOR.FLOAT16
+      ~VECTOR.FLOAT32
+      ~VECTOR.FLOAT64
+      ~VECTOR.I16
+      ~VECTOR.I32
+      ~VECTOR.I64
+      ~VECTOR.I8
+      ~VECTOR.INT16
+      ~VECTOR.INT32
+      ~VECTOR.INT64
+      ~VECTOR.INT8
+      ~VECTOR.hashable
+      ~VECTOR.python_type
+      ~VECTOR.render_bind_cast
+      ~VECTOR.render_literal_cast
+      ~VECTOR.should_evaluate_none
+      ~VECTOR.sort_key_function
+      ~VECTOR.length

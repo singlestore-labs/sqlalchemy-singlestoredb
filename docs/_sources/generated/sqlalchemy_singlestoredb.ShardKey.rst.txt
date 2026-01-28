@@ -1,0 +1,46 @@
+﻿sqlalchemy\_singlestoredb.ShardKey
+==================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: ShardKey
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~ShardKey.__init__
+      ~ShardKey.against
+      ~ShardKey.asc
+      ~ShardKey.compare
+      ~ShardKey.compile
+      ~ShardKey.desc
+      ~ShardKey.execute_if
+      ~ShardKey.execution_options
+      ~ShardKey.get_children
+      ~ShardKey.get_execution_options
+      ~ShardKey.memoized_instancemethod
+      ~ShardKey.options
+      ~ShardKey.params
+      ~ShardKey.self_group
+      ~ShardKey.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~ShardKey.allows_lambda
+      ~ShardKey.description
+      ~ShardKey.entity_namespace
+      ~ShardKey.inherit_cache
+      ~ShardKey.is_clause_element
+      ~ShardKey.is_delete
+      ~ShardKey.is_dml
+      ~ShardKey.is_from_statement
+      ~ShardKey.is_insert
+      ~ShardKey.is_select
+      ~ShardKey.is_selectable
+      ~ShardKey.is_text
+      ~ShardKey.is_update
+      ~ShardKey.stringify_dialect
+      ~ShardKey.supports_execution
+      ~ShardKey.target
+      ~ShardKey.uses_inspection
+      ~ShardKey.columns
+      ~ShardKey.index_type
+      ~ShardKey.metadata_only
+      ~ShardKey.negation_clause
+      ~ShardKey.proxy_set

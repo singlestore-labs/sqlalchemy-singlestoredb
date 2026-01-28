@@ -1,0 +1,43 @@
+﻿sqlalchemy\_singlestoredb.MultiValueIndex
+=========================================
+.. currentmodule:: sqlalchemy_singlestoredb
+.. autoclass:: MultiValueIndex
+   .. automethod:: __init__
+   .. rubric:: Methods
+   .. autosummary::
+      ~MultiValueIndex.__init__
+      ~MultiValueIndex.against
+      ~MultiValueIndex.compare
+      ~MultiValueIndex.compile
+      ~MultiValueIndex.execute_if
+      ~MultiValueIndex.execution_options
+      ~MultiValueIndex.get_children
+      ~MultiValueIndex.get_execution_options
+      ~MultiValueIndex.memoized_instancemethod
+      ~MultiValueIndex.options
+      ~MultiValueIndex.params
+      ~MultiValueIndex.self_group
+      ~MultiValueIndex.unique_params
+   .. rubric:: Attributes
+   .. autosummary::
+      ~MultiValueIndex.allows_lambda
+      ~MultiValueIndex.description
+      ~MultiValueIndex.entity_namespace
+      ~MultiValueIndex.inherit_cache
+      ~MultiValueIndex.is_clause_element
+      ~MultiValueIndex.is_delete
+      ~MultiValueIndex.is_dml
+      ~MultiValueIndex.is_from_statement
+      ~MultiValueIndex.is_insert
+      ~MultiValueIndex.is_select
+      ~MultiValueIndex.is_selectable
+      ~MultiValueIndex.is_text
+      ~MultiValueIndex.is_update
+      ~MultiValueIndex.stringify_dialect
+      ~MultiValueIndex.supports_execution
+      ~MultiValueIndex.target
+      ~MultiValueIndex.uses_inspection
+      ~MultiValueIndex.columns
+      ~MultiValueIndex.index_options
+      ~MultiValueIndex.negation_clause
+      ~MultiValueIndex.proxy_set

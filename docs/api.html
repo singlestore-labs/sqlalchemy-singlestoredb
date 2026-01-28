@@ -55,6 +55,26 @@
 </li>
 </ul>
 </li>
+<li class="toctree-l2"><a class="reference internal" href="#ddl-elements">DDL Elements</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.ShardKey.html">sqlalchemy_singlestoredb.ShardKey</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.SortKey.html">sqlalchemy_singlestoredb.SortKey</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.VectorKey.html">sqlalchemy_singlestoredb.VectorKey</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.MultiValueIndex.html">sqlalchemy_singlestoredb.MultiValueIndex</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.FullTextIndex.html">sqlalchemy_singlestoredb.FullTextIndex</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.ColumnGroup.html">sqlalchemy_singlestoredb.ColumnGroup</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#table-types">Table Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.RowStore.html">sqlalchemy_singlestoredb.RowStore</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.ColumnStore.html">sqlalchemy_singlestoredb.ColumnStore</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-types">Data Types</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.VECTOR.html">sqlalchemy_singlestoredb.VECTOR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.JSON.html">sqlalchemy_singlestoredb.JSON</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generated/sqlalchemy_singlestoredb.PersistedColumn.html">sqlalchemy_singlestoredb.PersistedColumn</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
@@ -111,6 +131,63 @@ not worked with directly.</p>
 </tbody>
 </table>
 </section>
+</section>
+<section id="ddl-elements">
+<h2>DDL Elements<a class="headerlink" href="#ddl-elements" title="Link to this heading">¶</a></h2>
+<p>SingleStoreDB-specific DDL elements for table definition.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.ShardKey.html#sqlalchemy_singlestoredb.ShardKey" title="sqlalchemy_singlestoredb.ShardKey"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ShardKey</span></code></a>(*columns[, index_type, metadata_only])</p></td>
+<td><p>SingleStore SHARD KEY DDL element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.SortKey.html#sqlalchemy_singlestoredb.SortKey" title="sqlalchemy_singlestoredb.SortKey"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SortKey</span></code></a>(*columns)</p></td>
+<td><p>SingleStore SORT KEY DDL element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.VectorKey.html#sqlalchemy_singlestoredb.VectorKey" title="sqlalchemy_singlestoredb.VectorKey"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VectorKey</span></code></a>(*columns[, name, index_options])</p></td>
+<td><p>SingleStore VECTOR INDEX DDL element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.MultiValueIndex.html#sqlalchemy_singlestoredb.MultiValueIndex" title="sqlalchemy_singlestoredb.MultiValueIndex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MultiValueIndex</span></code></a>(*columns[, index_options])</p></td>
+<td><p>SingleStore MULTI VALUE INDEX DDL element.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.FullTextIndex.html#sqlalchemy_singlestoredb.FullTextIndex" title="sqlalchemy_singlestoredb.FullTextIndex"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FullTextIndex</span></code></a>(*columns[, name, version])</p></td>
+<td><p>SingleStore FULLTEXT INDEX DDL element.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.ColumnGroup.html#sqlalchemy_singlestoredb.ColumnGroup" title="sqlalchemy_singlestoredb.ColumnGroup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnGroup</span></code></a>(*[, name])</p></td>
+<td><p>SingleStore COLUMN GROUP DDL element.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="table-types">
+<h2>Table Types<a class="headerlink" href="#table-types" title="Link to this heading">¶</a></h2>
+<p>Table storage type specifications for rowstore and columnstore tables.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.RowStore.html#sqlalchemy_singlestoredb.RowStore" title="sqlalchemy_singlestoredb.RowStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RowStore</span></code></a>([reference, temporary, ...])</p></td>
+<td><p>SingleStore rowstore table type specification.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.ColumnStore.html#sqlalchemy_singlestoredb.ColumnStore" title="sqlalchemy_singlestoredb.ColumnStore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ColumnStore</span></code></a>([reference, temporary])</p></td>
+<td><p>SingleStore columnstore table type specification.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="data-types">
+<h2>Data Types<a class="headerlink" href="#data-types" title="Link to this heading">¶</a></h2>
+<p>SingleStoreDB-specific data types.</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.VECTOR.html#sqlalchemy_singlestoredb.VECTOR" title="sqlalchemy_singlestoredb.VECTOR"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VECTOR</span></code></a>([n_elems, elem_type])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.JSON.html#sqlalchemy_singlestoredb.JSON" title="sqlalchemy_singlestoredb.JSON"><code class="xref py py-obj docutils literal notranslate"><span class="pre">JSON</span></code></a>(*args, **kwargs)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/sqlalchemy_singlestoredb.PersistedColumn.html#sqlalchemy_singlestoredb.PersistedColumn" title="sqlalchemy_singlestoredb.PersistedColumn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PersistedColumn</span></code></a>(*args[, persisted_expression])</p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
 </section>
 </section>
            </div>

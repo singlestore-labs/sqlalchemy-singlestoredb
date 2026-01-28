@@ -66,7 +66,9 @@ def _escape_column_name(column_name: str) -> str:
 class ShardKey(DDLElement):
     """SingleStore SHARD KEY DDL element.
 
-    Represents a SHARD KEY constraint for distributing table data across partitions.
+    Represents a SHARD KEY constraint for distributing table data across partitions
+    (leaf nodes) in a SingleStore cluster. Proper shard key selection is critical
+    for query performance and data distribution.
 
     Parameters
     ----------
@@ -104,22 +106,69 @@ class ShardKey(DDLElement):
 
     >>> ShardKey(ShardKey.asc('user_id'), ShardKey.desc('category_id'))
 
-    Mixed directions for performance optimization:
-
-    >>> ShardKey('tenant_id', ShardKey.desc('created_at'))
-
-    With index type (keyword-only):
+    With index type:
 
     >>> ShardKey('user_id', index_type='HASH')
 
-    With METADATA_ONLY to prevent index creation (keyword-only):
+    With METADATA_ONLY to prevent index creation:
 
     >>> ShardKey('user_id', metadata_only=True)
 
-    Combined options with directions (keyword-only):
+    **Table Usage:**
 
-    >>> ShardKey(ShardKey.asc('user_id'), ShardKey.desc('tenant_id'),
-    ...           index_type='BTREE', metadata_only=True)
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, MetaData, String, Table
+        from sqlalchemy_singlestoredb import ShardKey
+
+        metadata = MetaData()
+
+        users = Table(
+            'users', metadata,
+            Column('user_id', Integer, primary_key=True),
+            Column('name', String(100)),
+            singlestoredb_shard_key=ShardKey('user_id'),
+        )
+
+        # Multi-column shard key
+        orders = Table(
+            'orders', metadata,
+            Column('user_id', Integer),
+            Column('order_id', Integer),
+            Column('amount', Integer),
+            singlestoredb_shard_key=ShardKey('user_id', 'order_id'),
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, String
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import ShardKey
+
+        Base = declarative_base()
+
+        class User(Base):
+            __tablename__ = 'users'
+
+            user_id = Column(Integer, primary_key=True)
+            name = Column(String(100))
+
+            __table_args__ = {
+                'singlestoredb_shard_key': ShardKey('user_id'),
+            }
+
+        class Order(Base):
+            __tablename__ = 'orders'
+
+            user_id = Column(Integer, primary_key=True)
+            order_id = Column(Integer, primary_key=True)
+            amount = Column(Integer)
+
+            __table_args__ = {
+                'singlestoredb_shard_key': ShardKey('user_id', 'order_id'),
+            }
 
     """
 
@@ -301,7 +350,8 @@ class SortKey(DDLElement):
     """SingleStore SORT KEY DDL element.
 
     Represents a SORT KEY constraint for optimizing query performance by
-    pre-sorting data within partitions.
+    pre-sorting data within partitions. Properly chosen sort keys can
+    significantly improve query performance for range scans and ordered retrieval.
 
     Parameters
     ----------
@@ -323,6 +373,62 @@ class SortKey(DDLElement):
     Using static helper methods:
 
     >>> SortKey(SortKey.asc('user_id'), SortKey.desc('created_at'))
+
+    **Table Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, DateTime, Integer, MetaData, Table
+        from sqlalchemy_singlestoredb import SortKey
+
+        metadata = MetaData()
+
+        events = Table(
+            'events', metadata,
+            Column('event_id', Integer, primary_key=True),
+            Column('created_at', DateTime),
+            singlestoredb_sort_key=SortKey('created_at'),
+        )
+
+        # Multi-column sort key with directions
+        orders = Table(
+            'orders', metadata,
+            Column('user_id', Integer),
+            Column('created_at', DateTime),
+            Column('order_id', Integer),
+            singlestoredb_sort_key=SortKey('user_id', ('created_at', 'DESC')),
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, DateTime, Integer
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import SortKey
+
+        Base = declarative_base()
+
+        class Event(Base):
+            __tablename__ = 'events'
+
+            event_id = Column(Integer, primary_key=True)
+            created_at = Column(DateTime)
+
+            __table_args__ = {
+                'singlestoredb_sort_key': SortKey('created_at'),
+            }
+
+        class Order(Base):
+            __tablename__ = 'orders'
+
+            user_id = Column(Integer, primary_key=True)
+            order_id = Column(Integer)
+            created_at = Column(DateTime)
+
+            __table_args__ = {
+                'singlestoredb_sort_key': SortKey('user_id', ('created_at', 'DESC')),
+            }
 
     """
 
@@ -451,7 +557,8 @@ def compile_sort_key(element: Any, compiler: Any, **kw: Any) -> str:
 class VectorKey(DDLElement):
     """SingleStore VECTOR INDEX DDL element.
 
-    Represents a VECTOR INDEX for similarity search on vector data columns.
+    Represents a VECTOR INDEX for similarity search on vector data columns,
+    enabling fast nearest-neighbor searches for AI/ML applications.
 
     Parameters
     ----------
@@ -464,33 +571,91 @@ class VectorKey(DDLElement):
     index_options : str or Dict[str, Any], optional, keyword-only
         Index options for the vector index. Can be either a JSON string or
         a dictionary that will be automatically JSON-serialized.
-        Common values: '{"metric_type":"EUCLIDEAN_DISTANCE"}',
-        '{"metric_type":"DOT_PRODUCT"}', '{"metric_type":"COSINE_SIMILARITY"}'
-        Or as dict: {"metric_type": "EUCLIDEAN_DISTANCE"}
+        Common metric types: 'EUCLIDEAN_DISTANCE', 'DOT_PRODUCT', 'COSINE_SIMILARITY'
 
     Examples
     --------
-    Single vector column, auto-named:
+    Basic vector index:
 
     >>> VectorKey('embedding')
 
-    Single vector column, named:
+    Named vector index:
 
     >>> VectorKey('embedding', name='vec_idx')
 
-    Vector index with options (string):
+    Vector index with metric type (dict):
 
-    >>> VectorKey('embedding', name='vec_idx',
-    ...           index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}')
+    >>> VectorKey('embedding', index_options={'metric_type': 'COSINE_SIMILARITY'})
 
-    Vector index with options (dict):
+    Vector index with metric type (string):
 
-    >>> VectorKey('embedding', name='vec_idx',
-    ...           index_options={"metric_type": "EUCLIDEAN_DISTANCE"})
+    >>> VectorKey('embedding', index_options='{"metric_type":"EUCLIDEAN_DISTANCE"}')
 
-    Multiple vector columns (if supported):
+    **Table Usage:**
 
-    >>> VectorKey('embedding1', 'embedding2', name='vec_idx')
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, MetaData, Table
+        from sqlalchemy_singlestoredb import VECTOR, VectorKey
+
+        metadata = MetaData()
+
+        embeddings = Table(
+            'embeddings', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('embedding', VECTOR(1536)),
+            singlestoredb_vector_keys=[VectorKey('embedding')],
+        )
+
+        # Named vector index with options
+        documents = Table(
+            'documents', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('embedding', VECTOR(768)),
+            singlestoredb_vector_keys=[
+                VectorKey(
+                    'embedding',
+                    name='doc_vec_idx',
+                    index_options={'metric_type': 'COSINE_SIMILARITY'},
+                ),
+            ],
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import VECTOR, VectorKey
+
+        Base = declarative_base()
+
+        class Embedding(Base):
+            __tablename__ = 'embeddings'
+
+            id = Column(Integer, primary_key=True)
+            embedding = Column(VECTOR(1536))
+
+            __table_args__ = {
+                'singlestoredb_vector_keys': [VectorKey('embedding')],
+            }
+
+        class Document(Base):
+            __tablename__ = 'documents'
+
+            id = Column(Integer, primary_key=True)
+            embedding = Column(VECTOR(768))
+
+            __table_args__ = {
+                'singlestoredb_vector_keys': [
+                    VectorKey(
+                        'embedding',
+                        name='doc_vec_idx',
+                        index_options={'metric_type': 'COSINE_SIMILARITY'},
+                    ),
+                ],
+            }
 
     """
 
@@ -592,7 +757,8 @@ def compile_vector_key(element: Any, compiler: Any, **kw: Any) -> str:
 class MultiValueIndex(DDLElement):
     """SingleStore MULTI VALUE INDEX DDL element.
 
-    Represents a MULTI VALUE INDEX for indexing JSON array values.
+    Represents a MULTI VALUE INDEX for indexing JSON array values, enabling
+    efficient queries on individual array elements.
 
     Parameters
     ----------
@@ -613,19 +779,74 @@ class MultiValueIndex(DDLElement):
 
     >>> MultiValueIndex('tags', 'categories')
 
-    Multi-value index with options (string):
+    Multi-value index with options:
 
-    >>> MultiValueIndex('tags', index_options='{"some_option":"value"}')
+    >>> MultiValueIndex('tags', index_options={'some_option': 'value'})
 
-    Multi-value index with options (dict):
+    **Table Usage:**
 
-    >>> MultiValueIndex('tags', index_options={"some_option": "value"})
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, MetaData, Table
+        from sqlalchemy_singlestoredb import JSON, MultiValueIndex
+
+        metadata = MetaData()
+
+        articles = Table(
+            'articles', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('tags', JSON),
+            singlestoredb_multi_value_indexes=[MultiValueIndex('tags')],
+        )
+
+        # Multiple columns
+        products = Table(
+            'products', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('tags', JSON),
+            Column('categories', JSON),
+            singlestoredb_multi_value_indexes=[
+                MultiValueIndex('tags', 'categories'),
+            ],
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import JSON, MultiValueIndex
+
+        Base = declarative_base()
+
+        class Article(Base):
+            __tablename__ = 'articles'
+
+            id = Column(Integer, primary_key=True)
+            tags = Column(JSON)
+
+            __table_args__ = {
+                'singlestoredb_multi_value_indexes': [MultiValueIndex('tags')],
+            }
+
+        class Product(Base):
+            __tablename__ = 'products'
+
+            id = Column(Integer, primary_key=True)
+            tags = Column(JSON)
+            categories = Column(JSON)
+
+            __table_args__ = {
+                'singlestoredb_multi_value_indexes': [
+                    MultiValueIndex('tags', 'categories'),
+                ],
+            }
 
     Notes
     -----
     Multi-value indexes are used to index JSON arrays in SingleStore.
     They allow efficient queries on individual elements within JSON arrays.
-
     The columns must be of JSON type for multi-value indexing to work properly.
     """
 
@@ -702,7 +923,8 @@ def compile_multi_value_index(element: Any, compiler: Any, **kw: Any) -> str:
 class FullTextIndex(DDLElement):
     """SingleStore FULLTEXT INDEX DDL element.
 
-    Represents a FULLTEXT INDEX for full-text search on text columns.
+    Represents a FULLTEXT INDEX for full-text search on text columns,
+    enabling efficient text search queries.
 
     Parameters
     ----------
@@ -728,10 +950,6 @@ class FullTextIndex(DDLElement):
 
     >>> FullTextIndex('title', name='ft_title')
 
-    Multiple columns, auto-named:
-
-    >>> FullTextIndex('title', 'content')
-
     Multiple columns, named:
 
     >>> FullTextIndex('title', 'content', name='ft_search')
@@ -747,6 +965,66 @@ class FullTextIndex(DDLElement):
     Using static helper methods:
 
     >>> FullTextIndex(FullTextIndex.asc('title'), FullTextIndex.desc('content'))
+
+    **Table Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, MetaData, String, Table, Text
+        from sqlalchemy_singlestoredb import FullTextIndex
+
+        metadata = MetaData()
+
+        articles = Table(
+            'articles', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('content', Text),
+            singlestoredb_full_text_indexes=[FullTextIndex('content')],
+        )
+
+        # Multiple columns with name
+        documents = Table(
+            'documents', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('title', String(200)),
+            Column('body', Text),
+            singlestoredb_full_text_indexes=[
+                FullTextIndex('title', 'body', name='ft_doc_search'),
+            ],
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, String, Text
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import FullTextIndex
+
+        Base = declarative_base()
+
+        class Article(Base):
+            __tablename__ = 'articles'
+
+            id = Column(Integer, primary_key=True)
+            content = Column(Text)
+
+            __table_args__ = {
+                'singlestoredb_full_text_indexes': [FullTextIndex('content')],
+            }
+
+        class Document(Base):
+            __tablename__ = 'documents'
+
+            id = Column(Integer, primary_key=True)
+            title = Column(String(200))
+            body = Column(Text)
+
+            __table_args__ = {
+                'singlestoredb_full_text_indexes': [
+                    FullTextIndex('title', 'body', name='ft_doc_search'),
+                ],
+            }
 
     """
 
@@ -862,13 +1140,73 @@ class ColumnGroup(DDLElement):
 
     Examples
     --------
-    Basic column group with name parameter:
+    Column group with name:
 
     >>> ColumnGroup(name='cg_all_columns')
 
     Column group without explicit name (auto-generated):
 
     >>> ColumnGroup()
+
+    **Table Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, MetaData, String, Table
+        from sqlalchemy_singlestoredb import ColumnGroup, ColumnStore
+
+        metadata = MetaData()
+
+        wide_table = Table(
+            'wide_table', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('col1', String(100)),
+            Column('col2', String(100)),
+            singlestoredb_table_type=ColumnStore(),
+            singlestoredb_column_group=ColumnGroup(name='cg_all'),
+        )
+
+        # Column group with auto-generated name
+        analytics = Table(
+            'analytics', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('data', String(255)),
+            singlestoredb_table_type=ColumnStore(),
+            singlestoredb_column_group=ColumnGroup(),
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, String
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import ColumnGroup, ColumnStore
+
+        Base = declarative_base()
+
+        class WideTable(Base):
+            __tablename__ = 'wide_table'
+
+            id = Column(Integer, primary_key=True)
+            col1 = Column(String(100))
+            col2 = Column(String(100))
+
+            __table_args__ = {
+                'singlestoredb_table_type': ColumnStore(),
+                'singlestoredb_column_group': ColumnGroup(name='cg_all'),
+            }
+
+        class Analytics(Base):
+            __tablename__ = 'analytics'
+
+            id = Column(Integer, primary_key=True)
+            data = Column(String(255))
+
+            __table_args__ = {
+                'singlestoredb_table_type': ColumnStore(),
+                'singlestoredb_column_group': ColumnGroup(),
+            }
 
     Notes
     -----
@@ -1035,8 +1373,8 @@ class TableType(DDLElement):
 class RowStore(TableType):
     """SingleStore rowstore table type specification.
 
-    Rowstore tables are in-memory tables optimized for OLTP workloads
-    with fast point lookups and updates.
+    Rowstore tables are in-memory tables optimized for transactional workloads
+    (OLTP). They provide fast point lookups, inserts, and updates.
 
     Parameters
     ----------
@@ -1051,27 +1389,82 @@ class RowStore(TableType):
     --------
     Basic rowstore table:
 
-    >>> Table('cache', metadata,
-    ...       Column('key', String),
-    ...       singlestoredb_table_type=RowStore())
+    >>> RowStore()
 
     Temporary rowstore table:
 
-    >>> Table('temp_data', metadata,
-    ...       Column('id', Integer),
-    ...       singlestoredb_table_type=RowStore(temporary=True))
+    >>> RowStore(temporary=True)
 
     Global temporary rowstore table:
 
-    >>> Table('global_temp', metadata,
-    ...       Column('id', Integer),
-    ...       singlestoredb_table_type=RowStore(global_temporary=True))
+    >>> RowStore(global_temporary=True)
 
     Reference rowstore table:
 
-    >>> Table('lookups', metadata,
-    ...       Column('code', String),
-    ...       singlestoredb_table_type=RowStore(reference=True))
+    >>> RowStore(reference=True)
+
+    **Table Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, MetaData, String, Table
+        from sqlalchemy_singlestoredb import RowStore
+
+        metadata = MetaData()
+
+        cache = Table(
+            'cache', metadata,
+            Column('key', String(255), primary_key=True),
+            Column('value', String(1000)),
+            singlestoredb_table_type=RowStore(),
+        )
+
+        # Temporary rowstore table
+        temp_data = Table(
+            'temp_data', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('data', String(255)),
+            singlestoredb_table_type=RowStore(temporary=True),
+        )
+
+        # Reference rowstore table
+        lookups = Table(
+            'lookups', metadata,
+            Column('code', String(10), primary_key=True),
+            Column('description', String(200)),
+            singlestoredb_table_type=RowStore(reference=True),
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, Integer, String
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import RowStore
+
+        Base = declarative_base()
+
+        class Cache(Base):
+            __tablename__ = 'cache'
+
+            key = Column(String(255), primary_key=True)
+            value = Column(String(1000))
+
+            __table_args__ = {
+                'singlestoredb_table_type': RowStore(),
+            }
+
+        class Lookup(Base):
+            '''Reference rowstore table replicated to all nodes.'''
+            __tablename__ = 'lookups'
+
+            code = Column(String(10), primary_key=True)
+            description = Column(String(200))
+
+            __table_args__ = {
+                'singlestoredb_table_type': RowStore(reference=True),
+            }
 
     """
 
@@ -1100,7 +1493,8 @@ class ColumnStore(TableType):
     """SingleStore columnstore table type specification.
 
     Columnstore tables are disk-based tables optimized for analytical workloads
-    with fast scans and aggregations. This is the default table type in SingleStore.
+    (OLAP) with fast scans and aggregations over large datasets. This is the
+    default table type in SingleStore.
 
     Parameters
     ----------
@@ -1117,21 +1511,82 @@ class ColumnStore(TableType):
     --------
     Basic columnstore table (default):
 
-    >>> Table('analytics', metadata,
-    ...       Column('user_id', Integer),
-    ...       singlestoredb_table_type=ColumnStore())
+    >>> ColumnStore()
 
     Temporary columnstore table:
 
-    >>> Table('temp_analytics', metadata,
-    ...       Column('id', Integer),
-    ...       singlestoredb_table_type=ColumnStore(temporary=True))
+    >>> ColumnStore(temporary=True)
 
     Reference columnstore table:
 
-    >>> Table('ref_data', metadata,
-    ...       Column('code', String),
-    ...       singlestoredb_table_type=ColumnStore(reference=True))
+    >>> ColumnStore(reference=True)
+
+    **Table Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, DateTime, Integer, MetaData, Numeric, Table
+        from sqlalchemy_singlestoredb import ColumnStore
+
+        metadata = MetaData()
+
+        analytics = Table(
+            'analytics', metadata,
+            Column('id', Integer, primary_key=True),
+            Column('user_id', Integer),
+            Column('event_time', DateTime),
+            Column('amount', Numeric(10, 2)),
+            singlestoredb_table_type=ColumnStore(),
+        )
+
+        # Temporary columnstore table
+        temp_analytics = Table(
+            'temp_analytics', metadata,
+            Column('id', Integer),
+            Column('data', Integer),
+            singlestoredb_table_type=ColumnStore(temporary=True),
+        )
+
+        # Reference columnstore table
+        country_codes = Table(
+            'country_codes', metadata,
+            Column('code', String(2), primary_key=True),
+            Column('name', String(100)),
+            singlestoredb_table_type=ColumnStore(reference=True),
+        )
+
+    **ORM Usage:**
+
+    .. code-block:: python
+
+        from sqlalchemy import Column, DateTime, Integer, Numeric, String
+        from sqlalchemy.orm import declarative_base
+        from sqlalchemy_singlestoredb import ColumnStore
+
+        Base = declarative_base()
+
+        class Analytics(Base):
+            __tablename__ = 'analytics'
+
+            id = Column(Integer, primary_key=True)
+            user_id = Column(Integer)
+            event_time = Column(DateTime)
+            amount = Column(Numeric(10, 2))
+
+            __table_args__ = {
+                'singlestoredb_table_type': ColumnStore(),
+            }
+
+        class CountryCode(Base):
+            '''Reference table replicated to all nodes.'''
+            __tablename__ = 'country_codes'
+
+            code = Column(String(2), primary_key=True)
+            name = Column(String(100))
+
+            __table_args__ = {
+                'singlestoredb_table_type': ColumnStore(reference=True),
+            }
 
     """
 
