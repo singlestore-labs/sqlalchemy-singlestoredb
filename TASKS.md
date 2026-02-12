@@ -101,7 +101,7 @@ This document outlines the tasks needed to bring the SingleStoreDB SQLAlchemy di
   - [ ] Implement `in_boolean_mode()` modifier
   - [ ] Implement `in_natural_language_mode()` modifier
   - [ ] Implement `with_query_expansion()` modifier
-  - [ ] Add FULLTEXT index support in DDL
+  - [x] Add FULLTEXT index support in DDL
 
 ---
 
@@ -110,27 +110,27 @@ This document outlines the tasks needed to bring the SingleStoreDB SQLAlchemy di
 ### 3.1 Vector Enhancements
 - [ ] **Extended VECTOR support**
   - [ ] Add comprehensive vector similarity functions (DOT_PRODUCT, EUCLIDEAN_DISTANCE, etc.)
-  - [ ] Implement vector indexing options
+  - [x] Implement vector indexing options (VectorKey with metric types)
   - [ ] Add vector aggregation functions
-  - [ ] Optimize vector data serialization/deserialization
-  - [ ] Add support for different vector element types (F16, F32, F64, I8, I16, I32, I64)
+  - [x] Optimize vector data serialization/deserialization
+  - [x] Add support for different vector element types (F16, F32, F64, I8, I16, I32, I64)
 
 ### 3.2 Distributed Features
-- [ ] **Enhanced SHARD KEY support**
-  - [ ] Add validation for SHARD KEY syntax
-  - [ ] Support multiple column SHARD KEYs
+- [x] **Enhanced SHARD KEY support**
+  - [x] Add validation for SHARD KEY syntax
+  - [x] Support multiple column SHARD KEYs (with ASC/DESC directions)
   - [ ] Add SHARD KEY modification support
-  - [ ] Implement SHARD KEY reflection improvements
+  - [x] Implement SHARD KEY reflection improvements
 
-- [ ] **Enhanced SORT KEY support**
-  - [ ] Add SORT KEY validation
-  - [ ] Support multiple column SORT KEYs
-  - [ ] Implement SORT KEY reflection
+- [x] **Enhanced SORT KEY support**
+  - [x] Add SORT KEY validation
+  - [x] Support multiple column SORT KEYs (with ASC/DESC directions)
+  - [x] Implement SORT KEY reflection
   - [ ] Add SORT KEY modification support
 
 ### 3.3 Computed Columns Enhancement
 - [ ] **PersistedColumn improvements**
-  - [ ] Add comprehensive computed column syntax support
+  - [x] Add comprehensive computed column syntax support
   - [ ] Implement computed column reflection
   - [ ] Add validation for computed expressions
   - [ ] Support for virtual vs stored computed columns
@@ -148,10 +148,12 @@ This document outlines the tasks needed to bring the SingleStoreDB SQLAlchemy di
 
 ### 4.1 Index and Constraint Support
 - [ ] **Modern index features**
-  - [ ] Add FULLTEXT index support
+  - [x] Add FULLTEXT index support (FullTextIndex class with version support)
   - [ ] Implement index hints (USE INDEX, FORCE INDEX, IGNORE INDEX)
   - [ ] Add partial index support if available
   - [ ] Implement covering indexes
+  - [x] Add MultiValueIndex support for JSON arrays
+  - [x] Add ColumnGroup support for columnstore optimization
 
 - [ ] **Constraint enhancements**
   - [ ] Add foreign key constraint support (if available in SingleStore)
@@ -165,6 +167,7 @@ This document outlines the tasks needed to bring the SingleStoreDB SQLAlchemy di
   - [ ] Implement CHARACTER SET and COLLATION support
   - [ ] Add table comment support
   - [ ] Support for table-level options (ROW_FORMAT, etc.)
+  - [x] Add table type support (RowStore, ColumnStore with REFERENCE/TEMPORARY modifiers)
 
 - [ ] **Schema operations**
   - [ ] Implement ALTER TABLE enhancements
