@@ -131,14 +131,14 @@ Common metric types: ‘EUCLIDEAN_DISTANCE’, ‘DOT_PRODUCT’, ‘COSINE_SIMI
     <span class="s1">&#39;embeddings&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">)),</span>
-    <span class="n">singlestoredb_vector_keys</span><span class="o">=</span><span class="p">[</span><span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">)],</span>
+    <span class="n">singlestoredb_vector_key</span><span class="o">=</span><span class="p">[</span><span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">)],</span>
 <span class="p">)</span>
 <span class="c1"># Named vector index with options</span>
 <span class="n">documents</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
     <span class="s1">&#39;documents&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">VECTOR</span><span class="p">(</span><span class="mi">768</span><span class="p">)),</span>
-    <span class="n">singlestoredb_vector_keys</span><span class="o">=</span><span class="p">[</span>
+    <span class="n">singlestoredb_vector_key</span><span class="o">=</span><span class="p">[</span>
         <span class="n">VectorKey</span><span class="p">(</span>
             <span class="s1">&#39;embedding&#39;</span><span class="p">,</span>
             <span class="n">name</span><span class="o">=</span><span class="s1">&#39;doc_vec_idx&#39;</span><span class="p">,</span>
@@ -158,14 +158,14 @@ Common metric types: ‘EUCLIDEAN_DISTANCE’, ‘DOT_PRODUCT’, ‘COSINE_SIMI
     <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">embedding</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">1536</span><span class="p">))</span>
     <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;singlestoredb_vector_keys&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;singlestoredb_vector_key&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">)],</span>
     <span class="p">}</span>
 <span class="k">class</span> <span class="nc">Document</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
     <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;documents&#39;</span>
     <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">embedding</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">VECTOR</span><span class="p">(</span><span class="mi">768</span><span class="p">))</span>
     <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;singlestoredb_vector_keys&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;singlestoredb_vector_key&#39;</span><span class="p">:</span> <span class="p">[</span>
             <span class="n">VectorKey</span><span class="p">(</span>
                 <span class="s1">&#39;embedding&#39;</span><span class="p">,</span>
                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;doc_vec_idx&#39;</span><span class="p">,</span>

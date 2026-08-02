@@ -140,7 +140,7 @@ Version 2 or higher requires explicit specification.</p></li>
     <span class="s1">&#39;articles&#39;</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;content&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="p">),</span>
-    <span class="n">singlestoredb_full_text_indexes</span><span class="o">=</span><span class="p">[</span><span class="n">FullTextIndex</span><span class="p">(</span><span class="s1">&#39;content&#39;</span><span class="p">)],</span>
+    <span class="n">singlestoredb_full_text_index</span><span class="o">=</span><span class="p">[</span><span class="n">FullTextIndex</span><span class="p">(</span><span class="s1">&#39;content&#39;</span><span class="p">)],</span>
 <span class="p">)</span>
 <span class="c1"># Multiple columns with name</span>
 <span class="n">documents</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span>
@@ -148,7 +148,7 @@ Version 2 or higher requires explicit specification.</p></li>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="n">String</span><span class="p">(</span><span class="mi">200</span><span class="p">)),</span>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;body&#39;</span><span class="p">,</span> <span class="n">Text</span><span class="p">),</span>
-    <span class="n">singlestoredb_full_text_indexes</span><span class="o">=</span><span class="p">[</span>
+    <span class="n">singlestoredb_full_text_index</span><span class="o">=</span><span class="p">[</span>
         <span class="n">FullTextIndex</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;body&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ft_doc_search&#39;</span><span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span>
@@ -164,7 +164,7 @@ Version 2 or higher requires explicit specification.</p></li>
     <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">content</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">)</span>
     <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;singlestoredb_full_text_indexes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">FullTextIndex</span><span class="p">(</span><span class="s1">&#39;content&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;singlestoredb_full_text_index&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">FullTextIndex</span><span class="p">(</span><span class="s1">&#39;content&#39;</span><span class="p">)],</span>
     <span class="p">}</span>
 <span class="k">class</span> <span class="nc">Document</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
     <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;documents&#39;</span>
@@ -172,7 +172,7 @@ Version 2 or higher requires explicit specification.</p></li>
     <span class="n">title</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
     <span class="n">body</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Text</span><span class="p">)</span>
     <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;singlestoredb_full_text_indexes&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;singlestoredb_full_text_index&#39;</span><span class="p">:</span> <span class="p">[</span>
             <span class="n">FullTextIndex</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">,</span> <span class="s1">&#39;body&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;ft_doc_search&#39;</span><span class="p">),</span>
         <span class="p">],</span>
     <span class="p">}</span>

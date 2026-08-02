@@ -604,7 +604,7 @@ class VectorKey(DDLElement):
             'embeddings', metadata,
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(1536)),
-            singlestoredb_vector_keys=[VectorKey('embedding')],
+            singlestoredb_vector_key=[VectorKey('embedding')],
         )
 
         # Named vector index with options
@@ -612,7 +612,7 @@ class VectorKey(DDLElement):
             'documents', metadata,
             Column('id', Integer, primary_key=True),
             Column('embedding', VECTOR(768)),
-            singlestoredb_vector_keys=[
+            singlestoredb_vector_key=[
                 VectorKey(
                     'embedding',
                     name='doc_vec_idx',
@@ -638,7 +638,7 @@ class VectorKey(DDLElement):
             embedding = Column(VECTOR(1536))
 
             __table_args__ = {
-                'singlestoredb_vector_keys': [VectorKey('embedding')],
+                'singlestoredb_vector_key': [VectorKey('embedding')],
             }
 
         class Document(Base):
@@ -648,7 +648,7 @@ class VectorKey(DDLElement):
             embedding = Column(VECTOR(768))
 
             __table_args__ = {
-                'singlestoredb_vector_keys': [
+                'singlestoredb_vector_key': [
                     VectorKey(
                         'embedding',
                         name='doc_vec_idx',
@@ -796,7 +796,7 @@ class MultiValueIndex(DDLElement):
             'articles', metadata,
             Column('id', Integer, primary_key=True),
             Column('tags', JSON),
-            singlestoredb_multi_value_indexes=[MultiValueIndex('tags')],
+            singlestoredb_multi_value_index=[MultiValueIndex('tags')],
         )
 
         # Multiple columns
@@ -805,7 +805,7 @@ class MultiValueIndex(DDLElement):
             Column('id', Integer, primary_key=True),
             Column('tags', JSON),
             Column('categories', JSON),
-            singlestoredb_multi_value_indexes=[
+            singlestoredb_multi_value_index=[
                 MultiValueIndex('tags', 'categories'),
             ],
         )
@@ -827,7 +827,7 @@ class MultiValueIndex(DDLElement):
             tags = Column(JSON)
 
             __table_args__ = {
-                'singlestoredb_multi_value_indexes': [MultiValueIndex('tags')],
+                'singlestoredb_multi_value_index': [MultiValueIndex('tags')],
             }
 
         class Product(Base):
@@ -838,7 +838,7 @@ class MultiValueIndex(DDLElement):
             categories = Column(JSON)
 
             __table_args__ = {
-                'singlestoredb_multi_value_indexes': [
+                'singlestoredb_multi_value_index': [
                     MultiValueIndex('tags', 'categories'),
                 ],
             }
@@ -979,7 +979,7 @@ class FullTextIndex(DDLElement):
             'articles', metadata,
             Column('id', Integer, primary_key=True),
             Column('content', Text),
-            singlestoredb_full_text_indexes=[FullTextIndex('content')],
+            singlestoredb_full_text_index=[FullTextIndex('content')],
         )
 
         # Multiple columns with name
@@ -988,7 +988,7 @@ class FullTextIndex(DDLElement):
             Column('id', Integer, primary_key=True),
             Column('title', String(200)),
             Column('body', Text),
-            singlestoredb_full_text_indexes=[
+            singlestoredb_full_text_index=[
                 FullTextIndex('title', 'body', name='ft_doc_search'),
             ],
         )
@@ -1010,7 +1010,7 @@ class FullTextIndex(DDLElement):
             content = Column(Text)
 
             __table_args__ = {
-                'singlestoredb_full_text_indexes': [FullTextIndex('content')],
+                'singlestoredb_full_text_index': [FullTextIndex('content')],
             }
 
         class Document(Base):
@@ -1021,7 +1021,7 @@ class FullTextIndex(DDLElement):
             body = Column(Text)
 
             __table_args__ = {
-                'singlestoredb_full_text_indexes': [
+                'singlestoredb_full_text_index': [
                     FullTextIndex('title', 'body', name='ft_doc_search'),
                 ],
             }

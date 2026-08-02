@@ -106,7 +106,7 @@ class Document(Base):
 
     __table_args__ = {
         'singlestoredb_table_type': ColumnStore(),
-        'singlestoredb_vector_keys': [
+        'singlestoredb_vector_key': [
             VectorKey('embedding', index_options={'metric_type': 'COSINE_SIMILARITY'}),
         ],
     }
