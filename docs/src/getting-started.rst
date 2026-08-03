@@ -74,10 +74,10 @@ Use SQLAlchemy's Table construct with SingleStoreDB-specific options:
         Column('tags', JSON),
         singlestoredb_table_type=ColumnStore(),
         singlestoredb_shard_key=ShardKey('id'),
-        singlestoredb_vector_keys=[
+        singlestoredb_vector_key=[
             VectorKey('embedding', index_options={'metric_type': 'COSINE_SIMILARITY'}),
         ],
-        singlestoredb_multi_value_indexes=[MultiValueIndex('tags')],
+        singlestoredb_multi_value_index=[MultiValueIndex('tags')],
     )
 
     # Create all tables
@@ -129,10 +129,10 @@ Use SQLAlchemy's declarative ORM with ``__table_args__``:
         __table_args__ = {
             'singlestoredb_table_type': ColumnStore(),
             'singlestoredb_shard_key': ShardKey('id'),
-            'singlestoredb_vector_keys': [
+            'singlestoredb_vector_key': [
                 VectorKey('embedding', index_options={'metric_type': 'COSINE_SIMILARITY'}),
             ],
-            'singlestoredb_multi_value_indexes': [MultiValueIndex('tags')],
+            'singlestoredb_multi_value_index': [MultiValueIndex('tags')],
         }
 
     # Create all tables

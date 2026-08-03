@@ -81,7 +81,7 @@ class JSON(mybase.JSON):
             tags = Column(JSON)
 
             __table_args__ = {
-                'singlestoredb_multi_value_indexes': [MultiValueIndex('tags')],
+                'singlestoredb_multi_value_index': [MultiValueIndex('tags')],
             }
 
     """

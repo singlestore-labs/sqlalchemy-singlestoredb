@@ -124,7 +124,7 @@ and querying.</p>
     <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">tags</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">JSON</span><span class="p">)</span>
     <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s1">&#39;singlestoredb_multi_value_indexes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;singlestoredb_multi_value_index&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
     <span class="p">}</span>
 </pre></div>
 </div>

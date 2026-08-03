@@ -134,10 +134,10 @@ SQLAlchemy dialect.</p>
     <span class="n">Column</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">,</span> <span class="n">JSON</span><span class="p">),</span>
     <span class="n">singlestoredb_table_type</span><span class="o">=</span><span class="n">ColumnStore</span><span class="p">(),</span>
     <span class="n">singlestoredb_shard_key</span><span class="o">=</span><span class="n">ShardKey</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
-    <span class="n">singlestoredb_vector_keys</span><span class="o">=</span><span class="p">[</span>
+    <span class="n">singlestoredb_vector_key</span><span class="o">=</span><span class="p">[</span>
         <span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">index_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;metric_type&#39;</span><span class="p">:</span> <span class="s1">&#39;COSINE_SIMILARITY&#39;</span><span class="p">}),</span>
     <span class="p">],</span>
-    <span class="n">singlestoredb_multi_value_indexes</span><span class="o">=</span><span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
+    <span class="n">singlestoredb_multi_value_index</span><span class="o">=</span><span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
 <span class="p">)</span>
 <span class="c1"># Create all tables</span>
 <span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
@@ -178,10 +178,10 @@ SQLAlchemy dialect.</p>
     <span class="n">__table_args__</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s1">&#39;singlestoredb_table_type&#39;</span><span class="p">:</span> <span class="n">ColumnStore</span><span class="p">(),</span>
         <span class="s1">&#39;singlestoredb_shard_key&#39;</span><span class="p">:</span> <span class="n">ShardKey</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
-        <span class="s1">&#39;singlestoredb_vector_keys&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="s1">&#39;singlestoredb_vector_key&#39;</span><span class="p">:</span> <span class="p">[</span>
             <span class="n">VectorKey</span><span class="p">(</span><span class="s1">&#39;embedding&#39;</span><span class="p">,</span> <span class="n">index_options</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;metric_type&#39;</span><span class="p">:</span> <span class="s1">&#39;COSINE_SIMILARITY&#39;</span><span class="p">}),</span>
         <span class="p">],</span>
-        <span class="s1">&#39;singlestoredb_multi_value_indexes&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
+        <span class="s1">&#39;singlestoredb_multi_value_index&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">MultiValueIndex</span><span class="p">(</span><span class="s1">&#39;tags&#39;</span><span class="p">)],</span>
     <span class="p">}</span>
 <span class="c1"># Create all tables</span>
 <span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
