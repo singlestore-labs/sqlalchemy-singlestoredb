@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import struct
 from typing import Any
 from typing import Dict
 from typing import List
@@ -118,6 +119,19 @@ class JSON(mybase.JSON):
         return None
 
 
+_VECTOR_STRUCT_CODES = {
+    'F16': 'e', 'F32': 'f', 'F64': 'd',
+    'I8': 'b', 'I16': 'h', 'I32': 'i', 'I64': 'q',
+}
+
+
+def _unpack_vector(value: bytes, elem_type: str) -> List[Any]:
+    """Decode a little-endian packed VECTOR value into a list of numbers."""
+    code = _VECTOR_STRUCT_CODES[elem_type.upper()]
+    count = len(value) // struct.calcsize(code)
+    return list(struct.unpack(f'<{count}{code}', value))
+
+
 class VECTOR(mybase.BLOB):
     """SingleStore VECTOR data type for storing fixed-dimension vectors.
 
@@ -229,14 +243,26 @@ class VECTOR(mybase.BLOB):
         string_process = self._str_impl.result_processor(dialect, coltype)
         json_deserializer = dialect._json_deserializer or json.loads
 
-        def process(value: Union[str, bytes, Dict[str, Any], List[Any]]) -> Any:
+        def process(value: Any) -> Any:
             if value is None:
                 return None
+            if not isinstance(value, (str, bytes, bytearray)):
+                # Already decoded by the driver: singlestoredb returns VECTOR
+                # values as numpy arrays when numpy is installed.
+                return value
+            if isinstance(value, (bytes, bytearray)):
+                if value[:1] == b'[':
+                    try:
+                        return json_deserializer(value)
+                    except ValueError:
+                        pass
+                # Packed binary elements, as the HTTP Data API returns them.
+                return _unpack_vector(bytes(value), self.elem_type)
             if string_process:
                 value = string_process(value)
             if type(value) is dict or type(value) is list:
                 return value
-            return json_deserializer(value)  # type: ignore
+            return json_deserializer(value)
 
         return process
 
