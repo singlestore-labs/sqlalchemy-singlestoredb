@@ -154,6 +154,57 @@ class TestVECTORResultProcessor:
         result = processor(None)
         assert result is None
 
+    def test_process_driver_decoded_value(self) -> None:
+        """Values the driver already decoded (e.g. numpy arrays) pass through."""
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+
+        class Decoded:
+            """Stands in for numpy.ndarray, which json.loads rejects."""
+
+        processor = VECTOR(3).result_processor(SingleStoreDBDialect(), None)
+        value = Decoded()
+        assert processor(value) is value
+        assert processor((1.0, 2.0, 3.0)) == (1.0, 2.0, 3.0)
+
+    def test_process_packed_binary(self) -> None:
+        """Packed binary values (HTTP Data API) are unpacked by element type."""
+        import struct
+
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+        dialect = SingleStoreDBDialect()
+
+        f32 = VECTOR(3).result_processor(dialect, None)
+        assert f32(struct.pack('<3f', 1.0, -2.5, 3.25)) == [1.0, -2.5, 3.25]
+        i16 = VECTOR(2, 'I16').result_processor(dialect, None)
+        assert i16(struct.pack('<2h', -7, 300)) == [-7, 300]
+        assert f32(b'[1.0, 2.0, 3.0]') == [1.0, 2.0, 3.0]
+        # Binary that happens to start with '[' is still unpacked.
+        packed = struct.pack('<3f', 1.0, 2.0, 3.0)
+        packed = b'[' + packed[1:]
+        assert f32(packed) == list(struct.unpack('<3f', packed))
+
+    def test_process_json_bytes_with_leading_whitespace(self) -> None:
+        """JSON arrays may start with JSON whitespace."""
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+
+        f32 = VECTOR(3).result_processor(SingleStoreDBDialect(), None)
+        assert f32(b' [1.0, 2.0, 3.0]') == [1.0, 2.0, 3.0]
+        assert f32(bytearray(b'\n\t\r [1.0, 2.0, 3.0]')) == [1.0, 2.0, 3.0]
+
+    def test_process_packed_binary_that_parses_as_json(self) -> None:
+        """A packed payload that is also valid JSON is unpacked."""
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+
+        dialect = SingleStoreDBDialect()
+        i8 = VECTOR(3, 'I8').result_processor(dialect, None)
+        assert i8(b'[1]') == [91, 49, 93]
+        # A JSON array with the column's element count is still JSON.
+        assert i8(b'[1,2,3]') == [1, 2, 3]
+        # JSON whose length cannot be a packed value of the column is JSON
+        # even when the declared element count differs.
+        f32 = VECTOR(elem_type='F32').result_processor(dialect, None)
+        assert f32(b'[1.0, 2.0, 3.0]') == [1.0, 2.0, 3.0]
+
 
 class TestVECTORCacheKey:
     """Test VECTOR cache key generation."""
@@ -317,3 +368,26 @@ class TestVECTORReflection:
             # Result should be a list or JSON-like structure
             embedding = result[0]
             assert embedding is not None
+
+    def test_reflected_vector_typed_select(
+        self, test_engine: Any, table_name_prefix: str, clean_tables: None,
+    ) -> None:
+        """Selecting a reflected VECTOR column applies its result processor."""
+        table_name = f'{table_name_prefix}test_vec_typed'
+
+        with test_engine.connect() as conn:
+            with conn.begin():
+                conn.execute(
+                    text(
+                        f'CREATE TABLE {table_name} '
+                        '(id INT PRIMARY KEY, embedding VECTOR(3, F32))',
+                    ),
+                )
+                conn.execute(
+                    text(f"INSERT INTO {table_name} VALUES (1, '[1.0, 2.0, 3.0]')"),
+                )
+
+            table = Table(table_name, MetaData(), autoload_with=conn)
+            embedding = conn.execute(table.select()).one().embedding
+
+        assert [float(x) for x in embedding] == [1.0, 2.0, 3.0]
