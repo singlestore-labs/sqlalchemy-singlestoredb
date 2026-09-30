@@ -709,11 +709,12 @@ class SingleStoreDBDialect(MySQLDialect):
         return bool(getattr(dbapi_connection, '_autocommit', True))
 
     def set_isolation_level(self, dbapi_connection: Any, level: str) -> None:
+        if not _is_mysql_protocol(getattr(dbapi_connection, 'connection_params', {})):
+            # The HTTP Data API has no transactions or session state, so every
+            # level, including AUTOCOMMIT, leaves the connection untouched.
+            return
         if level == 'AUTOCOMMIT':
             dbapi_connection.autocommit(True)
-            return
-        if not _is_mysql_protocol(getattr(dbapi_connection, 'connection_params', {})):
-            # The HTTP Data API has no transactions or session state.
             return
         dbapi_connection.autocommit(False)
         super().set_isolation_level(dbapi_connection, level)

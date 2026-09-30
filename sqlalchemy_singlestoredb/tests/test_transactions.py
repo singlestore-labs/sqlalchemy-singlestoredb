@@ -53,6 +53,22 @@ class TestIsolationLevel:
         conn.autocommit.assert_called_once_with(True)
         conn.cursor.assert_not_called()
 
+    @pytest.mark.parametrize('level', ['AUTOCOMMIT', 'READ COMMITTED'])
+    @pytest.mark.parametrize(
+        'params',
+        [
+            {'driver': 'https', 'host': 'db.example.com'},
+            {'driver': 'mysql', 'host': 'singlestore.com'},
+        ],
+    )
+    def test_http_data_api_is_untouched(
+        self, level: str, params: dict[str, Any],
+    ) -> None:
+        conn = MagicMock(connection_params=params)
+        SingleStoreDBDialect().set_isolation_level(conn, level)
+        conn.autocommit.assert_not_called()
+        conn.cursor.assert_not_called()
+
     def test_other_level_disables_autocommit(self) -> None:
         conn = MagicMock(connection_params={'driver': 'mysql', 'host': 'h'})
         SingleStoreDBDialect().set_isolation_level(conn, 'READ COMMITTED')
