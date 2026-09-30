@@ -7,6 +7,7 @@ from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Type
 from urllib.parse import quote
 from urllib.parse import quote_plus
@@ -531,6 +532,13 @@ class _myconnpyBIT(BIT):
         return None
 
 
+def _is_mysql_protocol(params: Dict[str, Any]) -> bool:
+    """Return True for MySQL-protocol connections (not the HTTP Data API)."""
+    if params.get('host') == 'singlestore.com':
+        return False
+    return (params.get('driver') or 'mysql') == 'mysql'
+
+
 def render_as_string(url: URL) -> str:
     s = url.drivername + '://'
     if url.username is not None:
@@ -642,10 +650,20 @@ class SingleStoreDBDialect(MySQLDialect):
 
     def create_connect_args(self, url: URL) -> List[Any]:
         from singlestoredb.connection import build_params
-        return [
-            [],
-            build_params(host=render_as_string(url), client_found_rows=True),
-        ]
+        params = build_params(host=render_as_string(url), client_found_rows=True)
+        # The driver defaults to autocommit, but SQLAlchemy manages
+        # transactions itself and expects the DB-API connection to start in
+        # non-autocommit mode (PEP 249). Otherwise ``Connection.rollback()``
+        # and ``engine.begin()`` blocks cannot undo anything. Autocommit is
+        # still available through ``isolation_level='AUTOCOMMIT'`` or an
+        # explicit ``autocommit`` URL / connect argument. The HTTP Data API
+        # does not support transactions, so it keeps the driver default.
+        if (
+            _is_mysql_protocol(params) and
+            'autocommit' not in {k.lower() for k in url.query}
+        ):
+            params['autocommit'] = False
+        return [[], params]
 
     def _extract_error_code(self, exception: Exception) -> int:
         return getattr(exception, 'errno', -1)
@@ -675,6 +693,31 @@ class SingleStoreDBDialect(MySQLDialect):
         if params['host'] == 'singlestore.com':
             return
         dbapi_connection.rollback()
+
+    def get_isolation_level_values(self, dbapi_connection: Any) -> Tuple[str, ...]:
+        return (
+            'SERIALIZABLE',
+            'READ UNCOMMITTED',
+            'READ COMMITTED',
+            'REPEATABLE READ',
+            'AUTOCOMMIT',
+        )
+
+    def detect_autocommit_setting(self, dbapi_connection: Any) -> bool:
+        if hasattr(dbapi_connection, 'get_autocommit'):
+            return bool(dbapi_connection.get_autocommit())
+        return bool(getattr(dbapi_connection, '_autocommit', True))
+
+    def set_isolation_level(self, dbapi_connection: Any, level: str) -> None:
+        if not _is_mysql_protocol(getattr(dbapi_connection, 'connection_params', {})):
+            # The HTTP Data API has no transactions or session state, so every
+            # level, including AUTOCOMMIT, leaves the connection untouched.
+            return
+        if level == 'AUTOCOMMIT':
+            dbapi_connection.autocommit(True)
+            return
+        dbapi_connection.autocommit(False)
+        super().set_isolation_level(dbapi_connection, level)
 
     def _execute_context(
         self,
@@ -886,8 +929,6 @@ class SingleStoreDBDialect(MySQLDialect):
             cursor = dbapi_connection.cursor()
             try:
                 cursor.execute("SET NAMES 'utf8mb4'")
-                # Set session variables if needed
-                cursor.execute("SET sql_mode = 'TRADITIONAL'")
             except Exception:
                 # Ignore errors for cloud connections or unsupported features
                 pass
