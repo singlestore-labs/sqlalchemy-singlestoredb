@@ -183,6 +183,28 @@ class TestVECTORResultProcessor:
         packed = b'[' + packed[1:]
         assert f32(packed) == list(struct.unpack('<3f', packed))
 
+    def test_process_json_bytes_with_leading_whitespace(self) -> None:
+        """JSON arrays may start with JSON whitespace."""
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+
+        f32 = VECTOR(3).result_processor(SingleStoreDBDialect(), None)
+        assert f32(b' [1.0, 2.0, 3.0]') == [1.0, 2.0, 3.0]
+        assert f32(bytearray(b'\n\t\r [1.0, 2.0, 3.0]')) == [1.0, 2.0, 3.0]
+
+    def test_process_packed_binary_that_parses_as_json(self) -> None:
+        """A packed payload that is also valid JSON is unpacked."""
+        from sqlalchemy_singlestoredb.base import SingleStoreDBDialect
+
+        dialect = SingleStoreDBDialect()
+        i8 = VECTOR(3, 'I8').result_processor(dialect, None)
+        assert i8(b'[1]') == [91, 49, 93]
+        # A JSON array with the column's element count is still JSON.
+        assert i8(b'[1,2,3]') == [1, 2, 3]
+        # JSON whose length cannot be a packed value of the column is JSON
+        # even when the declared element count differs.
+        f32 = VECTOR(elem_type='F32').result_processor(dialect, None)
+        assert f32(b'[1.0, 2.0, 3.0]') == [1.0, 2.0, 3.0]
+
 
 class TestVECTORCacheKey:
     """Test VECTOR cache key generation."""

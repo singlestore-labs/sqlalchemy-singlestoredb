@@ -125,6 +125,23 @@ _VECTOR_STRUCT_CODES = {
 }
 
 
+def _packed_vector_size(n_elems: int, elem_type: str) -> int:
+    """Return the byte length of a packed VECTOR value."""
+    return n_elems * struct.calcsize(_VECTOR_STRUCT_CODES[elem_type.upper()])
+
+
+def _decode_json_vector(value: bytes, json_deserializer: Any) -> Optional[List[Any]]:
+    """Return ``value`` decoded as a JSON array, or None if it is not one."""
+    # JSON allows leading whitespace (space, tab, line feed, carriage return).
+    if value.lstrip(b' \t\n\r')[:1] != b'[':
+        return None
+    try:
+        decoded = json_deserializer(value)
+    except ValueError:
+        return None
+    return decoded if isinstance(decoded, list) else None
+
+
 def _unpack_vector(value: bytes, elem_type: str) -> List[Any]:
     """Decode a little-endian packed VECTOR value into a list of numbers."""
     code = _VECTOR_STRUCT_CODES[elem_type.upper()]
@@ -251,13 +268,19 @@ class VECTOR(mybase.BLOB):
                 # values as numpy arrays when numpy is installed.
                 return value
             if isinstance(value, (bytes, bytearray)):
-                if value[:1] == b'[':
-                    try:
-                        return json_deserializer(value)
-                    except ValueError:
-                        pass
+                value = bytes(value)
+                decoded = _decode_json_vector(value, json_deserializer)
+                # A packed payload can also parse as JSON (an I8 vector packed
+                # as b'[1]' is [91, 49, 93]). Only trust the JSON reading when
+                # it has the column's element count, or when the value cannot
+                # be a packed payload of this column because its length differs.
+                if decoded is not None and (
+                    len(decoded) == self.n_elems or
+                    len(value) != _packed_vector_size(self.n_elems, self.elem_type)
+                ):
+                    return decoded
                 # Packed binary elements, as the HTTP Data API returns them.
-                return _unpack_vector(bytes(value), self.elem_type)
+                return _unpack_vector(value, self.elem_type)
             if string_process:
                 value = string_process(value)
             if type(value) is dict or type(value) is list:
