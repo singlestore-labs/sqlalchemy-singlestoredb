@@ -53,9 +53,10 @@ def test_data_loaded(
                         if stmt and not stmt.startswith('--'):
                             try:
                                 conn.execute(text(stmt))
-                            except Exception:
-                                # Some statements might fail, continue
-                                pass
+                            except Exception as exc:
+                                # Some statements might fail, continue, but
+                                # report it so a failure later has a cause
+                                print(f'Statement failed: {stmt[:80]!r}: {exc!r}')
 
     print(f'URL for test data: {test_engine.url.render_as_string(hide_password=False)}')
     with test_engine.connect() as conn:

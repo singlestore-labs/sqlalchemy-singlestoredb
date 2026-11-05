@@ -71,6 +71,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      # Run every combination to the end, so one failure does not hide others.
+      fail-fast: false
       matrix:
         # Pinned, not ubuntu-latest: that label moves to Ubuntu 26.04, which
         # setup-python has no Python 3.9 build for.
