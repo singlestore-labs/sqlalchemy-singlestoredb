@@ -164,8 +164,8 @@ cluster = mgr.create_cluster(
 # The API generates the admin password and reports it only on the create
 # response: no route hands it back later, and it is None after any refresh(),
 # which every wait below does. It is read back rather than set because the API
-# accepts an adminPassword on both POST and PATCH and ignores both -- item 9 of
-# docs/management-api-audit.md in singlestoredb-python.
+# accepts an adminPassword on both POST and PATCH and ignores both -- items 8
+# and 14 of docs/management-api-audit.md in singlestoredb-python.
 generated = cluster.admin_password
 
 database = options.database
@@ -234,11 +234,12 @@ elif options.output == 'json':
 password = options.password
 escaped = password.replace('\\', '\\\\').replace("'", "\\'")
 
-# The firewall wait does not guarantee the first connection gets through: a
-# connect can still time out after it, with a later one succeeding -- item 12 of
-# docs/management-api-audit.md in singlestoredb-python. So the connect is
-# retried, but ALTER USER is not: a lost reply may mean it was applied, and the
-# generated password would no longer work for a second attempt.
+# The firewall wait only sees what GET /v2/clusters reports, and item 12 of
+# docs/management-api-audit.md in singlestoredb-python shows that view and the
+# endpoint's actual reachability can disagree. So the connect is retried in case
+# the first one lands in such a gap, but ALTER USER is not: a lost reply may
+# mean it was applied, and the generated password would no longer work for a
+# second attempt.
 tries = 10
 for attempt in range(1, tries + 1):
     try:
