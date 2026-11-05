@@ -13,9 +13,12 @@ from sqlalchemy.engine import Engine
 
 @pytest.fixture(scope='function')
 def test_data_loaded(
-    test_engine: Engine, table_name_prefix: str,
+    test_engine: Engine, table_name_prefix: str, clean_tables: None,
 ) -> Generator[dict[str, str], None, None]:
     """Load test data from test.sql file with randomized table names."""
+    # clean_tables is requested here, not just by the test, so its snapshot
+    # of existing tables is taken before these are created; otherwise it
+    # counts them as pre-existing and drops nothing.
     # Get path to test.sql file
     sql_file = os.path.join(os.path.dirname(__file__), 'test.sql')
 
