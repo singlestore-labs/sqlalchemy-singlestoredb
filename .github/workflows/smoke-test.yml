@@ -73,6 +73,10 @@ jobs:
     strategy:
       # Run every combination to the end, so one failure does not hide others.
       fail-fast: false
+      # Every job creates its own tables in the one shared S-00 cluster; with
+      # all 28 jobs at once, table memory hits maximum_table_memory and
+      # CREATE TABLE fails (error 1720). 8 is the load the old matrix ran at.
+      max-parallel: 8
       matrix:
         # Pinned, not ubuntu-latest: that label moves to Ubuntu 26.04, which
         # setup-python has no Python 3.9 build for.
