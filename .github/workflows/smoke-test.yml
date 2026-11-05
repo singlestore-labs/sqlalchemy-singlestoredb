@@ -34,11 +34,15 @@ jobs:
           python-version: "3.14"
           cache: "pip"
 
+      # resources/create_test_cluster.py needs singlestoredb.manage_clusters (v2),
+      # first released in singlestoredb 1.18.0. That floor is pinned here rather
+      # than in pyproject.toml, so the dialect does not force a driver that new
+      # on its users.
       - name: Install dependencies
         run: |
           python --version
           python -m pip install --upgrade pip
-          pip install .
+          pip install . "singlestoredb>=1.18.0"
 
       - name: Initialize database
         id: initialize-database
