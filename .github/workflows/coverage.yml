@@ -12,43 +12,27 @@ jobs:
     runs-on: ubuntu-latest
     environment: Base
 
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+        uses: actions/checkout@v7
 
+      # One version, not a matrix: the supported range is covered by
+      # smoke-test.yml and pre-commit.yml, so this tracks the newest final
+      # release rather than the floor in pyproject.toml. Release PRs get the
+      # smoke-test matrix from smoke-test.yml's own pull_request trigger.
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.15"
           cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-
-      - name: Check for release preparation commit
-        id: check-release
-        run: |
-          # Check if this is a release preparation commit
-          COMMIT_MSG=$(git log -1 --format='%s' HEAD)
-          if [[ "$COMMIT_MSG" =~ ^Prepare\ for\ v[0-9]+\.[0-9]+\.[0-9]+\ release$ ]]; then
-            echo "🚀 Release preparation commit detected: $COMMIT_MSG"
-            echo "is-release=true" >> $GITHUB_OUTPUT
-          else
-            echo "is-release=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Trigger smoke tests for release
-        if: steps.check-release.outputs.is-release == 'true'
-        run: |
-          echo "🔥 Triggering smoke tests for release preparation..."
-          gh workflow run smoke-test.yml
-          echo "✅ Smoke tests triggered successfully"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install SingleStore package and SQLAlchemy 2.0.x
         run: |
