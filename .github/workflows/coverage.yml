@@ -20,13 +20,15 @@ jobs:
         uses: actions/checkout@v7
 
       # One version, not a matrix: the supported range is covered by
-      # smoke-test.yml and pre-commit.yml, so this tracks the newest final
-      # release rather than the floor in pyproject.toml. Release PRs get the
+      # smoke-test.yml and pre-commit.yml, so this uses the newest
+      # well-supported release -- one behind the top of the smoke-test matrix,
+      # so dependencies have caught up -- rather than the floor in
+      # pyproject.toml. Release PRs get the
       # smoke-test matrix from smoke-test.yml's own pull_request trigger.
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
-          python-version: "3.15"
+          python-version: "3.14"
           cache: "pip"
 
       - name: Install dependencies
