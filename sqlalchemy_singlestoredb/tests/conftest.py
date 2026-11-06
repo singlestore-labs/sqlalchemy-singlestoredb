@@ -17,9 +17,11 @@ from urllib.parse import urlparse
 
 import pytest
 import singlestoredb
-from sqlalchemy import create_engine
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
+
+from sqlalchemy_singlestoredb.tests.utils import connect_with_retry
+from sqlalchemy_singlestoredb.tests.utils import create_test_engine
 
 
 # Configure logger for test fixtures
@@ -303,7 +305,7 @@ def test_database(
         logger.info('Database name: %s', db_name)
         logger.info('Connection URL for creation: %s', db_connection_url)
         logger.info('-' * 70)
-        with singlestoredb.connect(db_connection_url) as conn:
+        with connect_with_retry(singlestoredb.connect, db_connection_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(f'CREATE DATABASE IF NOT EXISTS {db_name}')
         logger.info('Test database created successfully: %s', db_name)
@@ -322,7 +324,7 @@ def test_database(
         logger.info('test_database: Cleaning up test database')
         logger.info('Dropping database: %s', db_name)
         logger.info('-' * 70)
-        with singlestoredb.connect(db_connection_url) as conn:
+        with connect_with_retry(singlestoredb.connect, db_connection_url) as conn:
             with conn.cursor() as cur:
                 cur.execute(f'DROP DATABASE IF EXISTS {db_name}')
         logger.info('Test database dropped successfully: %s', db_name)
@@ -346,7 +348,7 @@ def test_engine(
     logger.info('Engine URL: %s', test_url)
     logger.info('-' * 70)
 
-    engine = create_engine(test_url)
+    engine = create_test_engine(test_url)
 
     yield engine
 
@@ -368,7 +370,7 @@ def test_connection(
     # Get the URL from the engine
     url = test_engine.url.render_as_string(hide_password=False)
 
-    connection = singlestoredb.connect(url)
+    connection = connect_with_retry(singlestoredb.connect, url)
 
     yield connection
 
