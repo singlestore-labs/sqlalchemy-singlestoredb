@@ -510,8 +510,10 @@ def stage_files() -> None:
         'docs/',  # All generated documentation files
     ]
 
+    # The paths are relative to the repository root, wherever this is run from
+    repo_root = Path(__file__).parent.parent
     for file_path in files_to_stage:
-        subprocess.run(['git', 'add', file_path], check=True)
+        subprocess.run(['git', 'add', file_path], cwd=repo_root, check=True)
         status(f'   ✓ Staged {file_path}')
 
     status('✅ All modified files staged for commit')
