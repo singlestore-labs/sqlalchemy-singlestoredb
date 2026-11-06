@@ -13,9 +13,12 @@ from sqlalchemy.engine import Engine
 
 @pytest.fixture(scope='function')
 def test_data_loaded(
-    test_engine: Engine, table_name_prefix: str,
+    test_engine: Engine, table_name_prefix: str, clean_tables: None,
 ) -> Generator[dict[str, str], None, None]:
     """Load test data from test.sql file with randomized table names."""
+    # clean_tables is requested here, not just by the test, so its snapshot
+    # of existing tables is taken before these are created; otherwise it
+    # counts them as pre-existing and drops nothing.
     # Get path to test.sql file
     sql_file = os.path.join(os.path.dirname(__file__), 'test.sql')
 
@@ -53,9 +56,10 @@ def test_data_loaded(
                         if stmt and not stmt.startswith('--'):
                             try:
                                 conn.execute(text(stmt))
-                            except Exception:
-                                # Some statements might fail, continue
-                                pass
+                            except Exception as exc:
+                                # Some statements might fail, continue, but
+                                # report it so a failure later has a cause
+                                print(f'Statement failed: {stmt[:80]!r}: {exc!r}')
 
     print(f'URL for test data: {test_engine.url.render_as_string(hide_password=False)}')
     with test_engine.connect() as conn:

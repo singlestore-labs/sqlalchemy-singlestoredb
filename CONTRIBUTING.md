@@ -185,20 +185,40 @@ resources/bump_version.py major
 The script performs the following steps:
 1. Reads the current version from `pyproject.toml`
 2. Calculates the new version based on bump type
-3. Updates version in both `pyproject.toml` and `sqlalchemy_singlestoredb/__init__.py`
-4. Generates release notes from git history
-5. Opens an editor to customize release notes for `docs/src/whatsnew.rst`
-6. Builds the documentation
-7. Stages all modified files for commit
+3. Checks the repository is ready for a release (see below), before any file
+   is modified
+4. Updates version in both `pyproject.toml` and `sqlalchemy_singlestoredb/__init__.py`
+5. Generates release notes from git history
+6. Opens an editor to customize release notes for `docs/src/whatsnew.rst`
+7. Builds the documentation
+8. Stages all modified files for commit
+9. Optionally commits to a `release/v<version>` branch, pushes it, opens a
+   pull request against `main`, and switches back to `main`
+
+Releases go through a pull request from a `release/*` branch, because that is
+what triggers the smoke tests, so the release branch has to start from the
+current `origin/main`. The check in step 3 stops the script unless you are on
+`main`, tracked files are clean, `docs/` has no untracked files (step 8 stages
+all of `docs/`), local `main` matches `origin/main`, the `release/v<version>`
+branch does not exist locally or on origin, tag `v<version>` does not exist on
+origin, and `gh` is authenticated.
+
+If the commit in step 9 fails, for example because a pre-commit hook rejects
+it, the staged changes are moved back to `main` and the empty release branch
+is deleted, so you can fix the problem and finish with the manual commands the
+script prints.
 
 ### Creating a Release
 
-After version bumping and CI tests pass, use the `resources/create_release.py`
+After the release pull request is merged, use the `resources/create_release.py`
 script to create a GitHub release.
 
 ```bash
-# Create release using version from pyproject.toml
+# Create release using the version on origin/main
 resources/create_release.py
+
+# Create release, checking origin/main is at a specific version
+resources/create_release.py --version 1.2.2
 
 # Preview without creating (dry run)
 resources/create_release.py --dry-run
@@ -206,43 +226,82 @@ resources/create_release.py --dry-run
 
 The script:
 1. Checks prerequisites (gh CLI installed, authenticated with GitHub)
-2. Extracts version from `pyproject.toml`
-3. Reads release notes from `docs/src/whatsnew.rst`
-4. Creates a GitHub release with tag `v<version>`
+2. Fetches `origin/main` and reads the version from its `pyproject.toml`
+   (`--version` must match it), and stops if tag `v<version>` already exists
+3. Finds the `Prepare for v<version> release` commit on `origin/main`
+4. Reads release notes from `docs/src/whatsnew.rst` at that commit
+5. Creates a GitHub release with tag `v<version>` on that commit
+
+The version and notes are read from `origin/main` rather than your working tree,
+so running the script before the release pull request is merged stops instead of
+tagging the previous release's code: tag `v<previous>` already exists, or, with
+`--version`, the versions do not match. The tag goes on the release commit, not
+the tip of `origin/main`, so pull requests merged after the release are not
+published with it. That lookup relies on the commit subject, so keep the
+release commit's message -- and, when squash-merging, the pull request's
+title -- as `Prepare for v<version> release`.
 
 **Prerequisites**: The GitHub CLI (`gh`) must be installed and authenticated.
 Install from https://cli.github.com/ and run `gh auth login`.
 
 ### Complete Release Workflow
 
-1. **Bump the version**:
+1. **Start from an up-to-date `main`** with no uncommitted changes to tracked
+   files:
+   ```bash
+   git switch main
+   git pull --ff-only
+   ```
+
+2. **Bump the version**:
    ```bash
    resources/bump_version.py patch
    ```
 
-2. **Review and edit release notes** in the editor that opens
+3. **Review and edit release notes** in the editor that opens
 
-3. **Commit and push**:
+4. **Open the release pull request**. The script asks whether to do this; answer
+   yes and it opens the PR in your browser. If you answer no, run:
    ```bash
-   git commit -m "Prepare for vX.X.X release" && git push
+   git switch -c release/vX.X.X
+   git commit -m "Prepare for vX.X.X release"
+   git push -u origin release/vX.X.X
+   gh pr create --base main --fill
+   git switch main
    ```
 
-4. **Wait for CI tests to pass** on GitHub Actions
+5. **Wait for CI to pass**. The
+   [coverage tests](https://github.com/singlestore-labs/sqlalchemy-singlestoredb/actions/workflows/coverage.yml)
+   and [smoke tests](https://github.com/singlestore-labs/sqlalchemy-singlestoredb/actions/workflows/smoke-test.yml)
+   run on the pull request automatically. The smoke tests, which verify the
+   code works at all advertised Python versions, run on PRs from `release/*`
+   branches only, and are skipped on every other PR.
 
-5. **Run final testing**: Execute the full
-   [Coverage tests](https://github.com/singlestore-labs/sqlalchemy-singlestoredb/actions/workflows/coverage.yml)
-   and [Smoke tests](https://github.com/singlestore-labs/sqlalchemy-singlestoredb/actions/workflows/smoke-test.yml)
-   which verify the code works at all advertised Python versions.
+6. **Get the pull request approved and merged**. If another PR lands on `main`
+   first, update the release branch; that reruns the smoke tests and brings in
+   changes the release notes may not cover yet, so check
+   `docs/src/whatsnew.rst` again. Once it is merged, update your local `main`:
+   ```bash
+   git pull --ff-only
+   ```
 
-6. **Create the GitHub release**:
+7. **Create the GitHub release** (preview it first with `--dry-run`):
    ```bash
    resources/create_release.py
    ```
 
-7. **Verify PyPI publish** workflow completes successfully
+8. **Verify PyPI publish** workflow completes successfully
    (triggered automatically by the GitHub release). Check the
    [PyPI package page](https://pypi.org/project/sqlalchemy-singlestoredb/) to confirm
    the new version is available.
+
+9. **Delete the release branch** if it was not deleted when the PR was merged.
+   Use `-D` locally, because git does not recognise a squash-merged branch as
+   merged:
+   ```bash
+   git branch -D release/vX.X.X
+   git push origin --delete release/vX.X.X
+   ```
 
 ### Version File Locations
 
