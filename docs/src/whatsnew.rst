@@ -8,6 +8,10 @@ This document outlines features and improvements from each release.
    are for non-production testing and evaluation, and may include
    changes to the API.
 
+v1.2.2 - November 13, 2026
+--------------------------
+* Fix vector type results (#10)
+
 v1.2.1 - January 28, 2026
 -------------------------
 * Add documentation, docstring examples, and tests
