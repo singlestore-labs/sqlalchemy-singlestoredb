@@ -9,8 +9,27 @@
 name: Publish packages
 
 on:
+  # Test releases: build and attach the packages to a GitHub prerelease, but
+  # never publish to PyPI. These tags match the publish environment's v*.*.*
+  # rule, so they can point at an unmerged branch's commit.
+  push:
+    tags:
+      - 'v*-rc*'
+      - 'v*-test*'
+      - 'v*-alpha*'
+      - 'v*-beta*'
   release:
     types: [published]
+  # Build and check, but never publish, when packaging changes, so a broken
+  # release pipeline is caught in review rather than at release time.
+  pull_request:
+    paths:
+      - '.github/workflows/publish.yml'
+      - 'pyproject.toml'
+  # Runner images and setuptools releases change out from under the workflow
+  # with no change to this repo, so build and check weekly as well.
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     inputs:
       publish_pypi:
@@ -30,17 +49,14 @@ on:
         default: 0
 
 jobs:
-  publish:
+  # Kept apart from publish so that nothing installed or run during the build
+  # executes in a job that can mint a PyPI token.
+  build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
-      id-token: write   # Required for OIDC trusted publishing
-      contents: read    # Required for repository access
-
-    environment:
-      name: publish
-      url: https://pypi.org/p/sqlalchemy-singlestoredb
+      contents: read
 
 #   services:
 #     singlestore:
@@ -62,16 +78,34 @@ jobs:
           python-version: "3.14"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install build twine
 
       - name: Build PyPI package
         run: |
-          python -m pip install --upgrade pip
-          pip install build
           python -m build
+
+      - name: Check package metadata
+        run: |
+          twine check --strict dist/*
+
+      # Install the wheel into a clean environment, away from the checkout, so
+      # the check exercises the packaged files and entry points rather than
+      # the source tree.
+      - name: Check the wheel installs and registers the dialect
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -m venv wheel-check
+          wheel-check/bin/pip install "$GITHUB_WORKSPACE"/dist/*.whl
+          wheel-check/bin/python -c "
+          import sqlalchemy as sa
+          import sqlalchemy_singlestoredb as s2
+          engine = sa.create_engine('singlestoredb://user:pw@localhost/db')
+          assert isinstance(engine.dialect, s2.dialect), type(engine.dialect)
+          print(type(engine.dialect))
+          "
 
 #     - name: Build Conda package
 #       run: |
@@ -84,6 +118,69 @@ jobs:
 #         conda build --override-channels -c singlestore -c conda-forge --no-anaconda-upload --output-folder ../artifacts .
 #       env:
 #         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
+
+      - name: Archive source dist and wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 2
+
+  publish:
+    needs: build
+    # Runs on manual dispatch even with publish_pypi off, so the environment,
+    # artifact handoff and job setup can be exercised without uploading; only
+    # the PyPI step is gated on publishing.
+    if: ${{ github.event_name != 'pull_request' && github.event_name != 'schedule' }}
+
+    runs-on: ubuntu-24.04
+
+    permissions:
+      id-token: write      # Required for OIDC trusted publishing and actions/attest
+      actions: read        # Required for actions/download-artifact
+      contents: write      # Required for gh release create/upload
+      attestations: write  # Required for actions/attest
+
+    environment:
+      name: publish
+      url: https://pypi.org/p/sqlalchemy-singlestoredb
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Download source dist and wheel
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
+      # Signed SLSA build provenance for the files attached to the GitHub
+      # Release, which otherwise carry nothing to verify them against. PyPI's
+      # copies get their own attestations from gh-action-pypi-publish.
+      # Verify with: gh attestation verify FILE --repo singlestore-labs/sqlalchemy-singlestoredb
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/*
+
+      # The tag reaches the shell through the environment rather than being
+      # interpolated into the script: tag names may contain $(), backticks
+      # and ';', which the shell would otherwise run.
+      - name: Create GitHub Release
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gh release create "$TAG" dist/* --prerelease --title "$TAG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+
+      - name: Upload release assets
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          gh release upload "$TAG" dist/* --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
 
       - name: Publish PyPI package
         if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}

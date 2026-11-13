@@ -29,7 +29,7 @@ jobs:
       github.event_name != 'pull_request' ||
       (startsWith(github.head_ref, 'release/') &&
        github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v7
@@ -64,10 +64,16 @@ jobs:
         # to it, so the script resets it to CLUSTER_PASSWORD over SQL once the
         # cluster is up. A generated password could not reach the other jobs
         # anyway: the runner refuses to write a masked value as a job output.
+        #
+        # The secrets reach the script through the environment rather than
+        # being interpolated into the command, so the shell never sees their
+        # characters.
         run: |
-          python resources/create_test_cluster.py --password="${{ secrets.CLUSTER_PASSWORD }}" --token="${{ secrets.CLUSTER_API_KEY }}" --project="Standard Project" --init-sql sqlalchemy_singlestoredb/tests/test.sql --output=github --expires=2h "sqlalchemy - $GITHUB_WORKFLOW - $GITHUB_RUN_NUMBER"
+          python resources/create_test_cluster.py --password="$CLUSTER_PASSWORD" --token="$CLUSTER_API_KEY" --project="Standard Project" --init-sql sqlalchemy_singlestoredb/tests/test.sql --output=github --expires=2h "sqlalchemy - $GITHUB_WORKFLOW - $GITHUB_RUN_NUMBER"
         env:
           PYTHONPATH: ${{ github.workspace }}
+          CLUSTER_PASSWORD: ${{ secrets.CLUSTER_PASSWORD }}
+          CLUSTER_API_KEY: ${{ secrets.CLUSTER_API_KEY }}
 
     outputs:
       cluster-id: ${{ steps.initialize-database.outputs.cluster-id }}
@@ -150,7 +156,7 @@ jobs:
     # Skipped means setup-database's gate turned the run down and no cluster
     # exists; a failed or cancelled setup may still have created one.
     if: ${{ always() && needs.setup-database.result != 'skipped' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v7
@@ -212,7 +218,7 @@ jobs:
   smoke-test-result:
     needs: [setup-database, smoke-test, shutdown-database]
     if: ${{ always() }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check smoke-test results
