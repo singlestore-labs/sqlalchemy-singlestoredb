@@ -9,6 +9,15 @@
 name: Publish packages
 
 on:
+  # Test releases: build and attach the packages to a GitHub prerelease, but
+  # never publish to PyPI. These tags match the publish environment's v*.*.*
+  # rule, so they can point at an unmerged branch's commit.
+  push:
+    tags:
+      - 'v*-rc*'
+      - 'v*-test*'
+      - 'v*-alpha*'
+      - 'v*-beta*'
   release:
     types: [published]
   # Build and check, but never publish, when packaging changes, so a broken
@@ -127,19 +136,46 @@ jobs:
     runs-on: ubuntu-24.04
 
     permissions:
-      id-token: write   # Required for OIDC trusted publishing
-      actions: read     # Required for actions/download-artifact
+      id-token: write      # Required for OIDC trusted publishing and actions/attest
+      actions: read        # Required for actions/download-artifact
+      contents: write      # Required for gh release create/upload
+      attestations: write  # Required for actions/attest
 
     environment:
       name: publish
       url: https://pypi.org/p/sqlalchemy-singlestoredb
 
     steps:
+      - uses: actions/checkout@v7
+
       - name: Download source dist and wheel
         uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
+
+      # Signed SLSA build provenance for the files attached to the GitHub
+      # Release, which otherwise carry nothing to verify them against. PyPI's
+      # copies get their own attestations from gh-action-pypi-publish.
+      # Verify with: gh attestation verify FILE --repo singlestore-labs/sqlalchemy-singlestoredb
+      - name: Attest build provenance
+        uses: actions/attest@v4
+        with:
+          subject-path: dist/*
+
+      - name: Create GitHub Release
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          gh release create ${{ github.ref_name }} dist/* --prerelease --title "${{ github.ref_name }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} dist/* --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish PyPI package
         if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}

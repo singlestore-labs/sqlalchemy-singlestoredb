@@ -244,6 +244,29 @@ title -- as `Prepare for v<version> release`.
 **Prerequisites**: The GitHub CLI (`gh`) must be installed and authenticated.
 Install from https://cli.github.com/ and run `gh auth login`.
 
+### Test Releases
+
+Pushing a tag matching `v*-rc*`, `v*-test*`, `v*-alpha*` or `v*-beta*` runs
+the publish workflow end to end -- build, wheel check, attestation -- and
+attaches the packages to a GitHub prerelease, but never uploads to PyPI. The
+tag can point at any commit, including one on an unmerged branch:
+
+```bash
+git tag v1.2.2-test1
+git push origin v1.2.2-test1
+```
+
+The package version still comes from `pyproject.toml`, not the tag. Delete the
+prerelease and tag when done with
+`gh release delete v1.2.2-test1 --cleanup-tag --yes`.
+
+To check the publish job against `main` without creating a prerelease, run the
+workflow manually with publishing turned off:
+
+```bash
+gh workflow run publish.yml --ref main -f publish_pypi=false
+```
+
 ### Complete Release Workflow
 
 1. **Start from an up-to-date `main`** with no uncommitted changes to tracked
