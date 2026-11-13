@@ -119,7 +119,10 @@ jobs:
 
   publish:
     needs: build
-    if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}
+    # Runs on manual dispatch even with publish_pypi off, so the environment,
+    # artifact handoff and job setup can be exercised without uploading; only
+    # the PyPI step is gated on publishing.
+    if: ${{ github.event_name != 'pull_request' && github.event_name != 'schedule' }}
 
     runs-on: ubuntu-24.04
 
@@ -139,6 +142,7 @@ jobs:
           path: dist
 
       - name: Publish PyPI package
+        if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}
         uses: pypa/gh-action-pypi-publish@release/v1
 
 #     - name: Publish Conda package
