@@ -11,6 +11,16 @@ name: Publish packages
 on:
   release:
     types: [published]
+  # Build and check, but never publish, when packaging changes, so a broken
+  # release pipeline is caught in review rather than at release time.
+  pull_request:
+    paths:
+      - '.github/workflows/publish.yml'
+      - 'pyproject.toml'
+  # Runner images and setuptools releases change out from under the workflow
+  # with no change to this repo, so build and check weekly as well.
+  schedule:
+    - cron: '0 6 * * 1'
   workflow_dispatch:
     inputs:
       publish_pypi:
@@ -30,17 +40,14 @@ on:
         default: 0
 
 jobs:
-  publish:
+  # Kept apart from publish so that nothing installed or run during the build
+  # executes in a job that can mint a PyPI token.
+  build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
-      id-token: write   # Required for OIDC trusted publishing
-      contents: read    # Required for repository access
-
-    environment:
-      name: publish
-      url: https://pypi.org/p/sqlalchemy-singlestoredb
+      contents: read
 
 #   services:
 #     singlestore:
@@ -62,16 +69,34 @@ jobs:
           python-version: "3.14"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install build twine
 
       - name: Build PyPI package
         run: |
-          python -m pip install --upgrade pip
-          pip install build
           python -m build
+
+      - name: Check package metadata
+        run: |
+          twine check --strict dist/*
+
+      # Install the wheel into a clean environment, away from the checkout, so
+      # the check exercises the packaged files and entry points rather than
+      # the source tree.
+      - name: Check the wheel installs and registers the dialect
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -m venv wheel-check
+          wheel-check/bin/pip install "$GITHUB_WORKSPACE"/dist/*.whl
+          wheel-check/bin/python -c "
+          import sqlalchemy as sa
+          import sqlalchemy_singlestoredb as s2
+          engine = sa.create_engine('singlestoredb://user:pw@localhost/db')
+          assert isinstance(engine.dialect, s2.dialect), type(engine.dialect)
+          print(type(engine.dialect))
+          "
 
 #     - name: Build Conda package
 #       run: |
@@ -85,8 +110,35 @@ jobs:
 #       env:
 #         SINGLESTOREDB_URL: "root:root@127.0.0.1:3307"
 
+      - name: Archive source dist and wheel
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist
+          retention-days: 2
+
+  publish:
+    needs: build
+    if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}
+
+    runs-on: ubuntu-24.04
+
+    permissions:
+      id-token: write   # Required for OIDC trusted publishing
+      actions: read     # Required for actions/download-artifact
+
+    environment:
+      name: publish
+      url: https://pypi.org/p/sqlalchemy-singlestoredb
+
+    steps:
+      - name: Download source dist and wheel
+        uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+
       - name: Publish PyPI package
-        if: ${{ github.event_name == 'release' || github.event.inputs.publish_pypi == 'true' }}
         uses: pypa/gh-action-pypi-publish@release/v1
 
 #     - name: Publish Conda package
